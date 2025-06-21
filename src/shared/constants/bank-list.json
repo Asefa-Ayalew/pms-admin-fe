@@ -1,0 +1,167 @@
+[
+    {
+        "name": "Abay Bank",
+        "bankCode": "AB",
+        "headquarters": "Addis Ababa"
+    },
+    {
+        "name": "Access Bank Ethiopia",
+        "bankCode": "ABE",
+        "headquarters": "Addis Ababa"
+    },
+    {
+        "name": "Addis Credit and Saving Institution",
+        "bankCode": "ACSI",
+        "headquarters": "Addis Ababa"
+    },
+    {
+        "name": "Addis International Bank",
+        "bankCode": "AdIB",
+        "headquarters": "Addis Ababa"
+    },
+    {
+        "name": "Ahadu Bank",
+        "bankCode": "AHB",
+        "headquarters": "Addis Ababa"
+    },
+    {
+        "name": "Amhara Bank",
+        "bankCode": "AB",
+        "headquarters": "Addis Ababa"
+    },
+    {
+        "name": "Awash Bank",
+        "bankCode": "AB",
+        "headquarters": "Addis Ababa"
+    },
+    {
+        "name": "Bank of Abyssinia",
+        "bankCode": "BOA",
+        "headquarters": "Addis Ababa"
+    },
+    {
+        "name": "Berhan Bank",
+        "bankCode": "BB",
+        "headquarters": "Addis Ababa"
+    },
+    {
+        "name": "Bunna Bank",
+        "bankCode": "BB",
+        "headquarters": "Addis Ababa"
+    },
+    {
+        "name": "Commercial Bank of Ethiopia",
+        "bankCode": "CBE",
+        "headquarters": "Addis Ababa"
+    },
+    {
+        "name": "Cooperative Bank of Oromia",
+        "bankCode": "CBO",
+        "headquarters": "Addis Ababa"
+    },
+    {
+        "name": "Dashen Bank",
+        "bankCode": "DB",
+        "headquarters": "Addis Ababa"
+    },
+    {
+        "name": "Debub Global Bank",
+        "bankCode": "DGB",
+        "headquarters": "Addis Ababa"
+    },
+    {
+        "name": "Development Bank of Ethiopia",
+        "bankCode": "DBE",
+        "headquarters": "Addis Ababa"
+    },
+    {
+        "name": "Enat Bank",
+        "bankCode": "EB",
+        "headquarters": "Addis Ababa"
+    },
+    {
+        "name": "Gadaa Bank",
+        "bankCode": "GAB",
+        "headquarters": "Addis Ababa"
+    },
+    {
+        "name": "Goh Betoch Bank",
+        "bankCode": "GBB",
+        "headquarters": "Addis Ababa"
+    },
+    {
+        "name": "Global Bank Ethiopia",
+        "bankCode": "GBE",
+        "headquarters": "Addis Ababa"
+    },
+    {
+        "name": "Hibret Bank",
+        "bankCode": "HB",
+        "headquarters": "Addis Ababa"
+    },
+    {
+        "name": "Hijra Bank",
+        "bankCode": "HB",
+        "headquarters": "Addis Ababa"
+    },
+    {
+        "name": "Lion International Bank",
+        "bankCode": "LIB",
+        "headquarters": "Addis Ababa"
+    },
+    {
+        "name": "Nib International Bank",
+        "bankCode": "NIB",
+        "headquarters": "Addis Ababa"
+    },
+    {
+        "name": "Oromia International Bank",
+        "bankCode": "OIB",
+        "headquarters": "Addis Ababa"
+    },
+    {
+        "name": "Rammis Bank",
+        "bankCode": "RB",
+        "headquarters": "Addis Ababa"
+    },
+    {
+        "name": "Shabelle Bank",
+        "bankCode": "SB",
+        "headquarters": "Addis Ababa"
+    },
+    {
+        "name": "Siinqee Bank",
+        "bankCode": "SB",
+        "headquarters": "Addis Ababa"
+    },
+    {
+        "name": "Tsedey Bank",
+        "bankCode": "TSB",
+        "headquarters": "Addis Ababa"
+    },
+    {
+        "name": "Tsehay Bank",
+        "bankCode": "TSHB",
+        "headquarters": "Addis Ababa"
+    },
+    {
+        "name": "United Bank",
+        "bankCode": "UB",
+        "headquarters": "Addis Ababa"
+    },
+    {
+        "name": "Wegagen Bank",
+        "bankCode": "WB",
+        "headquarters": "Addis Ababa"
+    },
+    {
+        "name": "ZamZam Bank",
+        "bankCode": "ZZB",
+        "headquarters": "Addis Ababa"
+    },
+    {
+        "name": "Zemen Bank",
+        "bankCode": "ZB",
+        "headquarters": "Addis Ababa"
+    }
+]

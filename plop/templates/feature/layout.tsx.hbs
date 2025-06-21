@@ -1,0 +1,117 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
+
+import { {{pascalCase name}} } from "@/src/models/{{dashCase name}}.model";
+import EntityList from "@/src/shared/entity/entity-list";
+import { CollectionQuery, Order } from "@/src/shared/models/collection.model";
+import {
+  EntityConfig,
+  entityViewMode,
+} from "@/src/shared/models/entity-config.model";
+import { useLazyGet{{pascalCase (pluralize name)}}Query } from "./_store/{{dashCase name}}.query";
+
+export default function {{pascalCase name}}ListPage({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const params = useParams();
+
+  // Component states
+  const [check, setCheck] = useState(false);
+  const [selected{{pascalCase name}}, setSelectedType] = useState<{{pascalCase name}}>();
+  const [viewMode, setViewMode] = useState<entityViewMode>("list");
+  const [collection, setCollection] = useState<CollectionQuery>({
+    skip: 0,
+    top: 20,
+    orderBy: [{ field: "createdAt", direction: "desc" }],
+  });
+
+  // RTK hooks
+  const [get{{pascalCase name}}, {{camelCase (pluralize name)}}] = useLazyGet{{pascalCase (pluralize name)}}Query();
+
+  useEffect(() => {
+    get{{pascalCase name}}(collection);
+  }, [collection, get{{pascalCase name}}]);
+
+  useEffect(() => {
+    setSelectedType(
+      {{camelCase (pluralize name)}}?.data?.data?.find((item) => item?.id === `${params?.id}`)
+    );
+  }, [params?.id, {{camelCase (pluralize name)}}?.data?.data]);
+
+  useEffect(() => {
+    setViewMode(params?.id !== undefined ? "detail" : "list");
+  }, [params?.id]);
+
+  const config: EntityConfig<{{pascalCase name}}> = {
+    primaryColumn: {
+      key: "{{pascalCase name}} Name",
+      name: "{{pascalCase name}} Name",
+      render: (data: {{pascalCase name}}) => `${data?.name ?? ""}`,
+    },
+    rootUrl: "/{{dashCase (pluralize name)}}",
+    identity: "id",
+    visibleColumn: [
+      {
+        key: "",
+        name: "{{pascalCase name}} Name",
+        render: (data: {{pascalCase name}}) => `${data?.name ?? ""}`,
+      },
+      {
+        key: "createdAt",
+        name: "Registration Date",
+        isDate: true,
+      },
+    ],
+  };
+
+  const data = {{camelCase (pluralize name)}}?.data?.data;
+
+  return (
+    <div className="flex w-full">
+      <EntityList
+        parentStyle="w-full"
+        viewMode={viewMode}
+        check={check}
+        detail={children}
+        showArchived={false}
+        showSelector={true}
+        tableKey="{{camelCase (pluralize name)}}"
+        title="{{pascalCase (pluralize name)}}"
+        detailTitle={`${selected{{pascalCase name}}?.name ?? ""}`}
+        newButtonText="New"
+        total={ {{camelCase (pluralize name)}}?.data?.count || 0}
+        collectionQuery={collection}
+        itemsLoading={ {{camelCase (pluralize name)}}?.isLoading || {{camelCase (pluralize name)}}?.isFetching}
+        config={config}
+        items={ {{camelCase (pluralize name)}}?.data?.data }
+        initialPage={1}
+        defaultPageSize={collection.top}
+        pageSize={[20, 30, 50, 100]}
+        onShowSelector={(e) => setCheck(e)}
+        onPaginationChange={(skip: number, top: number) => {
+          const after = (skip - 1) * top;
+          setCollection({ ...collection, skip: after, top: top });
+        } }
+        onSearch={(data: any) => {
+          setCollection({
+            ...collection,
+            search: data || "",
+            searchFrom: data ? ["name"] : [],
+          });
+        } }
+        onFilterChange={(data: any) => {
+          if (collection?.filter || data.length > 0) {
+            // setCollection({ ...collection, filter: data });
+          }
+        } }
+        onOrder={(data: Order) =>
+          setCollection({ ...collection, orderBy: [data] })
+        }
+      />
+    </div>
+  );
+}

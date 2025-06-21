@@ -1,0 +1,281 @@
+import { {{pascalCase name}} } from "@/src/models/{{dashCase name}}.model";
+import {
+  Collection,
+  CollectionQuery,
+} from "@/src/shared/models/collection.model";
+import { collectionQueryBuilder } from "@/src/shared/utitlity/collection-query-builder";
+import { appApi } from "@/src/store/app.api";
+import { notifications } from "@mantine/notifications";
+import { {{constantCase name}}_ENDPOINT } from "./{{dashCase name}}.endpoint";
+
+let {{camelCase name}}Collection: CollectionQuery;
+
+export const {{camelCase name}}Query = appApi.injectEndpoints({
+  endpoints: (builder) => ({
+    get{{pascalCase name}}: builder.query<{{pascalCase name}}, CollectionQuery>({
+      query: (data: CollectionQuery) => ({
+        url: `${ {{constantCase name}}_ENDPOINT.detail}/${data?.id}`,
+        method: "GET",
+        params: collectionQueryBuilder(data),
+      }),
+    }),
+
+    get{{pascalCase (pluralize name)}}: builder.query<Collection<{{pascalCase name}}>, CollectionQuery>({
+      query: (data: CollectionQuery) => ({
+        url: {{constantCase name}}_ENDPOINT.list,
+        method: "GET",
+        params: collectionQueryBuilder(data),
+      }),
+      providesTags: ["{{pascalCase (pluralize name)}}"],
+      async onQueryStarted(param, { queryFulfilled }) {
+        try {
+          const { data } = await queryFulfilled;
+          if (data) {
+            {{camelCase name}}Collection = param;
+          }
+        } catch (error: any) {
+          notifications.show({
+            title: "Error",
+            message: error?.error?.data?.message || "Error, try again",
+            color: "red",
+          });
+        }
+      },
+    }),
+
+    create{{pascalCase name}}: builder.mutation<{{pascalCase name}}, {{pascalCase name}}>({
+      query: (newData: any) => ({
+        url: `${ {{constantCase name}}_ENDPOINT.create}`,
+        method: "POST",
+        data: newData,
+      }),
+      invalidatesTags: ["{{pascalCase (pluralize name)}}"],
+      async onQueryStarted(param, { dispatch, queryFulfilled }) {
+        try {
+          const { data } = await queryFulfilled;
+          if (data) {
+            notifications.show({
+              title: "Success",
+              message: "Successfully created",
+              color: "green",
+            });
+
+            dispatch(
+              {{camelCase name}}Query.util.updateQueryData(
+                "get{{pascalCase (pluralize name)}}",
+                {{camelCase name}}Collection,
+                (draft) => {
+                  if (data) {
+                    draft.data.push(data);
+                    draft.count += 1;
+                  }
+                }
+              )
+            );
+          }
+        } catch (error: any) {
+          notifications.show({
+            title: "Error",
+            message: error?.error?.data?.message || "Error, try again",
+            color: "red",
+          });
+        }
+      },
+    }),
+
+    update{{pascalCase name}}: builder.mutation<{{pascalCase name}}, {{pascalCase name}}>({
+      query: (newData: {{pascalCase name}}) => ({
+        url: `${ {{constantCase name}}_ENDPOINT.update}`,
+        method: "PUT",
+        data: newData,
+      }),
+      invalidatesTags: ["{{pascalCase name}}Info"],
+      async onQueryStarted(param, { dispatch, queryFulfilled }) {
+        try {
+          const { data } = await queryFulfilled;
+          if (data) {
+            dispatch(
+              {{camelCase name}}Query.util.updateQueryData(
+                "get{{pascalCase (pluralize name)}}",
+                {{camelCase name}}Collection,
+                (draft) => {
+                  if (data) {
+                    draft.data = draft?.data?.map((item) =>
+                      item.id === data.id ? data : item
+                    );
+                  }
+                }
+              )
+            );
+
+            notifications.show({
+              title: "Success",
+              message: "Successfully updated",
+              color: "green",
+            });
+          }
+        } catch (error: any) {
+          notifications.show({
+            title: "Error",
+            message: error?.error?.data?.message || "Error, try again",
+            color: "red",
+          });
+        }
+      },
+    }),
+    archive{{pascalCase name}}: builder.mutation<{{pascalCase name}}, CollectionQuery>({
+      query: (data: CollectionQuery) => ({
+        url: `${ {{constantCase name}}_ENDPOINT.archive}/${data?.id}`,
+        method: "DELETE",
+      }),
+
+      async onQueryStarted(param, { dispatch, queryFulfilled }) {
+        try {
+          const { data } = await queryFulfilled;
+          if (data) {
+            dispatch(
+              {{camelCase name}}Query.util.updateQueryData(
+                "get{{pascalCase (pluralize name)}}",
+                {{camelCase name}}Collection,
+                (draft) => {
+                  if (data) {
+                    draft.data = draft?.data?.map(({{camelCase name}}) => {
+                      if ({{camelCase name}}.id === data.id) return data;
+                      else {
+                        return {{camelCase name}};
+                      }
+                    });
+                  }
+                }
+              )
+            );
+            dispatch(
+              {{camelCase name}}Query.util.updateQueryData("get{{pascalCase name}}", param, (draft) => {
+                if (data) {
+                  draft.archivedAt = data?.archivedAt;
+                }
+              })
+            );
+            notifications.show({
+              title: "Success",
+              message: "Successfully archived",
+              color: "green",
+            });
+          }
+        } catch (error: any) {
+          notifications.show({
+            title: "Error",
+            message: error?.error?.data?.message
+              ? error?.error?.data?.message
+              : "Error try again",
+            color: "red",
+          });
+        }
+      },
+    }),
+    restore{{pascalCase name}}: builder.mutation<{{pascalCase name}}, CollectionQuery>({
+      query: (data: CollectionQuery) => ({
+        url: `${ {{constantCase name}}_ENDPOINT.restore }/${data?.id}`,
+        method: "POST",
+      }),
+
+      async onQueryStarted(param, { dispatch, queryFulfilled }) {
+        try {
+          const { data } = await queryFulfilled;
+          if (data) {
+            dispatch(
+              {{camelCase name}}Query.util.updateQueryData(
+                "get{{pascalCase (pluralize name)}}",
+                {{camelCase name}}Collection,
+                (draft) => {
+                  if (data) {
+                    draft.data = draft?.data?.map(({{camelCase name}}) => {
+                      if ({{camelCase name}}.id === data.id)
+                        return { ...data, archivedDate: null };
+                      else {
+                        return {{camelCase name}};
+                      }
+                    });
+                  }
+                }
+              )
+            );
+            dispatch(
+              {{camelCase name}}Query.util.updateQueryData("get{{pascalCase name}}", param, (draft) => {
+                if (data) {
+                  draft.archivedAt = "";
+                }
+              })
+            );
+            notifications.show({
+              title: "Success",
+              message: "Successfully restored",
+              color: "green",
+            });
+          }
+        } catch (error: any) {
+          notifications.show({
+            title: "Error",
+            message: error?.error?.data?.message
+              ? error?.error?.data?.message
+              : "Error try again",
+            color: "red",
+          });
+        }
+      },
+    }),
+    delete{{pascalCase name}}: builder.mutation<boolean, string>({
+      query: (id: string) => ({
+        url: `${ {{constantCase name}}_ENDPOINT.delete}/${id}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["{{pascalCase (pluralize name)}}"],
+      async onQueryStarted(id, { dispatch, queryFulfilled }) {
+        try {
+          const { data } = await queryFulfilled;
+          if (data) {
+            dispatch(
+              {{camelCase name}}Query.util.updateQueryData(
+                "get{{pascalCase (pluralize name)}}",
+                {{camelCase name}}Collection,
+                (draft) => {
+                  if (data) {
+                    draft.data = draft?.data?.filter(
+                      (item) => item.id?.toString() !== id
+                    );
+                    draft.count -= 1;
+                  }
+                }
+              )
+            );
+
+            notifications.show({
+              title: "Success",
+              message: "Successfully deleted",
+              color: "green",
+            });
+          }
+        } catch (error: any) {
+          notifications.show({
+            title: "Error",
+            message: error?.error?.data?.message || "Error, try again",
+            color: "red",
+          });
+        }
+      },
+    }),
+  }),
+
+  overrideExisting: true,
+});
+
+export const {
+  useLazyGet{{pascalCase name}}Query,
+  useArchive{{pascalCase name}}Mutation,
+  useGet{{pascalCase name}}Query,
+  useRestore{{pascalCase name}}Mutation,
+  useLazyGet{{pascalCase (pluralize name)}}Query,
+  useCreate{{pascalCase name}}Mutation,
+  useUpdate{{pascalCase name}}Mutation,
+  useDelete{{pascalCase name}}Mutation,
+} = {{camelCase name}}Query;

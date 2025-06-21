@@ -1,0 +1,292 @@
+"use client";
+import { useUserInfo } from "@/src/hooks/useUserInfo";
+import { Role } from "@/src/models/role.model";
+import { {{pascalCase name}} } from "@/src/models/{{dashCase name}}.model";
+import { New{{pascalCase name}}Schema } from "@/src/schemas/new-{{dashCase name}}-schema";
+import countryJson from "@/src/shared/constants/country-json.json";
+import { zodResolver } from "@hookform/resolvers/zod";
+import dayjs from "dayjs";
+import { useSession } from "next-auth/react";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { Controller, useForm } from "react-hook-form";
+import InputMask from "react-input-mask";
+import { Button, Modal, LoadingOverlay, TextInput } from "@mantine/core";
+import z from "zod";
+import { IconArrowBack, IconDeviceFloppy, IconTrash } from "@tabler/icons-react";
+// import { useLazyGetRolesQuery } from "../../role/_store/role.query";
+import {
+  useArchive{{pascalCase name}}Mutation,
+  useCreate{{pascalCase name}}Mutation,
+  useDelete{{pascalCase name}}Mutation,
+  useLazyGet{{pascalCase name}}Query,
+  useRestore{{pascalCase name}}Mutation,
+  useUpdate{{pascalCase name}}Mutation,
+} from "../_store/{{dashCase name}}.query";
+
+interface Props {
+  editMode: "new" | "detail";
+  onCreating?: (data: any) => void;
+}
+
+
+
+type FormSchema = z.infer<typeof New{{pascalCase name}}Schema>;
+
+const defaultValue: {{pascalCase name}} = {
+  name: "",
+};
+
+const countryCodes = countryJson
+  .map((country) => ({
+    value: country.dial_code,
+    label: `${country.name} (${country.dial_code})`,
+  }))
+  .filter(
+    (value, index, self) =>
+      index === self.findIndex((t) => t.value === value.value)
+  );
+
+export default function New{{pascalCase name}}Component(props: Props) {
+  const { editMode, onCreating } = props;
+  const params = useParams();
+  const navigate = useRouter();
+  const { update } = useSession();
+
+  const [openDeleteModal, setOpenDeleteModal] = useState(false);
+  const [selected{{pascalCase name}}, setSelected{{pascalCase name}}] = useState<{{pascalCase name}}>();
+  const [countryCode, setCountryCode] = useState<string>("+251");
+  
+  const [get{{pascalCase name}}, {{camelCase name}}] = useLazyGet{{pascalCase name}}Query();
+  const [create{{pascalCase name}}, createResponse] = useCreate{{pascalCase name}}Mutation();
+  const [update{{pascalCase name}}, updateResponse] = useUpdate{{pascalCase name}}Mutation();
+  const [archive{{pascalCase name}}, archiveResponse] = useArchive{{pascalCase name}}Mutation();
+  const [restore{{pascalCase name}}, restoreResponse] = useRestore{{pascalCase name}}Mutation();
+  const [delete{{pascalCase name}}, deleteResponse] = useDelete{{pascalCase name}}Mutation();
+  const { user: currentUser } = useUserInfo();
+
+  const {
+    register,
+    control,
+    handleSubmit,
+    getValues,
+    watch,
+    formState: { errors, isValid },
+    reset,
+    setValue,
+  } = useForm<FormSchema>({
+    resolver: zodResolver(New{{pascalCase name}}Schema),
+    mode: "all",
+  });
+
+  function onSubmit(data: {{pascalCase name}}) {
+    if (editMode === "new") {
+      create{{pascalCase name}}({
+        ...data,
+      }).then((response: any) => {
+        if (response?.data) {
+          onCreating?.(false);
+          if (!onCreating) {
+            navigate.push(`/{{dashCase (pluralize name)}}/detail/${response?.data?.id}`);
+          }
+        }
+      });
+    } else {
+        const updatedData = {
+            ...data,
+            id: `${params?.id}`,
+        };
+
+      update{{pascalCase name}}(updatedData).then(async (response: any) => {
+        if (response?.data) {
+            // do some logics here
+          navigate.push(`/{{dashCase (pluralize name)}}/detail/${response?.data?.id}`);
+        }
+      });
+    }
+  }
+
+  function handleDelete() {
+    selected{{pascalCase name}}?.archivedAt
+      ? restore{{pascalCase name}}({ id: `${selected{{pascalCase name}}?.id}` }).then((response: any) => {
+        if (response?.data) {
+          setOpenDeleteModal(false);
+        }
+      })
+      : delete{{pascalCase name}}(`${selected{{pascalCase name}}?.id}`)
+        .then((response: any) => {
+          if (response?.data) {
+            setOpenDeleteModal(false);
+          }
+        })
+        .finally(() => {
+          setOpenDeleteModal(false);
+          navigate.push(`/{{dashCase name}}`);
+        });
+  }
+
+  const onError = (error: any) => {
+    console.log("Error", error);
+  };
+
+  useEffect(() => {
+    if (editMode === "detail") {
+      get{{pascalCase name}}({
+        id: `${params?.id}`,
+      }).then((response: any) => {
+        if (response?.data) {
+          reset({
+            ...response?.data,
+          });
+        }
+      });
+    } else {
+      reset({
+        ...defaultValue,
+      });
+    }
+  }, [params?.id, editMode]);
+
+  return (
+    <div className="w-full p-4 flex-col space-y-4 buser">
+      <div className="flex items-center justify-center">
+        <h3 className="text-2xl font-semibold">
+          {editMode === "new"
+            ? "New {{pascalCase name}}" : ""}
+        </h3>
+      </div>
+    <div className="w-full flex justify-center relative">
+        <LoadingOverlay
+          visible={
+            {{camelCase name}}?.isLoading ||
+            {{camelCase name}}?.isFetching 
+          }
+          zIndex={1000}
+          overlayProps={ { radius: "sm", blur: 2 } }
+        />
+        <form
+          name="{{pascalCase name}} form"
+          onSubmit={handleSubmit(onSubmit, onError)}
+          autoComplete="off"
+          className="w-full"
+        >
+          <div className="flex w-full  justify-center">
+            <div className="px-2 w-3/4 mt-4 flex-col space-y-4">
+              <div className="lg:flex lg:space-x-4 sm:flex-row mt-4">
+                <TextInput
+                  label="{{pascalCase name}} Name"
+                  className="w-full"
+                  required
+                  placeholder="{{pascalCase name}} Name"
+                  {...register("name")}
+                  error={errors?.name?.message}
+                />
+              </div>
+              
+
+              <div className="w-full flex space-x-4  justify-end mt-4">
+                <Button
+                  variant="default"
+                  className="bg-none"
+                  onClick={() =>
+                    reset({
+                      ...defaultValue
+                    })
+                  }
+                >
+                  Reset
+                </Button>
+                {editMode === "detail" && (
+                  <div>
+                    <Button
+                      type="button"
+                      variant="filled"
+                      color="red"
+                      className={`shadow-none bg-red-500 rounded flex items-center`}
+                      onClick={() => {
+                        setOpenDeleteModal(true);
+                        setSelected{{pascalCase name}}({{camelCase name}}?.data);
+                      } }
+                      loading={
+                        archiveResponse?.isLoading || restoreResponse?.isLoading
+                      }
+                      leftSection={
+                        {{camelCase name}}?.data?.archivedAt ? (
+                          <IconArrowBack size={15} />
+                        ) : (
+                          <IconTrash size={15} />
+                        )
+                      }
+                    >
+                      { {{camelCase name}}?.data?.archivedAt ? "Restore" : "Delete" }
+                    </Button>
+                  </div>
+                )}
+                <Button
+                  variant="filled"
+                  // className="shadow-none bg-primary-500 rounded flex items-center"
+                  bg={"primary.4"}
+                  type="submit"
+                  loading={
+                    editMode === "new"
+                      ? createResponse?.isLoading
+                      : updateResponse?.isLoading
+                  }
+                  leftSection={<IconDeviceFloppy />}
+                >
+                  {editMode === "new" ? "Save" : "Update"}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+      <Modal
+        opened={openDeleteModal}
+        onClose={() => {
+          setOpenDeleteModal(false);
+        } }
+        size={"40%"}
+        title={"Delete {{pascalCase name}}"}
+        centered
+      >
+        {/* Modal content */}
+        <h2 className="">
+          Are you sure You want to delete{" "}
+          <span className="underline text-xl">{selected{{pascalCase name}}?.name} </span>
+        </h2>
+        <div className="flex my-4">
+          <Button
+            variant="default"
+            className="bg-none mx-2"
+            onClick={() => {
+              setOpenDeleteModal(false);
+            } }
+          >
+            Cancel
+          </Button>
+
+          <Button
+            type="button"
+            variant="filled"
+            color="red"
+            className={`bg-red-500 text-white shadow-none rounded flex items-center  mx-2`}
+            onClick={() => {
+              handleDelete();
+            } }
+            loading={archiveResponse?.isLoading || deleteResponse?.isLoading}
+            leftSection={
+              selected{{pascalCase name}}?.archivedAt ? (
+                <IconArrowBack size={15} />
+              ) : (
+                <IconTrash size={15} />
+              )
+            }
+          >
+            {selected{{pascalCase name}}?.archivedAt ? "Restore" : "Delete"}
+          </Button>
+        </div>
+      </Modal>
+    </div>
+  );
+}

@@ -1,0 +1,9 @@
+export const {{constantCase name}}_ENDPOINT = {
+    list: `${process.env.NEXT_PUBLIC_APP_API}/{{dashCase (pluralize name)}}/get-{{dashCase (pluralize name)}}`,
+    create: `${process.env.NEXT_PUBLIC_APP_API}/{{dashCase (pluralize name)}}/create-{{dashCase name}}`,
+    detail: `${process.env.NEXT_PUBLIC_APP_API}/{{dashCase (pluralize name)}}/get-{{dashCase name}}`,
+    update: `${process.env.NEXT_PUBLIC_APP_API}/{{dashCase (pluralize name)}}/update-{{dashCase name}}`,
+    delete: `${process.env.NEXT_PUBLIC_APP_API}/{{dashCase (pluralize name)}}/delete-{{dashCase name}}`,
+    archive: `${process.env.NEXT_PUBLIC_APP_API}/{{dashCase (pluralize name)}}/archive-{{dashCase name}}`,
+    restore: `${process.env.NEXT_PUBLIC_APP_API}/{{dashCase (pluralize name)}}/restore-{{dashCase name}}`,
+};

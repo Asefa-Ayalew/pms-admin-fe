@@ -1,0 +1,14 @@
+.side {
+  color: black;
+  background-color: #fff;
+}
+.header {
+  /* @apply p-2 flex items-center justify-between; */
+  background: #fff;
+  height: 60px;
+  color: #111827;
+}
+
+.appName {
+  /* @apply text-base; */
+}

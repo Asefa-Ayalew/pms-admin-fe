@@ -1,0 +1,71 @@
+"use client";
+
+import DetailsPage from "@/src/shared/component/details-page/details-page.component";
+import EmptyIcon from "@/src/shared/icons/empty-icon";
+import { LoadingOverlay } from "@mantine/core";
+import dayjs from "dayjs";
+import { useParams } from "next/navigation";
+import { useEffect } from "react";
+import { useLazyGet{{pascalCase name}}Query } from "../_store/{{dashCase name}}.query";
+import { useLazyGetUserQuery } from "../../user/_store/user.query";
+
+export default function {{pascalCase name}}DetailComponent() {
+    const params = useParams();
+
+    const [getUser, user] = useLazyGetUserQuery();
+    const [get{{pascalCase name}}, {{camelCase name}}] = useLazyGet{{pascalCase name}}Query();
+
+    const data = [
+        {
+            key: "name",
+            label: "Name",
+            value: `${ {{camelCase name}}?.data?.name ?? ""}`,
+        },
+    ];
+
+    const profileData = {
+        image: "",
+        name: `${user?.data?.firstName ?? ""} ${user?.data?.middleName ?? ""} ${user?.data?.lastName ?? ""}`,
+        type: "",
+        address: "",
+        phone: "",
+        email: "",
+        isVerified: false,
+    };
+
+    const config = {
+        editUrl: `/{{dashCase (pluralize name)}}/${params?.id}`,
+        isProfile: false,
+        title: `${ {{camelCase name}}?.data?.name ?? ""}`,
+        widthClass: "w-full",
+    };
+
+    useEffect(() => {
+      get{{pascalCase name}}({
+            id: `${params?.id}`,
+        });
+        //getUser({
+            // id: `${params?.id}`,
+          //  includes: ["userRoles", "userRoles.role"],
+        //});
+        // getRole(`${params?.id}`);
+    }, [params?.id]);
+
+    return (
+        <div className="w-full flex-col space-y-4 buser">
+            { {{camelCase name}}?.isLoading || {{camelCase name}}?.isFetching ? (
+                <div className="relative flex items-center justify-center">
+                    <LoadingOverlay visible={true} zIndex={1000} overlayProps={ {radius: 'sm', blur: 2} } />
+                    <EmptyIcon />
+                </div>
+            ) : (
+                <DetailsPage
+                    dataSource={[{ title: "Basic Information", source: data }]}
+                    profileData={profileData}
+                    config={config}
+                    isLoading={ {{camelCase name}}.isLoading || {{camelCase name}}.isFetching }
+                />
+            )}
+        </div>
+    );
+}
