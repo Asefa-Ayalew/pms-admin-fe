@@ -1,24 +1,32 @@
-import type { JSX, ReactNode } from "react";
-
-// import { Button, Divider, Empty, Image, Table, Typography } from "antd";
-
+"use client";
 import {
-  Badge,
+  Box,
   Button,
   Card,
+  Collapse,
+  Group,
   Table,
   Text,
   TypographyStylesProvider,
+  Badge,
 } from "@mantine/core";
-import { IconListDetails, IconStarFilled } from "@tabler/icons-react";
+import { useDisclosure } from "@mantine/hooks";
+import {
+  IconChevronDown,
+  IconChevronRight,
+  IconListDetails,
+  IconStarFilled,
+} from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
-import React from "react";
+import React, { JSX } from "react";
 import EmptyIcon from "../../icons/empty-icon";
 import DetailsPageSkeleton from "./details-page-skeleton.component";
-export interface DataType {
+
+interface DataType {
   key: string;
   label: string;
-  value: any;
+  value?: any;
+  level?: number;
   children?: DataType[];
   type?: "string" | "date" | "number" | "boolean";
 }
@@ -37,10 +45,10 @@ interface ProfileHeaderProps {
   profile: ProfileHeaderDataType;
   editUrl: string;
   hideEditButton: boolean;
-  children?: ReactNode;
+  children?: React.ReactNode;
 }
 
-export interface DetailsConfig {
+interface DetailsConfig {
   isProfile: boolean;
   title: string;
   editUrl?: string;
@@ -56,11 +64,12 @@ interface Props {
   config: DetailsConfig;
   description?: string;
   profileData?: ProfileHeaderDataType;
-  additionalActions?: ReactNode;
+  additionalActions?: React.ReactNode;
   isLoading: boolean;
+  hideEdit?: boolean;
 }
 
-export default function DetailsPage(props: Props): JSX.Element {
+export default function DetailsPage(props: Props): React.JSX.Element {
   const {
     dataSource,
     profileData,
@@ -68,12 +77,13 @@ export default function DetailsPage(props: Props): JSX.Element {
     additionalActions,
     config,
     isLoading,
+    hideEdit = false,
   } = props;
 
   const {
     isProfile,
     editUrl = "",
-    widthClass = "max-w-2xl",
+    widthClass = "max-w-3xl",
     hideEditButton = false,
   } = config;
 
@@ -86,148 +96,113 @@ export default function DetailsPage(props: Props): JSX.Element {
   if (!isLoading && dataSource.length === 0) {
     return <EmptyIcon />;
   }
+
   return (
-    <div className={`p-4 mx-auto font-roboto ${widthClass}`}>
-      {isProfile && profileData !== undefined ? (
-        <ProfileHeader
-          profile={profileData}
-          editUrl={editUrl}
-          hideEditButton={hideEditButton}
-        >
-          {additionalActions}
-        </ProfileHeader>
-      ) : (
-        <div className="flex justify-between items-center p-2 gap-2">
-          {/* <Title order={4} className="mb-0">
-            {title}
-          </Title> */}
-          {!hideEditButton && <EditButton editUrl={editUrl} />}
-          {additionalActions}
-        </div>
-      )}
-
-      {dataSource.map(({ title, source }) => {
-        return (
-          <section
-            className="mb-8 flex flex-col space-y-4 mt-8 last:mb-0 font-sans"
-            key={title}
+    <div className={`p-6 mx-auto font-roboto ${widthClass} bg-white shadow rounded-lg`}>
+      {!hideEdit &&
+        (isProfile && profileData ? (
+          <ProfileHeader
+            profile={profileData}
+            editUrl={editUrl}
+            hideEditButton={hideEditButton}
           >
-            <Table>
-              <Table.Tbody>
-                {(() => {
-                  const hasChildren = source.some(
-                    (item) => item.children?.length ?? 0 > 0
-                  );
+            {additionalActions}
+          </ProfileHeader>
+        ) : (
+          <div className="flex justify-between items-center p-2 gap-2">
+            {!hideEditButton && <EditButton editUrl={editUrl} />}
+            {additionalActions}
+          </div>
+        ))}
 
-                  return source.flatMap((data, index) => {
-                    if (data.children && data.children.length > 0) {
-                      return [
-                        <Table.Tr
-                          key={data.key}
-                          className="border border-dashed border-gray-200"
-                        >
-                          <Table.Td
-                            className="p-2 bg-gray-100 text-gray-900 border-r border-gray-200 align-center"
-                            rowSpan={data.children.length}
-                          >
-                            {data.label}
-                          </Table.Td>
-                          <Table.Td className=" bg-gray-100 p-2 border-r text-gray-800">
-                            {data.children[0].label}
-                          </Table.Td>
-                          <Table.Td className="p-2 w-3/4">
-                            {Array.isArray(data.children[0].value)
-                              ? data.children[0].value.map((value, i) => (
-                                  <Badge
-                                    color="primary"
-                                    variant="light"
-                                    mx={1}
-                                    key={i}
-                                  >
-                                    {value}
-                                  </Badge>
-                                ))
-                              : data.children[0].value}
-                          </Table.Td>
-                        </Table.Tr>,
-                        ...data.children.slice(1).map((child) => (
-                          <Table.Tr
-                            key={child.key}
-                            className="border border-gray-200 border-dashed"
-                          >
-                            <Table.Td className=" bg-gray-100 p-2 border-r text-gray-800">
-                              {child.label}
-                            </Table.Td>
-                            <Table.Td className="p-2 w-3/4">
-                              {Array.isArray(child.value)
-                                ? child.value.map((value, i) => (
-                                    <Badge
-                                      color="primary"
-                                      variant="light"
-                                      mx={1}
-                                      key={i}
-                                    >
-                                      {value}
-                                    </Badge>
-                                  ))
-                                : child.value}
-                            </Table.Td>
-                          </Table.Tr>
-                        )),
-                      ];
-                    }
-                    return (
-                      <Table.Tr
-                        key={data.key}
-                        className={`border border-gray-200 border-dashed ${
-                          index === 0 ? "border-t" : ""
-                        }`}
-                      >
-                        <Table.Td
-                          className="p-2 bg-gray-100 text-gray-900 border-r"
-                          colSpan={hasChildren ? 2 : 1}
-                        >
-                          {data.label}
-                        </Table.Td>
-                        <Table.Td className="p-2 w-3/4">
-                          {Array.isArray(data.value)
-                            ? data.value.map((value, i) => (
-                                <Badge
-                                  color="primary"
-                                  variant="light"
-                                  mx={1}
-                                  key={i}
-                                >
-                                  {value}
-                                </Badge>
-                              ))
-                            : data.value}
-                        </Table.Td>
-                      </Table.Tr>
-                    );
-                  });
-                })()}
-              </Table.Tbody>
-            </Table>
+      {dataSource.map(({ title, source }) => (
+        <Box key={title} className="mb-6 p-4">
+          <Text fw={600} size="lg" mb="md" className="text-blue-700">
+            {title}
+          </Text>
 
-            {description ? (
-              <Card shadow="sm" padding="lg" radius="md" withBorder>
-                <Text fw={500} mb="sm">
-                  Description:
-                </Text>
-                <TypographyStylesProvider>
-                  <div
-                    dangerouslySetInnerHTML={{ __html: description ?? "" }}
-                  />
-                </TypographyStylesProvider>
-              </Card>
-            ) : (
-              ""
-            )}
-          </section>
-        );
-      })}
+          <Table className="w-full">
+            <Table.Tbody>
+              {source.map((item) => (
+                <CollapsibleRow key={item.key} item={item} depth={0} />
+              ))}
+            </Table.Tbody>
+          </Table>
+
+          {description && (
+            <Card shadow="xs" padding="lg" radius="md" mt="lg" withBorder>
+              <Text fw={500} mb="sm">Description:</Text>
+              <TypographyStylesProvider>
+                <div dangerouslySetInnerHTML={{ __html: description ?? "" }} />
+              </TypographyStylesProvider>
+            </Card>
+          )}
+        </Box>
+      ))}
     </div>
+  );
+}
+
+function CollapsibleRow({
+  item,
+  depth,
+}: {
+  item: DataType;
+  depth: number;
+}): React.JSX.Element {
+  const [opened, { toggle }] = useDisclosure(false);
+  const hasChildren = item.children && item.children.length > 0;
+
+  const renderValue = (value: any) => {
+    if (Array.isArray(value)) {
+      // Flat array of primitives
+      return value.map((val: string | number | boolean, index: number) => (
+        <Badge key={index} variant="light" color="blue" mr={5}>
+          {String(val)}
+        </Badge>
+      ));
+    } else if (typeof value === "string" && value.includes(",")) {
+      // Comma-separated string
+      return value.split(",").map((val: string, index: number) => (
+        <Badge key={index} variant="light" color="blue" mr={5}>
+          {val.trim()} 
+        </Badge>
+      ));
+    } else {
+      return value ?? "—";
+    }
+  };
+
+  return (
+    <>
+      <Table.Tr className="transition hover:bg-gray-50">
+        <Table.Td
+          style={{ paddingLeft: `${depth * 40}px` }}
+          fw={800}
+          className="pl-3 bg-gray-100 w-1/4"
+        >
+          <Group gap="xs" className="pl-2">
+            {hasChildren && (
+              <button onClick={toggle} className="p-0 m-0 border-0 bg-transparent">
+                {opened ? (
+                  <IconChevronDown size={16} className="text-gray-600" />
+                ) : (
+                  <IconChevronRight size={16} className="text-gray-600" />
+                )}
+              </button>
+            )}
+            <span className="text-black p-1">{item.label}</span>
+          </Group>
+        </Table.Td>
+        <Table.Td>{renderValue(item.value)}</Table.Td>
+      </Table.Tr>
+
+      {hasChildren &&
+        opened &&
+        item.children?.map((child) => (
+          <CollapsibleRow key={child.key} item={child} depth={depth + 1} />
+        ))}
+    </>
   );
 }
 
@@ -238,22 +213,19 @@ function ProfileHeader(props: ProfileHeaderProps): JSX.Element {
   return (
     <section
       id="profile-header"
-      className="flex gap-2 bg-gray-100 p-4 rounded-sm"
+      className="flex gap-4 bg-gray-50 p-6 rounded-md border mb-6"
     >
       {image !== false && (
-        // <div className="w-24 h-24 flex-shrink-0 bg-gray-200 flex items-center justify-center rounded-full">
-        //   <Image className="rounded-full" src={image} />
-        // </div>
-        <div className=""></div>
+        <div className="w-24 h-24 rounded-full bg-gray-200"></div>
       )}
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-0.5">
+        <h1 className="text-2xl font-bold flex items-center gap-2">
           {name}
-          {isVerified && <IconStarFilled />}
+          {isVerified && <IconStarFilled className="text-yellow-500" />}
         </h1>
-        <h2 className="text-xl">{type}</h2>
+        <h2 className="text-lg text-gray-700">{type}</h2>
 
-        <div className="mt-3">
+        <div className="mt-3 text-sm text-gray-600 space-y-1">
           <Text className="block">{address}</Text>
           <Text className="block">{phone}</Text>
           <Text className="block">{email}</Text>
@@ -273,13 +245,12 @@ function EditButton({ editUrl }: { editUrl: string }): JSX.Element {
 
   return (
     <Button
-      leftSection={<IconListDetails size={12} />}
+      leftSection={<IconListDetails size={14} />}
       variant="filled"
-      radius={"xl"}
-      className="w-max ml-auto  flex items-center gap-0.5 bg-primary-500 text-white"
-      onClick={() => {
-        router.push(editUrl);
-      }}
+      radius="xl"
+      size="sm"
+      className="w-max ml-auto bg-blue-600 hover:bg-blue-700 text-white"
+      onClick={() => router.push(editUrl)}
     >
       Edit
     </Button>

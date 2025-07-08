@@ -1,39 +1,41 @@
 import { Service } from "./service.model";
 
-export interface Room {
+export interface Property {
   id?: string;
   tenantId?: string;
-  propertyId?: string;
-  roomNumber: string;
+  name?: string;
+  address: {
+    country: string;
+    city: string;
+    subcity: string;
+    woreda: string;
+    kebele: string;
+  };
   description?: string;
-  floorNumber: string;
-  isFurnished?: boolean;
-  numberOfBedRooms?: number;
-  makePublic?: boolean;
+  numberOfRooms: number;
   size: number;
+  isFurnished: boolean;
   amenities?: string[];
-  type: string;
   galleries?: Gallery[];
-  services?: RoomService[];
+  services?: PropertyService[];
   createdBy?: string;
   updatedBy?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  archivedAt?: string;
   deletedBy?: string;
-  archivedBy?: string;
-  createdAt?: Date;
-  updatedAt?: Date;
-  deletedAt?: Date;
-  archivedAt?: Date;
+  deletedAt?: string;
 }
 export interface Gallery {
-  roomId: string;
+  propertyId: string;
   description?: string;
   gallery: File;
 }
-export interface RoomService {
-  roomId?: string;
+export interface PropertyService {
+  propertyId?: string;
   serviceId: string;
   id?: string;
-  service?: Service;
+  service?: Service
   isOptional?: boolean;
   isPublic?: boolean;
   chargeAmount?: number;

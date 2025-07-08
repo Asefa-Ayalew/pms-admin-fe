@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
-interface Filter {
-  field: string;
-  name: string;
-  value?: string | number | boolean;
-  operator?: string;
-}
+// interface Filter {
+//   field: string;
+//   name: string;
+//   value?: string | number | boolean;
+//   operator?: string;
+// }
 
-type FilterValue = string[];
+// type FilterValue = string[];
 
 export const useFilter = (
   initialValues: string[] = [],

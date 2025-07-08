@@ -40,7 +40,7 @@ const EntityListHeader: React.FC<EntityListHeaderProps> = ({
   tableKey = "",
   header,
   primaryColor = "blue",
-  secondaryColor,
+  // secondaryColor,
   className = "",
   onResetFilters,
   onViewAll,
@@ -53,7 +53,8 @@ const EntityListHeader: React.FC<EntityListHeaderProps> = ({
         {title}
       </Title>
 
-      <Group gap="xs">
+      <Group gap="md" justify="flex-end" align="center">
+        <Flex>
         {filterValueLength > 0 && (
           <Button
             variant="subtle"
@@ -81,7 +82,7 @@ const EntityListHeader: React.FC<EntityListHeaderProps> = ({
             label="Show Archived"
             onChange={(e) => onShowArchived?.(e)}
             color={primaryColor}
-            className="cursor-pointer"
+            className="cursor-pointer mr-4"
           />
         )}
 
@@ -108,6 +109,7 @@ const EntityListHeader: React.FC<EntityListHeaderProps> = ({
             </Menu.Dropdown>
           </Menu>
         )}
+        </Flex>
       </Group>
     </Flex>
   );

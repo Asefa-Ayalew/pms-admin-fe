@@ -1,10 +1,10 @@
 import { Button, MantineColor, Paper, Title } from "@mantine/core";
 import { IconArrowLeft, IconMaximize, IconMinimize } from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
-import { FC } from "react";
+import { FC, ReactElement } from "react";
 
 interface EntityDetailViewProps {
-  detailTitle?: string;
+  detailTitle?: string | ReactElement<any>;
   title?: string;
   rootUrl?: string;
   detail?: any;
@@ -27,7 +27,7 @@ export const EntityDetailView: FC<EntityDetailViewProps> = ({
   fullScreen,
   setFullScreen,
   primaryColor = "blue",
-  secondaryColor,
+  // secondaryColor,
   className = "",
   showBackButton = true,
   showExpandButton = true,
@@ -48,7 +48,8 @@ export const EntityDetailView: FC<EntityDetailViewProps> = ({
     <div className={`flex flex-col h-full ${className}`}>
       <Paper className="mb-4 p-4 w-full bg-amber-200  flex justify-between items-center">
         <div className="flex justify-between w-full">
-          {showBackButton && (
+        <div className="flex space-x-0 w-full">
+            {showBackButton && (
             <Button
               leftSection={<IconArrowLeft size={16} />}
               variant="subtle"
@@ -56,12 +57,12 @@ export const EntityDetailView: FC<EntityDetailViewProps> = ({
               size="sm"
               onClick={handleBack}
             >
-              Back
             </Button>
           )}
-          <Title order={3} className="text-gray-700 ml-4">
+          <Title order={4} className="text-gray-700 ml-4 w-full">
             {detailTitle || title}
           </Title>
+        </div>
           {showExpandButton && setFullScreen && (
             <Button
               variant="subtle"
@@ -70,13 +71,13 @@ export const EntityDetailView: FC<EntityDetailViewProps> = ({
               onClick={() => setFullScreen(!fullScreen)}
               leftSection={
                 fullScreen ? (
-                  <IconMinimize size={16} />
+                  <IconMinimize size={18} />
                 ) : (
-                  <IconMaximize size={16} />
+                  <IconMaximize size={18} />
                 )
               }
             >
-              {fullScreen ? "Normal" : "Expand"}
+              {fullScreen}
             </Button>
           )}
         </div>

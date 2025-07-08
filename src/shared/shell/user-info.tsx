@@ -1,26 +1,31 @@
-import { IconAt, IconPhoneCall } from '@tabler/icons-react';
-import { Avatar, Group, Text } from '@mantine/core';
+import { Avatar, Group, Text, Box, Paper } from '@mantine/core';
 
-export function UserInfo(props: {user: any}) {
-  console.log('UserInfo props: ', props.user);
+export function UserInfo({ user }: { user: any }) {
+  const tenant = user?.currentTenant;
+
   return (
-    <div className='mx-3 my-4'>
-      <Group wrap="nowrap">
+    <Paper
+      shadow="md"
+      radius="lg"
+      p="md"
+      className="mx-3 my-4 bg-gradient-to-br from-blue-50 to-white dark:from-gray-900 dark:to-gray-800 transition-all duration-300"
+    >
+      <Group wrap="nowrap" gap="md">
         <Avatar
           src="https://raw.githubusercontent.com/mantinedev/mantine/master/.demo/avatars/avatar-2.png"
           size={72}
-          radius="120 "
+          radius="xl"
+          className="shadow-md"
         />
-        <div>
-
-          <Text fz="md" fw={500} className='text-blue-950'>
-            {'Mr Juan'}
+        <Box>
+          <Text fz="lg" fw={700} className="text-blue-900 dark:text-white">
+            {user?.firstName ?? 'Tenant Name'}
           </Text>
-          <Text  fw={300}>
-            CEO
+          <Text fz="sm" c="dimmed">
+            {tenant?.industry ?? 'Industry'}
           </Text>
-        </div>
+        </Box>
       </Group>
-    </div>
+    </Paper>
   );
 }

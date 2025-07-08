@@ -1,5 +1,4 @@
 "use client";
-import styles from './shell.module.css';
 import { ProtectedRoute } from "@/src/components/ProtectedRoute";
 import { useUserInfo } from "@/src/hooks/useUserInfo";
 import {
@@ -8,34 +7,45 @@ import {
   UserRole,
 } from "@/src/models/user-info.model";
 import {
+  Accordion,
   AppShell,
   Avatar,
   Box,
   Burger,
   Flex,
   Group,
+  Menu,
   ScrollArea,
   Skeleton,
   Text,
   Title,
+  UnstyledButton,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
+import { modals } from "@mantine/modals";
 import {
   IconBuildingBank,
-  IconBuildingHospital,
+  IconChevronDown,
+  IconChevronUp,
+  IconCircleCheckFilled,
+  IconCashBanknote,
   IconGauge,
-  IconHome,
-  IconMenu2,
+  IconLogout,
+  IconSettings,
+  IconUserCog,
 } from "@tabler/icons-react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { ReactNode, useEffect, useMemo, useState } from "react";
 import { RoleKey, useRoleGuard } from "../auth/hooks/useRoleGuard";
+import InternetConnectionStatus from "../component/internet-connection-status/internet-connection-status";
+import LogoutModal from "../component/logout-modal";
+import SwitchRoleModal from "../component/switch-role-modal";
 import { useLazyGetSignedUrlQuery } from "../utils/signedUrl/file.query";
-import { LinksGroup } from "./nav-bar-links-group";
+import { cn } from "../utitlity/cn";
+import { NavigationContainer } from "./nav-bar-links-group-component";
+import classes from "./navbar.module.css";
 import { NAV_ITEMS, PROTECTED_ROUTES } from "./route-permissions";
-import { Notifications } from "@mantine/notifications";
-import { UserInfo } from "./user-info";
-import { useSession } from "next-auth/react";
 
 interface NavItem {
   label: string;
@@ -129,22 +139,21 @@ export function Shell({ children }: { children: ReactNode }) {
   const [mobileOpened, { toggle: toggleMobile }] = useDisclosure();
   const [desktopOpened, { toggle: toggleDesktop }] = useDisclosure(true);
   const { user, userRoles, activeRole } = useUserInfo();
+  const tenant = user?.currentTenant;
+
+  const [userMenuOpened, setUserMenuOpened] = useState(false);
   const bucketName = user?.organization?.logo?.bucketName;
   const name = user?.organization?.logo?.name;
   const [getSignedUrl, { isLoading: isLoadingGetSignedUrl, data: signedUrl }] =
     useLazyGetSignedUrlQuery();
 
   const { protectRoutesFromRoles } = useRoleGuard();
-  const {data: userInfo} = useSession();
-  console.log('userInfo', userInfo);
 
   const navData = useMemo(
     () => generateNavData(protectRoutesFromRoles),
     [protectRoutesFromRoles]
   );
- const links = navData.map((item) => (
-    <LinksGroup {...item} key={item.label} />
-  ));
+
   useEffect(() => {
     if (bucketName && name) {
       getSignedUrl({ bucketName, name }).then((res) => {
@@ -154,7 +163,7 @@ export function Shell({ children }: { children: ReactNode }) {
   }, [bucketName, name]);
 
   // Memoize the header content
-   const HeaderContent = useMemo(
+  const HeaderContent = useMemo(
     () => (
       <Group h="100%" px="md">
         <Burger
@@ -176,8 +185,8 @@ export function Shell({ children }: { children: ReactNode }) {
           isLoading={isLoadingGetSignedUrl}
           signedUrl={signedUrl?.link || null}
         />
-        <Text className="text-lg font-semibold text-primary-500 uppercase">
-          {'user?.tenant?.name'}
+        <Text className="text-lg font-bold text-gray-900 uppercase">
+          {tenant?.name}
         </Text>
       </Group>
     ),
@@ -194,73 +203,70 @@ export function Shell({ children }: { children: ReactNode }) {
 
   return (
     <ProtectedRoute>
-      <Notifications />
       <AppShell
-        header={{ height: "48px" }}
-        layout="alt"
+        header={{ height: "40px" }}
         navbar={{
-          width: 250,
+          width: 300,
           breakpoint: "sm",
-          collapsed: {
-            mobile: !mobileOpened,
-            desktop: !desktopOpened,
-          },
+          collapsed: { mobile: !mobileOpened, desktop: !desktopOpened },
         }}
-        padding="md"
+        padding="xs"
       >
         <AppShell.Header
-          style={{
-            height: "48px",
-            alignItems: "center",
-          }}
+          className="flex justify-between"
+          style={{ height: "60px" }}
         >
-          {HeaderContent}
-        </AppShell.Header>
-        <AppShell.Navbar className={styles.side}>
-          <AppShell.Section>
-            <Box className={styles.header}>
-              <Box className="flex-grow">
-                <Box
+          <Group gap={2}>
+            <Box
+              style={{
+                height: "60px",
+                backgroundColor: "#0b2752",
+                alignItems: "center",
+                color: "white",
+                width: "300px",
+              }}
+              className="dark:bg-gray-900"
+            >
+              <Group align="center" gap={0} h="100%" className="mx-4">
+                <IconBuildingBank size={20} />
+                <h2
                   style={{
+                    paddingLeft: "20px",
+                    paddingBottom: "20px",
+                    paddingTop: "20px",
+                    fontFamily: "sans-serif",
+                    fontWeight: "bold",
                     height: "60px",
-                    backgroundColor: "#0b2752",
-                    alignItems: "center",
-                    color: "white",
                   }}
-                  className="dark:bg-gray-900"
                 >
-                  <Group align="center" gap={0} h="100%" className="mx-4">
-                 <IconBuildingBank size={20}/>
-                    <h2
-                      style={{
-                        paddingLeft: "20px",
-                        paddingBottom: "20px",
-                        paddingTop: "20px",
-                        fontFamily: "sans-serif",
-                        fontWeight: "bold",
-                        height: "60px",
-                      }}
-                    >
-                      <Title fw={500} fz="md">PMS ADMIN</Title>
-                    </h2>
-                  </Group>
-                </Box>
-                <Burger
-                  color="black"
-                  hiddenFrom="sm"
-                  onClick={toggleMobile}
-                  opened={mobileOpened}
-                  size="sm"
-                />
-              </Box>
+                  <Title fw={500} fz="md" order={3}>
+                    PMS TENANT
+                  </Title>
+                </h2>
+              </Group>
             </Box>
-            <UserInfo user={userInfo} />
-          </AppShell.Section>
-          <AppShell.Section component={ScrollArea} grow>
-            {links}
-          </AppShell.Section>
-        </AppShell.Navbar>
-        <AppShell.Main>{children}</AppShell.Main>
+            {HeaderContent}
+          </Group>
+          <UserMenu
+            user={user}
+            userRoles={userRoles}
+            activeRole={activeRole}
+            userMenuOpened={userMenuOpened}
+            setUserMenuOpened={setUserMenuOpened}
+            onSwitchRole={SwitchRole}
+            onLogout={Logout}
+          />
+        </AppShell.Header>
+        <Flex className="flex-row h-full">
+          <AppShell.Navbar className="mt-6">
+            {/* <UserInfo user={user} /> */}
+            <NavigationContainer links={navData} />
+          </AppShell.Navbar>
+          <AppShell.Main className="w-full mt-4 bg-neutral-100">
+            {children}
+          </AppShell.Main>
+        </Flex>
+        <InternetConnectionStatus />
       </AppShell>
     </ProtectedRoute>
   );
@@ -316,3 +322,173 @@ function OrganizationLogo({
   );
 }
 
+function UserMenu({
+  user,
+  userRoles,
+  activeRole,
+  userMenuOpened,
+  setUserMenuOpened,
+  onSwitchRole,
+  onLogout,
+}: UserMenuProps) {
+  const router = useRouter();
+
+  return (
+    <div className="px-5 flex items-center space-x-4 text-gray-500">
+      <Menu
+        width={260}
+        position="bottom-end"
+        transitionProps={{ transition: "pop-top-right" }}
+        onClose={() => setUserMenuOpened(false)}
+        onOpen={() => setUserMenuOpened(true)}
+        withinPortal
+      >
+        <Menu.Target>
+          <UnstyledButton
+            className={cn(
+              classes.user,
+              `hover:bg-blue-200 hover:shadow-lg bg-blue-100 shadow-sm transition-all duration-300 rounded-md px-2 py-1`
+            )}
+          >
+            <Group gap={7}>
+              <Avatar
+                src={user?.profilePicture ? user.profilePicture : "https://raw.githubusercontent.com/mantinedev/mantine/master/.demo/avatars/avatar-2.png"}
+                alt={user?.firstName}
+                radius="xl"
+                size={40}
+              />
+              <Text fw={500} size="sm" lh={1} mr={3}>
+                {user?.firstName}
+              </Text>
+              
+              {userMenuOpened ? (
+                <IconChevronUp size={12} stroke={1.5} />
+              ) : (
+                <IconChevronDown size={12} stroke={1.5} />
+              )}
+            </Group>
+          </UnstyledButton>
+        </Menu.Target>
+        <Menu.Dropdown>
+          <Text fz="sm" c="dimmed">
+                          {user?.currentTenant?.industry ?? 'Industry'}
+                        </Text>
+          {userRoles.length > 1 ? (
+            <RoleSwitcher
+              activeRole={activeRole}
+              onSwitchRole={onSwitchRole}
+              userRoles={userRoles}
+            />
+          ) : (
+            <Menu.Item
+              leftSection={
+                <IconUserCog size={20} color="var(--mantine-color-green-6)" />
+              }
+              className="text-xs font-semibold bg-blue-500 border-blue-700 border-solid border-2 text-slate-50 shadow-md cursor-not-allowed"
+            >
+              {activeRole?.name}
+            </Menu.Item>
+          )}
+          {activeRole?.key === "SA" && (
+            <Menu.Item
+              leftSection={<IconSettings size={16} stroke={1.5} />}
+              className="text-xs font-semibold"
+              onClick={() => {
+                router.push("/settings");
+              }}
+            >
+              Account settings
+            </Menu.Item>
+          )}
+          <Menu.Item
+            color="red"
+            leftSection={<IconLogout size={16} stroke={1.5} />}
+            onClick={onLogout}
+          >
+            Logout
+          </Menu.Item>
+        </Menu.Dropdown>
+      </Menu>
+    </div>
+  );
+}
+
+function RoleSwitcher({
+  onSwitchRole,
+  userRoles,
+  activeRole,
+}: RoleSwitcherProps) {
+  return (
+    <Accordion variant="default">
+      <Accordion.Item value="roles">
+        <Accordion.Control
+          icon={<IconUserCog size={20} color="var(--mantine-color-green-6)" />}
+        >
+          Switch Role
+        </Accordion.Control>
+        <Accordion.Panel>
+          <ScrollArea className="h-[50svh]">
+            {userRoles?.map((role: UserRole) => (
+              <Menu.Item
+                key={role.role.id}
+                onClick={() => onSwitchRole(role.role.id)}
+                className={cn(
+                  "text-xs font-semibold hover:bg-blue-200 hover:border-blue-200 hover:shadow-lg bg-blue-50 border-2 border-blue-100 border-solid transition-all duration-300 rounded-md px-4 py-1.5 mb-1",
+                  role.role.id === activeRole?.id
+                    ? "bg-blue-500 border-blue-700 border-solid border-2 text-slate-50 shadow-md cursor-not-allowed"
+                    : ""
+                )}
+                disabled={role.role.id === activeRole?.id}
+                rightSection={
+                  role.role.id === activeRole?.id ? (
+                    <IconCircleCheckFilled size={20} stroke={3} color="white" />
+                  ) : null
+                }
+              >
+                {role.role.roleName}
+              </Menu.Item>
+            ))}
+          </ScrollArea>
+        </Accordion.Panel>
+      </Accordion.Item>
+    </Accordion>
+  );
+}
+
+const Logout = async () => {
+  modals.openConfirmModal({
+    title: null,
+    withCloseButton: false,
+    children: <LogoutModal />,
+    portalProps: {
+      target: document.body,
+    },
+    padding: 0,
+    cancelProps: { display: "none" },
+    confirmProps: {
+      disabled: true,
+      display: "none",
+    },
+    closeOnConfirm: false,
+    closeOnCancel: false,
+  });
+};
+
+const SwitchRole = async (roleId: string) => {
+  modals.openConfirmModal({
+    title: null,
+    withCloseButton: false,
+    children: <SwitchRoleModal roleId={roleId} />,
+    portalProps: {
+      target: document.body,
+    },
+    padding: 0,
+    cancelProps: { display: "none" },
+    confirmProps: {
+      disabled: true,
+      display: "none",
+    },
+    closeOnConfirm: false,
+    closeOnCancel: false,
+  });
+};

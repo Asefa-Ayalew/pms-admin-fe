@@ -37,6 +37,7 @@ export interface Column<T> {
   // style
   tdClass?: string;
   render?: (value: T) => any;
+  className?: (data: T) => string;
 }
 export interface Actions {
   label: string;

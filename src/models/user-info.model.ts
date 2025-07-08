@@ -98,6 +98,7 @@ export interface UserProfile {
   userRoles: UserRole[];
   activeRole?: ActiveRole;
   tenant?: Tenant;
+  currentTenant?: Tenant;
 }
 
 export interface ActiveRole {

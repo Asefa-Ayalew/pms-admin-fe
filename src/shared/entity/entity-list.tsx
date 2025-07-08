@@ -134,7 +134,7 @@ interface Props<T extends Record<string, any>> {
 
   detail?: ReactNode;
   detailWidth?: number | string;
-  detailTitle?: string;
+  detailTitle?: string | ReactElement<any>;
 
   dataLoadMode?: DataLoadMode;
   items?: T[];
@@ -205,10 +205,8 @@ interface Props<T extends Record<string, any>> {
   detailTableConfig?: DetailTableConfig;
 }
 
-const CustomPagination = <
-  TData extends Record<string, any> = Record<string, any>,
->({
-  table,
+const CustomPagination = ({
+  // table,
   pageIndex,
   pageSize,
   total,
@@ -305,9 +303,9 @@ export default function EntityList<T extends Record<string, any>>(
     detailTitle,
 
     showNewButton = true,
-    showNewModal = false,
+    // showNewModal = false,
     newButtonText = "New",
-    showArchived = true,
+    showArchived = false,
     header,
     parentStyle,
     showExport,
@@ -316,7 +314,7 @@ export default function EntityList<T extends Record<string, any>>(
     hasGenerateButton,
     onGenerateButton,
     handleAction: externalHandleAction,
-    handleNewModal,
+    // handleNewModal,
     initialPage = 1,
     defaultPageSize = 20,
     pageSizeOptions = [10, 20, 30, 50, 100],
@@ -335,7 +333,7 @@ export default function EntityList<T extends Record<string, any>>(
     behaviorConfig = {
       enableColumnFilters: true,
       enableGlobalFilter: true,
-      enableColumnResizing: true,
+      enableColumnResizing: false,
       enableFullScreenToggle: true,
       enableDensityToggle: true,
       enableColumnOrdering: true,
@@ -355,8 +353,8 @@ export default function EntityList<T extends Record<string, any>>(
     renderCustomTopToolbar,
     renderCustomBottomToolbar,
     renderNoDataComponent,
-    renderLoadingComponent,
-    renderErrorComponent,
+    // renderLoadingComponent,
+    // renderErrorComponent,
 
     fetchData,
     useQueryHook,
@@ -365,7 +363,7 @@ export default function EntityList<T extends Record<string, any>>(
     customActions,
     topActions,
     bottomActions,
-    showCustomActionsPosition,
+    // showCustomActionsPosition,
 
     renderCustomLeftToolbar,
     renderCustomRightToolbar,
@@ -433,13 +431,15 @@ export default function EntityList<T extends Record<string, any>>(
       .sort((a, b) => (a.order || 0) - (b.order || 0));
   }, [bottomActions, customActions]);
 
+  const rtkResult = useQueryHook?.({
+    ...queryOptions,
+    ...(fetchData ? {} : { collection }),
+  });
+
   const rtqQueryResult = useMemo(() => {
     if (dataLoadMode === "rtk-query") {
-      if (useQueryHook) {
-        return useQueryHook({
-          ...queryOptions,
-          ...(fetchData ? {} : { collection }),
-        });
+      if (rtkResult) {
+        return rtkResult;
       } else if (fetchData) {
         return {
           data: { data: externalItems, count: externalTotal },
@@ -477,7 +477,7 @@ export default function EntityList<T extends Record<string, any>>(
     }
   }, [queryError]);
 
-  const [opened, { open, close }] = useDisclosure(false);
+  const [opened, { close }] = useDisclosure(false);
 
   useEffect(() => {
     if (params?.id) {
@@ -650,7 +650,7 @@ export default function EntityList<T extends Record<string, any>>(
     pageIndex,
     setPageIndex,
     pageSize,
-    setPageSize,
+    // setPageSize,
     order,
     setOrder,
     fullScreen,
@@ -680,7 +680,7 @@ export default function EntityList<T extends Record<string, any>>(
     onOrder: handleOrderChange,
   });
 
-  const { exportToExcel, exportDropdown, pdfRef } = useExport<T>({
+  const {  exportDropdown, pdfRef } = useExport<T>({
     title,
     setting,
     check,
@@ -720,25 +720,42 @@ export default function EntityList<T extends Record<string, any>>(
         const accessorKey = Array.isArray(col.key)
           ? col.key.join(".")
           : col.key;
-
+         const Cell = col.isDate 
+        ? ({ row }: { row: MRT_Row<T> }) => {
+            const value = row.original[col.key as keyof T];
+            return formatDate(value as Date | string);
+          }
+        : col.render 
+          ? ({ row }: { row: MRT_Row<T> }) => col.render!(row.original)
+          : undefined;
         return {
           accessorKey,
           header: col.name || "",
           enableSorting: !col.hideSort,
-
-          Cell: col.render ? ({ row }) => col.render!(row.original) : undefined,
-
+          Cell,
           sortingFn: col.isDate ? "datetime" : undefined,
-
           enableColumnFilter: behaviorConfig.enableColumnFilters,
           enableResizing: behaviorConfig.enableColumnResizing,
           enableHiding: behaviorConfig.enableHiding,
         };
       });
   }, [setting?.visibleColumn, behaviorConfig]);
-
+const formatDate = (date: Date | string | null | undefined): string => {
+  if (!date) return '';
+  
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  
+  return dateObj.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+};
   const tableOptions = useMemo(
     () => ({
+      
       columns,
       data: items,
       enableRowSelection: check,
@@ -757,7 +774,7 @@ export default function EntityList<T extends Record<string, any>>(
       enableColumnResizing: behaviorConfig.enableColumnResizing !== false,
       enableGrouping: true,
       enableColumnOrdering: behaviorConfig.enableColumnOrdering !== false,
-      enableColumnDragging: true,
+      enableColumnDragging: false,
       enableMultiSort: behaviorConfig.enableMultiSort,
       enablePinning: behaviorConfig.enablePinning,
       enableRowVirtualization: total > 100,
@@ -1178,6 +1195,20 @@ export default function EntityList<T extends Record<string, any>>(
       onDensityChange: (newDensity: "xs" | "sm" | "md") => {
         setTableDensity(newDensity);
       },
+      mantineTableContainerProps: {
+        style: {
+          // Container should have overflow
+          overflow: 'auto',
+          maxWidth: '100%',
+        },
+      },
+       mantineTableProps: {
+        style: {
+          // Ensure table has a width that allows scrolling
+          minWidth: '100%',
+          overflowX: 'auto',
+        },
+      },
     }),
     [
       columns,
@@ -1225,30 +1256,60 @@ export default function EntityList<T extends Record<string, any>>(
   const table = useMantineReactTable(tableOptions as MRT_TableOptions<T>);
 
   const cssStyles = `
-    <style>
-      .mantine-table-optimized th,
-      .mantine-table-optimized td {
-        will-change: transform;
-      }
-      
-      .mantine-table-optimized .mantine-Menu-dropdown {
-        will-change: opacity, transform;
-        transition: opacity 150ms ease, transform 150ms ease;
-        transform-origin: top center;
-      }
-      
-      .mantine-table-optimized .mantine-TableScrollContainer-root {
-        contain: content;
-      }
-      
-      /* Use hardware acceleration for animations */
-      .mantine-table-optimized .mantine-ActionIcon-root {
-        transform: translateZ(0);
-        backface-visibility: hidden;
-        perspective: 1000px;
-      }
-    </style>
-  `;
+  <style>
+    .mantine-table-optimized th,
+    .mantine-table-optimized td {
+      will-change: transform;
+    }
+
+    .mantine-table-optimized .mantine-Menu-dropdown {
+      will-change: opacity, transform;
+      transition: opacity 150ms ease, transform 150ms ease;
+      transform-origin: top center;
+    }
+
+    .mantine-table-optimized .mantine-TableScrollContainer-root {
+      contain: content;
+    }
+
+    /* Ensure table takes full screen width at minimum */
+    .mantine-table-optimized table {
+      min-width: 100vw;
+    }
+
+    /* Fixed columns styling */
+    .mantine-table-optimized .mantine-Table-th:first-child,
+    .mantine-table-optimized .mantine-Table-td:first-child {
+      position: sticky;
+      left: 0;
+      z-index: 2;
+      background: white;
+      box-shadow: 2px 0 5px -2px rgba(0,0,0,0.1);
+    }
+
+    .mantine-table-optimized .mantine-Table-th:last-child,
+    .mantine-table-optimized .mantine-Table-td:last-child {
+      position: sticky;
+      right: 0;
+      z-index: 2;
+      background: white;
+      box-shadow: -2px 0 5px -2px rgba(0,0,0,0.1);
+    }
+
+    /* Header specific styling */
+    .mantine-table-optimized .mantine-Table-thead .mantine-Table-th:first-child,
+    .mantine-table-optimized .mantine-Table-thead .mantine-Table-th:last-child {
+      z-index: 3;
+    }
+
+    /* Use hardware acceleration for animations */
+    .mantine-table-optimized .mantine-ActionIcon-root {
+      transform: translateZ(0);
+      backface-visibility: hidden;
+      perspective: 1000px;
+    }
+  </style>
+`;
 
   useEffect(() => {
     if (!document.getElementById("mantine-table-optimized-styles")) {
@@ -1269,7 +1330,7 @@ export default function EntityList<T extends Record<string, any>>(
   }, []);
 
   return (
-    <div className={`h-full flex space-x-2 relative p-2 ${parentStyle}`}>
+    <div className={`w-full h-full flex space-x-2 relative p-2 ${parentStyle}`}>
       <div
         className={`flex-col space-y-2 ${
           viewMode !== "detail"
@@ -1281,7 +1342,7 @@ export default function EntityList<T extends Record<string, any>>(
               : "hidden"
         }`}
       >
-        <Paper shadow={styleConfig.shadowLevel || "xs"} p="md" radius="md">
+        <Paper shadow={styleConfig.shadowLevel || "xs"} p="md" radius="md" w={"100%"}>
           <EntityListHeader
             title={title}
             showArchived={showArchived && viewMode !== "detail"}

@@ -18,7 +18,7 @@ import {
 } from "@tabler/icons-react";
 import { useParams, useRouter } from "next/navigation";
 import React, { useState } from "react";
-import { EntityConfig } from "../../../shared/models/entity-config.model";
+import { EntityConfig } from "../../models/entity-config.model";
 
 interface PaginationOptions {
   pageIndex: number;

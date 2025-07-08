@@ -22,21 +22,6 @@ export type RoutePermissions = {
 };
 
 export const PROTECTED_ROUTES: RoutePermissions = {
-  "/vendor": {
-    allowedRoles: ["SA"],
-    restrictedRoles: ["OPSWR"],
-    requiresAuth: true,
-  },
-  "/pro-forma": {
-    allowedRoles: ["SA", "SL"],
-    restrictedRoles: ["OPSWR"],
-    requiresAuth: true,
-  },
-  // "/user": {
-  //   allowedRoles: ["SA", "OM"],
-  //   restrictedRoles: ["OPSWR"],
-  //   requiresAuth: true,
-  // },
   "/my-organization": {
     allowedRoles: ["SA", "OM"],
     restrictedRoles: ["OPSWR"],
@@ -61,7 +46,8 @@ export const NAV_ITEMS = {
     label: "Properties",
     icon: IconBuildingEstate,
     children: [
-      { label: "Tenants", path: "/tenants" },
+      { label: "Tenants", path: "/tenant" },
+      { label: "Properties", path: "/property" },
       { label: "Room", path: "/room" },
     ],
   },

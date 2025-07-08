@@ -63,7 +63,7 @@ export default function UserListPage({
     identity: "id",
     visibleColumn: [
       {
-        key: "",
+        key: "name",
         name: "User Name",
         render: (data: User) =>
           `${data?.firstName ?? ""} ${data?.middleName ?? ""} ${
@@ -116,7 +116,6 @@ export default function UserListPage({
         items={data}
         initialPage={1}
         defaultPageSize={collection.top}
-        pageSize={[20, 30, 50, 100]}
         onShowSelector={(e) => setCheck(e)}
         onPaginationChange={(skip: number, top: number) => {
           const after = (skip - 1) * top;

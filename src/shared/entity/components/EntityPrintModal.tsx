@@ -49,7 +49,7 @@ const EntityPrintModal = <T extends Record<string, any>>({
   const formatCellValue = (
     value: any,
     isDate: boolean | undefined,
-    render?: (data: T) => any
+    // render?: (data: T) => any
   ) => {
     if (value === undefined || value === null) return "";
 

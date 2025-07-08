@@ -39,16 +39,16 @@ export const useEntityList = <T extends Record<string, any>>({
   tableKey,
   collectionQuery,
   items,
-  total,
-  pageSize: pageSizeProp,
+  // total,
+  // pageSize: pageSizeProp,
   initialPage,
   defaultPageSize = 20,
   check: checkProp = false,
   onItemsSelected,
-  onShowArchived,
+  // onShowArchived,
   onShowSelector,
-  onViewAll,
-  onPaginationChange,
+  // onViewAll,
+  // onPaginationChange,
   onSearch,
   onFilterChange,
   onOrder,
@@ -64,7 +64,7 @@ export const useEntityList = <T extends Record<string, any>>({
   const [checkedItems, setCheckedItems] = useState<T[]>([]);
   const [allChecked, setAllChecked] = useState<boolean>(false);
 
-  const [fullScreen, setFullScreen] = useState<boolean>(false);
+  const [fullScreen, setFullScreen] = useState<boolean>(true);
   const [check, setCheck] = useState<boolean>(checkProp);
 
   const [pageIndex, setPageIndex] = useState<number>(initialPage ?? 1);
@@ -185,7 +185,7 @@ export const useEntityList = <T extends Record<string, any>>({
 
   useEffect(() => {
     if (config) {
-      setSetting((prevSetting) => ({
+      setSetting(() => ({
         ...defaultValue,
         ...config,
       }));
