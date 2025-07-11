@@ -238,7 +238,7 @@ const CustomPagination = ({
     <Flex justify="space-between" align="center" gap="md" className="px-2 py-2">
       <div className="text-sm text-gray-500">
         {total > 0
-          ? `Showing ${(pageIndex - 1) * pageSize + 1}-${Math.min(pageIndex * pageSize, total)} of ${total}`
+          ? `Showing ${(pageIndex - 1) * pageSize + 1}-${Math.min(pageIndex * pageSize, total)} of ${total} Results`
           : "No records"}
       </div>
 
@@ -316,7 +316,7 @@ export default function EntityList<T extends Record<string, any>>(
     handleAction: externalHandleAction,
     // handleNewModal,
     initialPage = 1,
-    defaultPageSize = 20,
+    defaultPageSize = 10,
     pageSizeOptions = [10, 20, 30, 50, 100],
     check: checkProp,
     hideToolbar = false,
@@ -680,7 +680,7 @@ export default function EntityList<T extends Record<string, any>>(
     onOrder: handleOrderChange,
   });
 
-  const {  exportDropdown, pdfRef } = useExport<T>({
+  const { exportDropdown, pdfRef } = useExport<T>({
     title,
     setting,
     check,
@@ -720,14 +720,14 @@ export default function EntityList<T extends Record<string, any>>(
         const accessorKey = Array.isArray(col.key)
           ? col.key.join(".")
           : col.key;
-         const Cell = col.isDate 
-        ? ({ row }: { row: MRT_Row<T> }) => {
-            const value = row.original[col.key as keyof T];
-            return formatDate(value as Date | string);
-          }
-        : col.render 
-          ? ({ row }: { row: MRT_Row<T> }) => col.render!(row.original)
-          : undefined;
+        const Cell = col.isDate
+          ? ({ row }: { row: MRT_Row<T> }) => {
+              const value = row.original[col.key as keyof T];
+              return formatDate(value as Date | string);
+            }
+          : col.render
+            ? ({ row }: { row: MRT_Row<T> }) => col.render!(row.original)
+            : undefined;
         return {
           accessorKey,
           header: col.name || "",
@@ -740,22 +740,21 @@ export default function EntityList<T extends Record<string, any>>(
         };
       });
   }, [setting?.visibleColumn, behaviorConfig]);
-const formatDate = (date: Date | string | null | undefined): string => {
-  if (!date) return '';
-  
-  const dateObj = typeof date === 'string' ? new Date(date) : date;
-  
-  return dateObj.toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-};
+  const formatDate = (date: Date | string | null | undefined): string => {
+    if (!date) return "";
+
+    const dateObj = typeof date === "string" ? new Date(date) : date;
+
+    return dateObj.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
   const tableOptions = useMemo(
     () => ({
-      
       columns,
       data: items,
       enableRowSelection: check,
@@ -780,6 +779,14 @@ const formatDate = (date: Date | string | null | undefined): string => {
       enableRowVirtualization: total > 100,
       layoutMode: "semantic" as const,
       enableStickyHeader: true,
+      mantineTableHeadCellProps: {
+        style: {
+          backgroundColor: "#e5e7eb",
+          color: "#334155",
+          paddingTop: "12px",
+          paddingBottom: "12px",
+        },
+      },
       onRowSelectionChange: (updater: any) => {
         const newSelectedRows =
           typeof updater === "function"
@@ -820,7 +827,7 @@ const formatDate = (date: Date | string | null | undefined): string => {
         },
       }),
 
-      renderPagination: () => {
+      renderBottomToolbar: () => {
         if (!behaviorConfig.enablePagination) return null;
 
         return (
@@ -927,7 +934,9 @@ const formatDate = (date: Date | string | null | undefined): string => {
         }
 
         if (renderCustomTopToolbar) {
-          return renderCustomTopToolbar();
+          return (
+            <div style={{ fontSize: "16px" }}>{renderCustomTopToolbar()}</div>
+          );
         }
 
         return (
@@ -1189,7 +1198,14 @@ const formatDate = (date: Date | string | null | undefined): string => {
           : undefined,
         style: {
           cursor: setting?.showDetail ? "pointer" : "default",
+          color: "#334155",
+          fontSize: "14px",
+          paddingTop: "10px",
+          paddingBottom: "10px",
         },
+      }),
+      mantineTableBodyRowProps: () => ({
+        className: "group hover:bg-gray-50 transition-colors",
       }),
 
       onDensityChange: (newDensity: "xs" | "sm" | "md") => {
@@ -1198,15 +1214,15 @@ const formatDate = (date: Date | string | null | undefined): string => {
       mantineTableContainerProps: {
         style: {
           // Container should have overflow
-          overflow: 'auto',
-          maxWidth: '100%',
+          overflow: "auto",
+          maxWidth: "100%",
         },
       },
-       mantineTableProps: {
+      mantineTableProps: {
         style: {
           // Ensure table has a width that allows scrolling
-          minWidth: '100%',
-          overflowX: 'auto',
+          minWidth: "100%",
+          overflowX: "auto",
         },
       },
     }),
@@ -1342,7 +1358,12 @@ const formatDate = (date: Date | string | null | undefined): string => {
               : "hidden"
         }`}
       >
-        <Paper shadow={styleConfig.shadowLevel || "xs"} p="md" radius="md" w={"100%"}>
+        <Paper
+          shadow={styleConfig.shadowLevel || "xs"}
+          p="md"
+          radius="md"
+          w={"100%"}
+        >
           <EntityListHeader
             title={title}
             showArchived={showArchived && viewMode !== "detail"}
@@ -1359,98 +1380,59 @@ const formatDate = (date: Date | string | null | undefined): string => {
           />
         </Paper>
 
-        {!hideToolbar && (
-          <Paper shadow={styleConfig.shadowLevel || "xs"} p="md" radius="md">
-            <Flex justify="space-between" align="center">
-              <Group>
-                {showNewButton && (
-                  <Box
-                    component={Link}
-                    href={`${setting?.rootUrl}/new`}
-                    className={`bg-${styleConfig.primaryColor || "blue"}-500 hover:bg-${styleConfig.primaryColor || "blue"}-600 text-white py-2 px-4 rounded flex items-center space-x-2`}
-                  >
-                    <IconPlus size={16} />
-                    <span>{newButtonText}</span>
-                  </Box>
-                )}
+        {!hideToolbar &&
+          ((hasGenerateButton && checkedItems.length > 0) ||
+            filterMenus ||
+            (showSelector && viewMode !== "detail")) && (
+            <Paper shadow={styleConfig.shadowLevel || "xs"} p="md" radius="md">
+              <Flex justify="space-between" align="center">
+                <Group>
+                  {hasGenerateButton && checkedItems.length > 0 && (
+                    <Box
+                      component="button"
+                      onClick={() => onGenerateButton?.(checkedItems)}
+                      className={`bg-${styleConfig.primaryColor || "blue"}-500 hover:bg-${styleConfig.primaryColor || "blue"}-600 text-white py-2 px-4 rounded`}
+                    >
+                      Generate
+                    </Box>
+                  )}
+                </Group>
 
-                {hasGenerateButton && checkedItems.length > 0 && (
-                  <Box
-                    component="button"
-                    onClick={() => onGenerateButton?.(checkedItems)}
-                    className={`bg-${styleConfig.primaryColor || "blue"}-500 hover:bg-${styleConfig.primaryColor || "blue"}-600 text-white py-2 px-4 rounded`}
-                  >
-                    Generate
-                  </Box>
-                )}
-              </Group>
-
-              <Group>
-                <Box
-                  className="relative"
-                  style={{ width: viewMode === "detail" ? "100%" : "320px" }}
-                >
-                  <TextInput
-                    type="text"
-                    placeholder="Search here"
-                    className="pl-10 w-full border-gray-300 rounded"
-                    onChange={(e) => {
-                      const value = e.target.value;
-
-                      if (value !== table.getState().globalFilter) {
-                        table.setGlobalFilter(value);
+                <Group>
+                  {filterMenus && (
+                    <ActionIcon
+                      variant="filled"
+                      color={styleConfig.primaryColor || "blue"}
+                      onClick={() =>
+                        table.setShowColumnFilters(
+                          !table.getState().showColumnFilters
+                        )
                       }
-                    }}
-                    defaultValue={table.getState().globalFilter || ""}
-                    variant="filled"
-                    size="sm"
-                    rightSection={<IconSearch size={16} />}
-                    rightSectionWidth={42}
-                    styles={{
-                      input: {
-                        paddingRight: "42px",
-                      },
-                    }}
-                    classNames={{
-                      input: "pl-10",
-                    }}
-                  />
-                </Box>
+                      aria-label="Filter"
+                    >
+                      <IconFilter size={16} />
+                    </ActionIcon>
+                  )}
 
-                {filterMenus && (
-                  <ActionIcon
-                    variant="filled"
-                    color={styleConfig.primaryColor || "blue"}
-                    onClick={() =>
-                      table.setShowColumnFilters(
-                        !table.getState().showColumnFilters
-                      )
-                    }
-                    aria-label="Filter"
-                  >
-                    <IconFilter size={16} />
-                  </ActionIcon>
-                )}
-
-                {showSelector && viewMode !== "detail" && (
-                  <Checkbox
-                    label="Select rows"
-                    checked={check}
-                    onChange={() => {
-                      if (check) {
-                        setAllChecked(!check);
-                        setCheck(!check);
-                      } else {
-                        setCheck(!check);
-                      }
-                      onShowSelector?.(!check);
-                    }}
-                  />
-                )}
-              </Group>
-            </Flex>
-          </Paper>
-        )}
+                  {showSelector && viewMode !== "detail" && (
+                    <Checkbox
+                      label="Select rows"
+                      checked={check}
+                      onChange={() => {
+                        if (check) {
+                          setAllChecked(!check);
+                          setCheck(!check);
+                        } else {
+                          setCheck(!check);
+                        }
+                        onShowSelector?.(!check);
+                      }}
+                    />
+                  )}
+                </Group>
+              </Flex>
+            </Paper>
+          )}
 
         <Paper
           shadow={styleConfig.shadowLevel || "xs"}

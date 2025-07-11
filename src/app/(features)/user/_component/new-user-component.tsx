@@ -1,4 +1,5 @@
 "use client";
+
 import { useUserInfo } from "@/src/hooks/useUserInfo";
 import { Department } from "@/src/models/department.model";
 import { User } from "@/src/models/user.model";
@@ -6,10 +7,11 @@ import { NewUserSchema } from "@/src/schemas/new-user-schema";
 import countryJson from "@/src/shared/constants/country-json.json";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
+  Box,
   Button,
   Fieldset,
   Group,
-  Input,
+  InputBase,
   LoadingOverlay,
   Modal,
   MultiSelect,
@@ -22,14 +24,16 @@ import { DatePickerInput } from "@mantine/dates";
 import {
   IconArrowBack,
   IconDeviceFloppy,
+  IconEdit,
   IconTrash,
+  IconView360,
 } from "@tabler/icons-react";
 import dayjs from "dayjs";
 import { useSession } from "next-auth/react";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react"; 
 import { Controller, FieldErrors, useForm } from "react-hook-form";
-import InputMask from "react-input-mask";
+
 import z from "zod";
 import { useLazyGetRolesQuery } from "../../role/_store/role.query";
 import {
@@ -41,6 +45,10 @@ import {
   useRestoreUserMutation,
   useUpdateUserMutation,
 } from "../_store/user.query";
+import { IMaskInput } from "react-imask";
+import DetailsPage from "@/src/shared/component/details-page/details-page.component";
+import { useLazyGetBankAccountsQuery } from "../_store/bank-account.query";
+import { CollectionQuery } from "@/src/shared/models/collection.model";
 
 interface Props {
   editMode: "new" | "detail";
@@ -86,7 +94,7 @@ export default function NewUserComponent(props: Props) {
   const [countryCode, setCountryCode] = useState<string>("+251");
 
   const [getRoles, roles] = useLazyGetRolesQuery();
-
+  const [getBankAccount, _] = useLazyGetBankAccountsQuery();
   const [getUser, user] = useLazyGetUserQuery();
   const [createUser, createResponse] = useCreateUserMutation();
   const [updateUser, updateResponse] = useUpdateUserMutation();
@@ -94,7 +102,14 @@ export default function NewUserComponent(props: Props) {
   const [restoreUser, restoreResponse] = useRestoreUserMutation();
   const [deleteUser, deleteResponse] = useDeleteUserMutation();
   const { user: currentUser } = useUserInfo();
-  const collection = {};
+  const [isEditMode, setIsEditMode] = useState(editMode !== 'detail');
+  // FIX: Memoize the collection object to prevent infinite re-renders
+  const collection = useMemo(() => ({}), []);
+  const [bankAccountCollection, setBankAccountCollection] =
+    useState<CollectionQuery>({
+      filter: [[{ field: "ownerId", value: params.id, operator: "=" }]],
+      orderBy: [{ field: "createdAt", direction: "desc" }],
+    });
   const [getDepartments, departments] = useLazyGetDepartmentsQuery();
   const {
     register,
@@ -112,6 +127,9 @@ export default function NewUserComponent(props: Props) {
   interface CustomRole {
     roleId: string;
   }
+  const handleToggle = () => {
+    setIsEditMode((prev) => !prev);
+  };
   function onSubmit(data: FormSchema) {
     if (editMode === "new") {
       createUser({
@@ -173,15 +191,18 @@ export default function NewUserComponent(props: Props) {
   const onError = (error: FieldErrors) => {
     console.log("Error", error, archiveUser);
   };
-
+  useEffect(() => {
+    getBankAccount(bankAccountCollection);
+  }, [bankAccountCollection, getBankAccount, setBankAccountCollection]);
   useEffect(() => {
     if (editMode === "detail") {
       getUser({
         id: `${params?.id}`,
-        includes: ["userRoles", "userContacts"],
+        includes: ["userRoles", "userRoles.role", "userContacts"],
       }).then((response) => {
         if (response?.data) {
           const userRoles = response?.data?.userRoles;
+          console.log("User Roles", userRoles);
           reset({
             ...response?.data,
             dateOfBirth: response?.data?.dateOfBirth
@@ -202,424 +223,680 @@ export default function NewUserComponent(props: Props) {
         ...defaultValue,
       });
     }
-  }, [params?.id, editMode]);
+  }, [params?.id, editMode, getUser, reset]); // Added getUser and reset to dependencies
 
   useEffect(() => {
     getDepartments(collection);
     getRoles(collection);
-  }, [collection]);
+  }, [collection, getDepartments, getRoles]); // Added getDepartments and getRoles to dependencies
 
+  const data = [
+    {
+      key: "name",
+      label: "Name",
+      value: `${user?.data?.firstName ?? ""} ${user?.data?.middleName ?? ""} ${user?.data?.lastName ?? ""}`,
+    },
+    {
+      key: "userNumber",
+      label: "Employee Number",
+      value: user?.data?.employeeNumber ?? "",
+    },
+    {
+      key: "phone",
+      label: "Phone",
+      value: user?.data?.phone ?? "",
+    },
+    {
+      key: "email",
+      label: "Email",
+      value: user?.data?.email ?? "",
+    },
+    {
+      key: "startDate",
+      label: "Employment Date",
+      value: user?.data?.startDate
+        ? dayjs(user?.data?.startDate).format("DD-MMM-YYYY")
+        : "",
+    },
+    {
+      key: "tin",
+      label: "TIN",
+      value: user?.data?.tin ?? "",
+    },
+    {
+      key: "address",
+      label: "Address",
+      value: "",
+      level: 1,
+      children: [
+        {
+          key: "country",
+          label: "Country",
+          value: user?.data?.address?.country ?? "",
+        },
+        {
+          key: "city",
+          label: "City",
+          value: user?.data?.address?.city ?? "",
+        },
+        {
+          key: "subcity",
+          label: "Subcity",
+          value: user?.data?.address?.subcity ?? "",
+        },
+        {
+          key: "woreda",
+          label: "Woreda",
+          value: user?.data?.address?.woreda ?? "",
+        },
+        {
+          key: "kebele",
+          label: "Kebele",
+          value: user?.data?.address?.kebele ?? "",
+        },
+      ],
+    },
+    // {
+    //   key: "contact",
+    //   label: "User Contact",
+    //   value: "",
+    //   level: 1,
+    //   children: Object.entries(
+    //     (user?.data?.userContacts ?? []).reduce<Record<string, EmergencyContact[]>>(
+    //       (acc, contact) => {
+    //         const type = contact.contactType ?? "Other";
+    //         if (!acc[type]) acc[type] = [];
+    //         acc[type].push(contact);
+    //         return acc;
+    //       },
+    //       {}
+    //     )
+    //   ).map(([contactType, contacts]) => ({
+    //     key: `contact-group-${contactType}`,
+    //     label: `${contactType.charAt(0).toUpperCase() + contactType.slice(1).toLowerCase()} Contact(s)`,
+    //     value: "",
+    //     level: 2,
+    //     children: contacts.map((contact, idx) => ({
+    //       key: `contact-${contactType}-${idx}`,
+    //       label: `Contact ${idx + 1}`,
+    //       value: "",
+    //       level: 3,
+    //       children: [
+    //         {
+    //           key: `contact-${contactType}-${idx}-name`,
+    //           label: "Name",
+    //           value: `${contact.firstName} ${contact.middleName} ${contact.lastName}`,
+    //         },
+    //         {
+    //           key: `contact-${contactType}-${idx}-email`,
+    //           label: "Email",
+    //           value: contact.email,
+    //         },
+    //         {
+    //           key: `contact-${contactType}-${idx}-phone`,
+    //           label: "Phone",
+    //           value: contact.phone,
+    //         },
+    //         {
+    //           key: `contact-${contactType}-${idx}-address`,
+    //           label: "Address",
+    //           value: "",
+    //           level: 4,
+    //           children: [
+    //             {
+    //               key: `contact-${contactType}-${idx}-country`,
+    //               label: "Country",
+    //               value: contact.address?.country ?? "",
+    //             },
+    //             {
+    //               key: `contact-${contactType}-${idx}-city`,
+    //               label: "City",
+    //               value: contact.address?.city ?? "",
+    //             },
+    //             {
+    //               key: `contact-${contactType}-${idx}-subcity`,
+    //               label: "Subcity",
+    //               value: contact.address?.subcity ?? "",
+    //             },
+    //             {
+    //               key: `contact-${contactType}-${idx}-woreda`,
+    //               label: "Woreda",
+    //               value: contact.address?.woreda ?? "",
+    //             },
+    //             {
+    //               key: `contact-${contactType}-${idx}-kebele`,
+    //               label: "Kebele",
+    //               value: contact.address?.kebele ?? "",
+    //             },
+    //           ],
+    //         },
+    //       ],
+    //     })),
+    //   })),
+    // },
+    // {
+    //   key: "bankAccounts",
+    //   label: "Bank Accounts",
+    //   value: "",
+    //   level: 1,
+    //   children: Object.entries(
+    //     (bankAccounts?.data?.data ?? []).reduce<Record<string, BankAccount[]>>(
+    //       (acc, account) => {
+    //         const groupKey =
+    //           account.bankName ?? account.bankCode ?? "Unknown Bank";
+    //         if (!acc[groupKey]) acc[groupKey] = [];
+    //         acc[groupKey].push(account);
+    //         return acc;
+    //       },
+    //       {}
+    //     )
+    //   ).map(([bankGroup, accounts]) => ({
+    //     key: `bank-group-${bankGroup}`,
+    //     label: bankGroup,
+    //     value: "",
+    //     level: 2,
+    //     children: accounts.map((account, idx) => ({
+    //       key: `bank-${bankGroup}-${idx}`,
+    //       label: `Account ${idx + 1}`,
+    //       value: "",
+    //       level: 3,
+    //       children: [
+    //         {
+    //           key: `bank-${bankGroup}-${idx}-accountNumber`,
+    //           label: "Account Number",
+    //           value: account.accountNumber,
+    //         },
+    //         {
+    //           key: `bank-${bankGroup}-${idx}-bankCode`,
+    //           label: "Bank Code",
+    //           value: account.bankCode,
+    //         },
+    //         {
+    //           key: `bank-${bankGroup}-${idx}-isPreferred`,
+    //           label: "Preferred",
+    //           value: account.isPreferred ? "Yes" : "No",
+    //         },
+    //         {
+    //           key: `bank-${bankGroup}-${idx}-ownerType`,
+    //           label: "Owner Type",
+    //           value: account.ownerType,
+    //         },
+    //       ],
+    //     })),
+    //   })),
+    // },
+    {
+      key: "roles",
+      label: "Roles",
+      value: user?.data?.userRoles
+        ? user?.data?.userRoles
+            .map((userRole) => userRole?.role?.name?.toUpperCase())
+            .filter(Boolean)
+        : [],
+    },
+  ];
+
+  const profileData = {
+    image: "",
+    name: `${user?.data?.firstName ?? ""} ${user?.data?.middleName ?? ""} ${
+      user?.data?.lastName ?? ""
+    }`,
+    type: "",
+    address: "",
+    phone: "",
+    email: "",
+    isVerified: false,
+  };
+  const config = {
+    editUrl: `#`,
+    isProfile: false,
+    title: `${user?.data?.firstName ?? ""} ${user?.data?.middleName ?? ""} ${
+      user?.data?.lastName ?? ""
+    }`,
+    widthClass: "w-full",
+  };
   return (
-    <div className="w-full p-4 flex-col space-y-4 buser">
-      <div className="flex px-4 buser-0 buser-b-2 items-center justify-center">
-        <h3 className="text-2xl font-semibold">
-          {editMode === "new" ? "New User Registration" : "User Detail"}
-        </h3>
-      </div>
-      <div className="w-full flex justify-center relative">
-        <LoadingOverlay
-          visible={
-            user.isLoading ||
-            user?.isFetching ||
-            roles?.isLoading ||
-            roles?.isFetching
-          }
-          zIndex={1000}
-          overlayProps={{ radius: "sm", blur: 2 }}
-        />
-        <form
-          name="User form"
-          onSubmit={handleSubmit(onSubmit, onError)}
-          autoComplete="off"
-          className="w-full"
-        >
-          <div className="flex w-full  justify-center">
-            <div className="px-2 w-4/5 flex-col space-y-4">
-              <Fieldset legend="Basic Information">
-                <div className="md:flex sm:flex-row md:space-x-4">
-                  <TextInput
-                    label="First Name"
-                    className="w-full"
-                    required
-                    placeholder="First Name"
-                    {...register("firstName")}
-                    error={errors?.firstName?.message}
-                  />
-                  <TextInput
-                    label="Middle Name"
-                    className="w-full"
-                    required
-                    placeholder="Middle Name"
-                    {...register("middleName")}
-                    error={errors?.middleName?.message}
-                  />
-                </div>
-
-                <div className="flex space-x-4">
-                  <TextInput
-                    label="Last Name"
-                    className="sm:w-full lg:w-1/2"
-                    placeholder="Last Name"
-                    {...register("lastName")}
-                    error={errors?.lastName?.message}
-                  />
-                  <Controller
-                    name="isEmployee"
-                    control={control}
-                    render={({ field }) => (
-                      <Switch
-                        className="lg:w-1/2 sm:w-full lg:mt-7"
-                        checked={watch("employeeNumber") ? true : field.value}
-                        onChange={(e) => {
-                          setValue("isEmployee", e.currentTarget.checked, {
-                            shouldValidate: true,
-                            shouldDirty: true,
-                          });
-                        }}
-                        label="Is Employee"
-                      />
-                    )}
-                  />
-                </div>
-                <div className="lg:flex sm:flex-row lg:gap-x-2">
-                  {(watch("isEmployee") || watch("employeeNumber")) && (
-                    <TextInput
-                      label="Employee ID Number"
-                      className="sm:w-full"
-                      placeholder="Employee ID Number"
-                      {...register("employeeNumber")}
-                      error={errors?.employeeNumber?.message}
-                    />
-                  )}
-                  {editMode === "new" && (
-                    <TextInput
-                      label="Password"
-                      className="sm:w-full"
-                      type="password"
-                      placeholder="Password"
-                      {...register("password")}
-                      error={errors?.password?.message}
-                    />
-                  )}
-                </div>
-                <div className="flex space-x-4">
-                  <DatePickerInput
-                    label="Date of Birth"
-                    className="w-full"
-                    error={errors?.dateOfBirth?.message}
-                    required
-                    value={watch("dateOfBirth")}
-                    onChange={(value) => {
-                      setValue("dateOfBirth", dayjs(value).toDate());
-                    }}
-                  />
-                  <div className="flex w-full justify-between items-center">
-                    <Controller
-                      name="gender"
-                      control={control}
-                      render={({ field }) => (
-                        <Radio.Group
-                          {...field}
-                          withAsterisk
-                          label="Select Gender"
-                          value={watch("gender")}
-                          onChange={(event) => {
-                            setValue("gender", event as "Male" | "Female");
-                          }}
-                        >
-                          <Group mt="xs">
-                            <Radio value="Male" label="Male" />
-                            <Radio value="Female" label="Female" />
-                          </Group>
-                        </Radio.Group>
-                      )}
-                    />
-                  </div>
-                </div>
-              </Fieldset>
-              <Fieldset legend="Address Information">
-                <div className="flex space-x-4">
-                  <div className="flex w-full">
-                    <Select
-                      radius={"xs"}
-                      searchable
-                      onChange={(code) => {
-                        if (
-                          code &&
-                          countryJson.find((item) => item.code === code)
-                        ) {
-                          setCountryCode(
-                            countryJson.find((item) => item.code === code)
-                              ?.dial_code ?? "+251"
-                          );
-                        }
-                      }}
-                      classNames={{
-                        input:
-                          "border border-gray-400/70 border-r-0 rounded rounded-r-none",
-                      }}
-                      value={
-                        countryJson.find(
-                          (item) => item.dial_code === countryCode
-                        )?.code ?? "ET"
-                      }
-                      label="Code"
-                      data={countryJson?.map((item) => ({
-                        label: `${item.name} (${item.dial_code})`,
-                        value: item.code,
-                        key: item.name,
-                      }))}
-                      maxDropdownHeight={400}
-                    />
-                    <Input.Wrapper
-                      className="w-full"
-                      label="Phone number"
-                      required
-                      error={errors.phone && `${errors?.phone?.message}`}
-                    >
-                      <Input
-                        classNames={{ input: "rounded-l-none" }}
-                        component={InputMask}
-                        mask={`${countryCode} 999 999 999`}
-                        value={watch("phone")}
-                        placeholder="Phone number"
-                        {...register("phone")}
-                      />
-                    </Input.Wrapper>
-                  </div>
-                </div>
-                <div className="flex gap-x-3">
-                  <TextInput
-                    type="email"
-                    label="Email"
-                    required
-                    className="w-full"
-                    placeholder="Email"
-                    {...register("email")}
-                    error={errors?.email?.message}
-                  />
-                  <Controller
-                    control={control}
-                    name="address.country"
-                    render={({ field }) => (
-                      <Select
-                        label="Country"
-                        searchable
-                        required
-                        placeholder="Select Country"
-                        className="w-full"
-                        error={errors?.address?.country?.message}
-                        value={field.value}
-                        onChange={field.onChange}
-                        data={countryJson?.map((item) => ({
-                          label: `${item.name}`,
-                          value: item.name,
-                          key: item.name,
-                        }))}
-                      />
-                    )}
-                  />
-                </div>
-                <div className="flex gap-x-3">
-                  <TextInput
-                    label="City"
-                    className="w-full"
-                    required
-                    placeholder="Enter City"
-                    {...register("address.city")}
-                    error={errors?.address?.city?.message}
-                  />
-                  <TextInput
-                    label="Subcity"
-                    className="w-full"
-                    required
-                    placeholder="Enter Subcity"
-                    {...register("address.subcity")}
-                    error={errors?.address?.subcity?.message}
-                  />
-                </div>
-                <div className="flex gap-x-3">
-                  <TextInput
-                    label="Woreda"
-                    className="w-full"
-                    required
-                    placeholder="Enter Woreda"
-                    {...register("address.woreda")}
-                    error={errors?.address?.woreda?.message}
-                  />
-                  <TextInput
-                    label="Kebele"
-                    className="w-full"
-                    required
-                    placeholder="Enter Kebele"
-                    {...register("address.kebele")}
-                    error={errors?.address?.kebele?.message}
-                  />
-                </div>
-              </Fieldset>
-              <Fieldset legend="Employment Information">
-                <div className="md:flex sm:flex-row md:space-x-4">
-                  <TextInput
-                    label="Job Title"
-                    className="w-full"
-                    required
-                    placeholder="Job Title"
-                    {...register("jobTitle")}
-                    error={errors?.jobTitle?.message}
-                  />
-                  <TextInput
-                    label="TIN"
-                    className="w-full"
-                    required
-                    placeholder="TIN"
-                    {...register("tin")}
-                    error={errors?.tin?.message}
-                  />
-                </div>
-                <div className="flex space-x-4">
-                  <Controller
-                    control={control}
-                    name="departmentId"
-                    render={({ field }) => (
-                      <Select
-                        label="Department"
-                        searchable
-                        placeholder="Select Department"
-                        className="w-full"
-                        error={errors?.departmentId?.message}
-                        value={field.value}
-                        onChange={(selectedValue) => {
-                          field.onChange(selectedValue);
-                        }}
-                        data={
-                          departments?.data?.data?.map((item: Department) => ({
-                            label: item?.name,
-                            value: item?.id ?? "",
-                            key: item?.name,
-                          })) ?? []
-                        }
-                      />
-                    )}
-                  />
-                  <Controller
-                    control={control}
-                    name="userRoles"
-                    render={({ field: { value, onChange } }) => {
-                      const selectedRoleIds =
-                        value?.map((role: CustomRole) => role.roleId) || [];
-
-                      return (
-                        <MultiSelect
-                          label="Role"
-                          searchable
-                          nothingFoundMessage="Nothing found..."
-                          hidePickedOptions
-                          placeholder="Select role here"
-                          className="w-full"
-                          value={selectedRoleIds}
-                          onChange={(selectedValues) => {
-                            onChange(selectedValues);
-                          }}
-                          data={
-                            roles?.data?.data?.map((item) => ({
-                              label: item?.name,
-                              value: item?.id,
-                              key: item?.key,
-                            })) ?? []
-                          }
-                        />
-                      );
-                    }}
-                  />
-                </div>
-                <div className="flex space-x-4">
-                  {watch("isEmployee") && (
-                    <>
-                      <DatePickerInput
-                        label="Start Date"
-                        className="w-full"
-                        error={errors?.startDate?.message}
-                        value={watch("startDate")}
-                        onChange={(value) => {
-                          setValue("startDate", dayjs(value).toDate());
-                        }}
-                      />
-                      <DatePickerInput
-                        label="End Date (if terminated)"
-                        className="w-full"
-                        error={errors?.endDate?.message}
-                        value={watch("endDate") || undefined}
-                        clearable
-                        onChange={(value) => {
-                          setValue(
-                            "endDate",
-                            value ? dayjs(value).toDate() : undefined,
-                            {
-                              shouldValidate: true,
-                              shouldDirty: true,
-                            }
-                          );
-                        }}
-                      />
-                    </>
-                  )}
-                </div>
-              </Fieldset>
-              <div className="w-full flex space-x-4  justify-end">
-                <Button
-                  variant="default"
-                  className="bg-none"
-                  onClick={() =>
-                    reset({
-                      ...defaultValue,
-                    })
-                  }
-                >
-                  Reset
-                </Button>
-                {editMode === "detail" && (
-                  <Button
-                    type="button"
-                    variant="filled"
-                    color="red"
-                    className={`shadow-none bg-red-500 rounded flex items-center`}
-                    onClick={() => {
-                      setOpenDeleteModal(true);
-                      setSelectedUser(user?.data);
-                    }}
-                    loading={
-                      archiveResponse?.isLoading || restoreResponse?.isLoading
-                    }
-                    leftSection={
-                      user?.data?.archivedAt ? (
-                        <IconArrowBack size={15} />
-                      ) : (
-                        <IconTrash size={15} />
-                      )
-                    }
-                  >
-                    {user?.data?.archivedAt ? "Restore" : "Delete"}
-                  </Button>
-                )}
-                <Button
-                  variant="filled"
-                  // className="shadow-none bg-primary-500 rounded flex items-center"
-                  bg={"primary.4"}
-                  type="submit"
-                  loading={
-                    editMode === "new"
-                      ? createResponse?.isLoading
-                      : updateResponse?.isLoading
-                  }
-                  leftSection={<IconDeviceFloppy />}
-                >
-                  {editMode === "new" ? "Save" : "Update"}
-                </Button>
-              </div>
-            </div>
+    <div className="w-full flex-col space-y-4">
+      {editMode !== "new" && (
+        <Box className="w-full flex justify-center relative">
+          <Button
+            leftSection={
+              isEditMode ? <IconEdit size={12} /> : <IconView360 size={12} />
+            }
+            variant="filled"
+            radius="md"
+            className="w-max ml-auto flex items-center gap-0.5 bg-primary-500 text-white"
+            onClick={handleToggle}
+          >
+            {isEditMode ? "View" : "Edit"}
+          </Button>
+        </Box>
+      )}
+      {isEditMode ? (
+        <>
+          <div className="flex px-4 items-center justify-center">
+            <h3 className="text-2xl font-semibold">
+              {editMode === "new" ? "New User Registration" : "User Detail"}
+            </h3>
           </div>
-        </form>
-      </div>
+          <div className="w-full flex justify-center relative">
+            <LoadingOverlay
+              visible={
+                user.isLoading ||
+                user?.isFetching ||
+                roles?.isLoading ||
+                roles?.isFetching
+              }
+              zIndex={1000}
+              overlayProps={{ radius: "sm", blur: 2 }}
+            />
+
+            <form
+              name="User form"
+              onSubmit={handleSubmit(onSubmit, onError)}
+              autoComplete="off"
+              className="w-full"
+            >
+              <div className="flex w-full justify-center">
+                <div className="px-2 w-full flex-col space-y-4">
+                  <Fieldset legend="Basic Information">
+                    <div className="md:flex sm:flex-row md:space-x-4">
+                      <TextInput
+                        label="First Name"
+                        className="w-full"
+                        required
+                        placeholder="First Name"
+                        {...register("firstName")}
+                        error={errors?.firstName?.message}
+                      />
+                      <TextInput
+                        label="Middle Name"
+                        className="w-full"
+                        required
+                        placeholder="Middle Name"
+                        {...register("middleName")}
+                        error={errors?.middleName?.message}
+                      />
+                    </div>
+
+                    <div className="flex space-x-4">
+                      <TextInput
+                        label="Last Name"
+                        className="sm:w-full lg:w-1/2"
+                        placeholder="Last Name"
+                        {...register("lastName")}
+                        error={errors?.lastName?.message}
+                      />
+                      <Controller
+                        name="isEmployee"
+                        control={control}
+                        render={({ field }) => (
+                          <Switch
+                            className="lg:w-1/2 sm:w-full lg:mt-7"
+                            checked={
+                              watch("employeeNumber") ? true : field.value
+                            }
+                            onChange={(e) => {
+                              setValue("isEmployee", e.currentTarget.checked, {
+                                shouldValidate: true,
+                                shouldDirty: true,
+                              });
+                            }}
+                            label="Is Employee"
+                          />
+                        )}
+                      />
+                    </div>
+                    <div className="lg:flex sm:flex-row lg:gap-x-2">
+                      {(watch("isEmployee") || watch("employeeNumber")) && (
+                        <TextInput
+                          label="Employee ID Number"
+                          className="sm:w-full"
+                          placeholder="Employee ID Number"
+                          {...register("employeeNumber")}
+                          error={errors?.employeeNumber?.message}
+                        />
+                      )}
+                      {editMode === "new" && (
+                        <TextInput
+                          label="Password"
+                          className="sm:w-full"
+                          type="password"
+                          placeholder="Password"
+                          {...register("password")}
+                          error={errors?.password?.message}
+                        />
+                      )}
+                    </div>
+                    <div className="flex space-x-4">
+                      <DatePickerInput
+                        label="Date of Birth"
+                        className="w-full"
+                        error={errors?.dateOfBirth?.message}
+                        required
+                        value={watch("dateOfBirth")}
+                        onChange={(value) => {
+                          setValue("dateOfBirth", dayjs(value).toDate());
+                        }}
+                      />
+                      <div className="flex w-full justify-between items-center">
+                        <Controller
+                          name="gender"
+                          control={control}
+                          render={({ field }) => (
+                            <Radio.Group
+                              {...field}
+                              withAsterisk
+                              label="Select Gender"
+                              value={watch("gender")}
+                              onChange={(event) => {
+                                setValue("gender", event as "Male" | "Female");
+                              }}
+                            >
+                              <Group mt="xs">
+                                <Radio value="Male" label="Male" />
+                                <Radio value="Female" label="Female" />
+                              </Group>
+                            </Radio.Group>
+                          )}
+                        />
+                      </div>
+                    </div>
+                  </Fieldset>
+                  <Fieldset legend="Address Information">
+                    <div className="flex space-x-4">
+                      <div className="flex w-full">
+                        <Select
+                          radius={"xs"}
+                          searchable
+                          onChange={(code) => {
+                            if (
+                              code &&
+                              countryJson.find((item) => item.code === code)
+                            ) {
+                              setCountryCode(
+                                countryJson.find((item) => item.code === code)
+                                  ?.dial_code ?? "+251"
+                              );
+                            }
+                          }}
+                          classNames={{
+                            input:
+                              "border border-gray-400/70 border-r-0 rounded rounded-r-none",
+                          }}
+                          value={
+                            countryJson.find(
+                              (item) => item.dial_code === countryCode
+                            )?.code ?? "ET"
+                          }
+                          label="Code"
+                          data={countryJson?.map((item) => ({
+                            label: `${item.name} (${item.dial_code})`,
+                            value: item.code,
+                            key: item.name,
+                          }))}
+                          maxDropdownHeight={400}
+                        />
+                        <InputBase
+                          className=" rounded rounded-l-none w-full"
+                          label="Your phone"
+                          component={IMaskInput}
+                          mask={`${countryCode} 000 000-0000`}
+                          placeholder="Your phone"
+                        />
+                      </div>
+                    </div>
+                    <div className="flex gap-x-3">
+                      <TextInput
+                        type="email"
+                        label="Email"
+                        required
+                        className="w-full"
+                        placeholder="Email"
+                        {...register("email")}
+                        error={errors?.email?.message}
+                      />
+                      <Controller
+                        control={control}
+                        name="address.country"
+                        render={() => (
+                          <Select
+                            label="Country"
+                            className="w-full"
+                            data={countryJson.map((country) => ({
+                              value: country.code,
+                              label: `${country.name} (${country.code})`,
+                            }))}
+                            value={watch("address.country")}
+                            onChange={(code) => {
+                              if (code) {
+                                setValue("address.country", code);
+                                const selected = countryJson.find(
+                                  (item) => item.code === code
+                                );
+                                if (selected) {
+                                  setCountryCode(selected.code);
+                                }
+                              }
+                            }}
+                            error={errors?.address?.country?.message}
+                          />
+                        )}
+                      />
+                    </div>
+                    <div className="flex gap-x-3">
+                      <TextInput
+                        label="City"
+                        className="w-full"
+                        required
+                        placeholder="Enter City"
+                        {...register("address.city")}
+                        error={errors?.address?.city?.message}
+                      />
+                      <TextInput
+                        label="Subcity"
+                        className="w-full"
+                        required
+                        placeholder="Enter Subcity"
+                        {...register("address.subcity")}
+                        error={errors?.address?.subcity?.message}
+                      />
+                    </div>
+                    <div className="flex gap-x-3">
+                      <TextInput
+                        label="Woreda"
+                        className="w-full"
+                        required
+                        placeholder="Enter Woreda"
+                        {...register("address.woreda")}
+                        error={errors?.address?.woreda?.message}
+                      />
+                      <TextInput
+                        label="Kebele"
+                        className="w-full"
+                        required
+                        placeholder="Enter Kebele"
+                        {...register("address.kebele")}
+                        error={errors?.address?.kebele?.message}
+                      />
+                    </div>
+                  </Fieldset>
+                  <Fieldset legend="Employment Information">
+                    <div className="md:flex sm:flex-row md:space-x-4">
+                      <TextInput
+                        label="Job Title"
+                        className="w-full"
+                        required
+                        placeholder="Job Title"
+                        {...register("jobTitle")}
+                        error={errors?.jobTitle?.message}
+                      />
+                      <TextInput
+                        label="TIN"
+                        className="w-full"
+                        required
+                        placeholder="TIN"
+                        {...register("tin")}
+                        error={errors?.tin?.message}
+                      />
+                    </div>
+                    <div className="flex space-x-4">
+                      <Controller
+                        control={control}
+                        name="departmentId"
+                        render={({ field }) => (
+                          <Select
+                            label="Department"
+                            searchable
+                            placeholder="Select Department"
+                            className="w-full"
+                            error={errors?.departmentId?.message}
+                            value={field.value}
+                            onChange={(selectedValue) => {
+                              field.onChange(selectedValue);
+                            }}
+                            data={
+                              departments?.data?.data?.map(
+                                (item: Department) => ({
+                                  label: item?.name,
+                                  value: item?.id ?? "",
+                                  key: item?.name,
+                                })
+                              ) ?? []
+                            }
+                          />
+                        )}
+                      />
+                      <Controller
+                        control={control}
+                        name="userRoles"
+                        render={({ field: { value, onChange } }) => {
+                          const selectedRoleIds =
+                            value?.map((role: CustomRole) => role.roleId) || [];
+
+                          return (
+                            <MultiSelect
+                              label="Role"
+                              searchable
+                              nothingFoundMessage="Nothing found..."
+                              hidePickedOptions
+                              placeholder="Select role here"
+                              className="w-full"
+                              value={selectedRoleIds}
+                              onChange={(selectedValues) => {
+                                onChange(selectedValues);
+                              }}
+                              data={
+                                roles?.data?.data?.map((item) => ({
+                                  label: item?.name,
+                                  value: item?.id,
+                                  key: item?.key,
+                                })) ?? []
+                              }
+                            />
+                          );
+                        }}
+                      />
+                    </div>
+                    <div className="flex space-x-4">
+                      {watch("isEmployee") && (
+                        <>
+                          <DatePickerInput
+                            label="Start Date"
+                            className="w-full"
+                            error={errors?.startDate?.message}
+                            value={watch("startDate")}
+                            onChange={(value) => {
+                              setValue("startDate", dayjs(value).toDate());
+                            }}
+                          />
+                          <DatePickerInput
+                            label="End Date (if terminated)"
+                            className="w-full"
+                            error={errors?.endDate?.message}
+                            value={watch("endDate") || undefined}
+                            clearable
+                            onChange={(value) => {
+                              setValue(
+                                "endDate",
+                                value ? dayjs(value).toDate() : undefined,
+                                {
+                                  shouldValidate: true,
+                                  shouldDirty: true,
+                                }
+                              );
+                            }}
+                          />
+                        </>
+                      )}
+                    </div>
+                  </Fieldset>
+                  <div className="w-full flex space-x-4 justify-end">
+                    <Button
+                      variant="default"
+                      className="bg-none"
+                      onClick={() =>
+                        reset({
+                          ...defaultValue,
+                        })
+                      }
+                    >
+                      Reset
+                    </Button>
+                    {editMode === "detail" && (
+                      <Button
+                        type="button"
+                        variant="filled"
+                        color="red"
+                        className={`shadow-none bg-red-500 rounded flex items-center`}
+                        onClick={() => {
+                          setOpenDeleteModal(true);
+                          setSelectedUser(user?.data);
+                        }}
+                        loading={
+                          archiveResponse?.isLoading ||
+                          restoreResponse?.isLoading
+                        }
+                        leftSection={
+                          user?.data?.archivedAt ? (
+                            <IconArrowBack size={15} />
+                          ) : (
+                            <IconTrash size={15} />
+                          )
+                        }
+                      >
+                        {user?.data?.archivedAt ? "Restore" : "Delete"}
+                      </Button>
+                    )}
+                    <Button
+                      variant="filled"
+                      // className="shadow-none bg-primary-500 rounded flex items-center"
+                      bg={"primary.4"}
+                      type="submit"
+                      loading={
+                        editMode === "new"
+                          ? createResponse?.isLoading
+                          : updateResponse?.isLoading
+                      }
+                      leftSection={<IconDeviceFloppy />}
+                    >
+                      {editMode === "new" ? "Save" : "Update"}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </form>
+          </div>
+        </>
+      ) : (
+        <DetailsPage
+          dataSource={[{ title: "Basic Information", source: data }]}
+          profileData={profileData}
+          config={config}
+          isLoading={user.isLoading || user.isFetching}
+          hideEdit={true}
+        />
+      )}
 
       <Modal
         opened={openDeleteModal}
@@ -650,7 +927,7 @@ export default function NewUserComponent(props: Props) {
             type="button"
             variant="filled"
             color="red"
-            className={`bg-red-500 text-white shadow-none rounded flex items-center  mx-2`}
+            className={`bg-red-500 text-white shadow-none rounded flex items-center mx-2`}
             onClick={() => {
               handleDelete();
             }}

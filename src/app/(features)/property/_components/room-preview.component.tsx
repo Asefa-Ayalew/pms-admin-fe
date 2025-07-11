@@ -1,41 +1,51 @@
 "use client";
 import { Box, Button } from "@mantine/core";
 import { formatDate } from "@/src/shared/utils/date-utils";
-import { RoomService } from "@/src/models/room.model";
-import { useParams } from "next/navigation";
+import { Room } from "@/src/models/room.model";
 
 interface Props {
   onClose: () => void;
-  data?: RoomService;
+  data?: Room;
 }
 
-export default function ServicePreview(props: Props) {
-  const params = useParams();
+export default function RoomPreview(props: Props) {
   return (
     <Box className="w-full text-sm text-gray-900">
       <tr className="flex border-b border-gray-300 border-dashed">
         <td className="w-1/3 p-2 bg-gray-100 border-gray-300">
-          {"Charge Amount"}
+          {"Description"}
         </td>
-        <td className="p-2">{props?.data?.chargeAmount}</td>
+        <td className="p-2">{props?.data?.description}</td>
       </tr>
       <tr className="flex border-b border-gray-300 border-dashed">
         <td className="w-1/3 p-2 bg-gray-100 border-gray-300">
-          {"Available From"}
+          {"Size"}
         </td>
-        <td className="p-2">{formatDate(props.data?.availableFrom)}</td>
+        <td className="p-2">{props.data?.size}</td>
       </tr>
       <tr className="flex border-b border-gray-300 border-dashed">
         <td className="w-1/3 p-2 bg-gray-100 border-gray-300">
-          {"Is Optional"}
+          {"Floor Number"}
         </td>
-        <td className="p-2">{props.data?.isOptional ? "Yes" : "No"}</td>
+        <td className="p-2">{props.data?.floorNumber}</td>
+      </tr>
+      <tr className="flex border-b border-gray-300 border-dashed">
+        <td className="w-1/3 p-2 bg-gray-100 border-gray-300">
+          {"Room Number"}
+        </td>
+        <td className="p-2">{props.data?.roomNumber}</td>
+      </tr>
+      <tr className="flex border-b border-gray-300 border-dashed">
+        <td className="w-1/3 p-2 bg-gray-100 border-gray-300">
+          {"No of Bed Rooms"}
+        </td>
+        <td className="p-2">{props.data?.numberOfBedRooms}</td>
       </tr>
       <tr className="flex border-b border-gray-300 border-dashed">
         <td className="w-1/3 p-2 bg-gray-100 border-gray-300">{"Is Public"}</td>
-        <td className="p-2">{props.data?.isPublic ? "Yes" : "No"}</td>
+        <td className="p-2">{props.data?.makePublic ? "Yes" : "No"}</td>
       </tr>
-      <Box className="w-full justify-end mt-4">
+      <Box className="flex justify-end mt-2">
         <Button
           variant="filled"
           bg={"primary.4"}

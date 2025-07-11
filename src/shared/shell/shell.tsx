@@ -95,16 +95,21 @@ const generateNavData = (
     },
     {
       label: NAV_ITEMS.BANKACCOUNTS.label,
-      icon: NAV_ITEMS.BANKACCOUNTS.icon,
-      links: NAV_ITEMS.BANKACCOUNTS.children.map((child) => ({
-        label: child.label,
-        link: child.path,
-      })),
+      link: NAV_ITEMS.BANKACCOUNTS.path,
+      icon: IconCashBanknote,
     },
     {
       label: NAV_ITEMS.UsersManagement.label,
       icon: NAV_ITEMS.UsersManagement.icon,
       links: NAV_ITEMS.UsersManagement.children.map((child) => ({
+        label: child.label,
+        link: child.path,
+      })),
+    },
+    {
+      label: NAV_ITEMS.SETTINGS.label,
+      icon: NAV_ITEMS.SETTINGS.icon,
+      links: NAV_ITEMS.SETTINGS.children.map((child) => ({
         label: child.label,
         link: child.path,
       })),
@@ -240,7 +245,7 @@ export function Shell({ children }: { children: ReactNode }) {
                   }}
                 >
                   <Title fw={500} fz="md" order={3}>
-                    PMS TENANT
+                    PMS ADMIN
                   </Title>
                 </h2>
               </Group>
@@ -352,7 +357,11 @@ function UserMenu({
           >
             <Group gap={7}>
               <Avatar
-                src={user?.profilePicture ? user.profilePicture : "https://raw.githubusercontent.com/mantinedev/mantine/master/.demo/avatars/avatar-2.png"}
+                src={
+                  user?.profilePicture
+                    ? user.profilePicture
+                    : "https://raw.githubusercontent.com/mantinedev/mantine/master/.demo/avatars/avatar-2.png"
+                }
                 alt={user?.firstName}
                 radius="xl"
                 size={40}
@@ -360,7 +369,7 @@ function UserMenu({
               <Text fw={500} size="sm" lh={1} mr={3}>
                 {user?.firstName}
               </Text>
-              
+
               {userMenuOpened ? (
                 <IconChevronUp size={12} stroke={1.5} />
               ) : (
@@ -371,8 +380,8 @@ function UserMenu({
         </Menu.Target>
         <Menu.Dropdown>
           <Text fz="sm" c="dimmed">
-                          {user?.currentTenant?.industry ?? 'Industry'}
-                        </Text>
+            {user?.currentTenant?.industry ?? "Industry"}
+          </Text>
           {userRoles.length > 1 ? (
             <RoleSwitcher
               activeRole={activeRole}

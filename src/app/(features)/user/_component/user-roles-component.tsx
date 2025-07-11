@@ -13,6 +13,12 @@ import { useLazyGetUserQuery } from "../_store/emergency-contact.query";
 export interface MappedUserRoles {
   userId: any;
   roleId: any;
+  role?: {
+    id: string;
+    name: string;
+    description: string;
+    key: string;
+  };
   name: string;
   description: string;
   key: string;
@@ -168,7 +174,6 @@ export default function UserRolesComponent() {
         showNewModal={true}
         initialPage={1}
         defaultPageSize={collection.top}
-        pageSize={[20, 30, 50, 100]}
         onPaginationChange={(skip: number, top: number) => {
           const after = (skip - 1) * top;
           setCollection({ ...collection, skip: after, top: top });

@@ -15,8 +15,12 @@ const nextConfig = {
       "@mantine/hooks": "@mantine/hooks",
       "@mantine/core": "@mantine/core",
       "@mantine/tiptap": "@mantine/tiptap",
+      "@mantine/rte": "@mantine/rte",
+      "@mantine/utils": "@mantine/utils",
       "@mantine/notifications": "@mantine/notifications",
+      "@mantine/carousel": "@mantine/carousel",
       "@mantine/dates": "@mantine/dates",
+      "@mantine/dropzone": "@mantine/dropzone",
       "@mantine/modals": "@mantine/modals",
       dateformat: "dateformat",
       lodash: "lodash",
@@ -54,41 +58,55 @@ const nextConfig = {
     remotePatterns: [],
     formats: ["image/avif", "image/webp"],
   },
+
   serverExternalPackages: ["lodash"],
+
   experimental: {
-    optimizeCss: true,
+    // 🛠 Temporarily disabled for better error tracing
+    optimizeCss: false,
+    workerThreads: false,
+
+    // ✅ Safe to keep enabled
     optimizeServerReact: true,
     serverActions: {
       bodySizeLimit: "2mb",
     },
     serverMinification: true,
-    workerThreads: true,
     optimisticClientCache: true,
   },
+
   reactStrictMode: false,
   poweredByHeader: false,
+
   env: {
     ENVIRONMENT: process.env.NODE_ENV,
     API_URL: process.env.NEXT_PUBLIC_API_URL,
   },
+
   pageExtensions: ["tsx", "ts", "jsx", "js", "mdx"],
   distDir: ".next",
   compress: true,
   productionBrowserSourceMaps: false,
+
   typescript: {
     ignoreBuildErrors: false,
   },
+
   output: "standalone",
   generateEtags: true,
   staticPageGenerationTimeout: 120,
+
   compiler: {
     removeConsole: process.env.NODE_ENV === "production",
   },
+
   onDemandEntries: {
     maxInactiveAge: 60 * 1000,
     pagesBufferLength: 5,
   },
 };
+
+// Production-specific overrides
 if (process.env.NODE_ENV === "production") {
   nextConfig.compress = true;
   nextConfig.productionBrowserSourceMaps = false;

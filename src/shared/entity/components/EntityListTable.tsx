@@ -18,7 +18,7 @@ import {
 } from "@tabler/icons-react";
 import { useParams, useRouter } from "next/navigation";
 import React, { useState } from "react";
-import { EntityConfig } from "../../models/entity-config.model";
+import { EntityConfig } from "../../../shared/models/entity-config.model";
 
 interface PaginationOptions {
   pageIndex: number;
@@ -282,7 +282,7 @@ export const EntityListTable = <T extends Record<string, any>>({
               )}
             </tr>
           </thead>
-          <tbody className="relative text-xs text-gray-700 border border-gray-200 border-white">
+          <tbody className="relative text-xs text-gray-700 border border-gray-200">
             {items.map((item, idx) => {
               const itemId = getIdentityValue(item);
 

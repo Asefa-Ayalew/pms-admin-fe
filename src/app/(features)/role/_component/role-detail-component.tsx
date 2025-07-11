@@ -59,7 +59,7 @@ export default function RoleDetailComponent() {
       <Tabs defaultValue="detail">
         <Tabs.List>
           <Tabs.Tab value="detail">Basic Detail</Tabs.Tab>
-          <Tabs.Tab value="user">Users</Tabs.Tab>
+          <Tabs.Tab value="user">Assigned Users</Tabs.Tab>
         </Tabs.List>
 
         <Tabs.Panel value="detail">
@@ -83,6 +83,7 @@ export default function RoleDetailComponent() {
         </Tabs.Panel>
         <Tabs.Panel value="user">
           <UsersPerRoleComponent />
+          {/* nothing */}
         </Tabs.Panel>
       </Tabs>
     </div>

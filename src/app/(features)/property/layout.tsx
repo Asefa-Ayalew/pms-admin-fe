@@ -167,36 +167,12 @@ export default function PropertyListPage({
     }),
     []
   );
-  const customActions: CustomToolbarAction[] = useMemo(
-    () => [
-      {
-        key: "refresh",
-        label: "Refresh Properties",
-        icon: <IconRefreshDot size={18} />,
-        color: "blue",
-        onClick: () => getProperties(collectionQuery),
-        tooltip: "Refresh Property data",
-        position: "top",
-        order: 1,
-      },
-      {
-        key: "add-property",
-        label: "Add Property",
-        icon: <IconUserPlus size={18} />,
-        color: "green",
-        onClick: () => console.log("Add property clicked"),
-        tooltip: "Add a new property",
-        position: "top",
-        order: 2,
-      },
-    ],
-    [getProperties]
-  );
+
 
   return (
     <EntityList
       title="Properties"
-      detailTitle={isNewRoute ? "New Property" : selectedProperty?.description}
+      detailTitle={selectedProperty?.description}
       config={config}
       viewMode={viewMode}
       detail={children}
@@ -210,7 +186,7 @@ export default function PropertyListPage({
       itemsLoading={isLoading}
       styleConfig={styleConfig}
       behaviorConfig={behaviorConfig}
-      customActions={customActions}
+      showNewButton={false}
       errorText={
         error ? "Failed to load properties. Please try again." : undefined
       }

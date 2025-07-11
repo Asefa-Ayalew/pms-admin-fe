@@ -1,13 +1,7 @@
 import {
   IconAdjustments,
-  IconAlertHexagon,
+  IconBuildingBank,
   IconBuildingEstate,
-  IconCalendar,
-  IconCurrency,
-  IconLock,
-  IconMoneybag,
-  IconReportMoney,
-  IconSocial,
   IconUser,
 } from "@tabler/icons-react";
 import { RoleKey } from "../auth/hooks/useRoleGuard";
@@ -48,8 +42,12 @@ export const NAV_ITEMS = {
     children: [
       { label: "Tenants", path: "/tenant" },
       { label: "Properties", path: "/property" },
-      { label: "Room", path: "/room" },
     ],
+  },
+  BANKACCOUNTS: {
+    label: "Bank Accounts",
+    path: "/bank-accounts",
+    icon: IconBuildingBank,
   },
   UsersManagement: {
     label: "Users",
@@ -60,12 +58,9 @@ export const NAV_ITEMS = {
       { label: "Departments", path: "/departments" },
     ],
   },
-  BANKACCOUNTS: {
-    label: "Bank Accounts",
-    icon: IconMoneybag,
-    children: [
-      { label: "Organizational", path: "/organization-bank-accounts" },
-      { label: "Individual", path: "/bank-accounts" },
-    ],
+  SETTINGS: {
+    label: "Settings",
+    icon: IconAdjustments,
+    children: [{ label: "My Organization", path: "/my-organizations" }],
   },
 } as const;

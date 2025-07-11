@@ -1,9 +1,7 @@
 "use client";
-import { UserContactType } from "@/src/models/emergency-contact.model";
-import EntityList from "@/src/shared/entity/entity-list";
-import { CollectionQuery, Order } from "@/src/shared/models/collection.model";
+import { CollectionQuery } from "@/src/shared/models/collection.model";
 import { EntityConfig } from "@/src/shared/models/entity-config.model";
-import { Badge, Card, Divider, Modal } from "@mantine/core";
+import { ActionIcon, Button, Card, Divider, Menu, Modal, Table } from "@mantine/core";
 import { useParams } from "next/navigation";
 import { JSX, useEffect, useState } from "react";
 
@@ -11,6 +9,7 @@ import { User } from "@/src/models/user.model";
 import NewUserComponent from "../../user/_component/new-user-component";
 import { useLazyGetUsersQuery } from "../../user/_store/user.query";
 import { useLazyGetDepartmentQuery } from "../_store/department.query";
+import { IconDotsVertical, IconEdit, IconEye, IconInbox, IconPlus, IconTrash } from "@tabler/icons-react";
 
 export default function DepartmentUsersComponent() {
   const [modals, setModals] = useState({
@@ -47,15 +46,17 @@ export default function DepartmentUsersComponent() {
   const [selectedDepartmentUser, setSelectedDepartmentUser] = useState<User>(
     defaultDepartmentUserValue
   );
+  console.log(selectedDepartmentUser);
 
   const [getDepartment, department] = useLazyGetDepartmentQuery();
   const [getDepartmentUsers, departmentUsers] = useLazyGetUsersQuery();
-  const [collection, setCollection] = useState<CollectionQuery>({
-    skip: 0,
-    top: 20,
-    filter: [[{ field: "departmentId", value: params.id, operator: "=" }]],
-    orderBy: [{ field: "createdAt", direction: "desc" }],
-  });
+  console.log(department)
+  // const [collection, setCollection] = useState<CollectionQuery>({
+  //   skip: 0,
+  //   top: 20,
+  //   filter: [[{ field: "departmentId", value: params.id, operator: "=" }]],
+  //   orderBy: [{ field: "createdAt", direction: "desc" }],
+  // });
   const [UserCollection] = useState<CollectionQuery>({
     skip: 0,
     top: 20,
@@ -67,28 +68,28 @@ export default function DepartmentUsersComponent() {
     getDepartmentUsers(UserCollection);
   }, [UserCollection]);
 
-  const _getContactTypeBadge = (contactType: UserContactType) => {
-    const badgeColors: Record<UserContactType, string> = {
-      [UserContactType.BAIL]: "orange",
-      [UserContactType.EMERGENCY]: "red",
-      [UserContactType.FAMILY]: "blue",
-      [UserContactType.FRIEND]: "green",
-      [UserContactType.OTHER]: "gray",
-    };
+  // const _getContactTypeBadge = (contactType: UserContactType) => {
+  //   const badgeColors: Record<UserContactType, string> = {
+  //     [UserContactType.BAIL]: "orange",
+  //     [UserContactType.EMERGENCY]: "red",
+  //     [UserContactType.FAMILY]: "blue",
+  //     [UserContactType.FRIEND]: "green",
+  //     [UserContactType.OTHER]: "gray",
+  //   };
 
-    console.log("", selectedDepartmentUser, department);
+  //   console.log("", selectedDepartmentUser, department);
 
-    return (
-      <Badge
-        color={badgeColors[contactType] || "gray"}
-        size="lg"
-        radius="lg"
-        variant="light"
-      >
-        {contactType.toUpperCase()}
-      </Badge>
-    );
-  };
+  //   return (
+  //     <Badge
+  //       color={badgeColors[contactType] || "gray"}
+  //       size="lg"
+  //       radius="lg"
+  //       variant="light"
+  //     >
+  //       {contactType.toUpperCase()}
+  //     </Badge>
+  //   );
+  // };
 
   const openModal = (type: keyof typeof modals, contact?: User) => {
     setSelectedDepartmentUser(contact ?? defaultDepartmentUserValue);
@@ -125,8 +126,8 @@ export default function DepartmentUsersComponent() {
     showDetail: false,
     visibleColumn: [
       {
-        key: "",
-        name: "User Name",
+        key: "name",
+        name: "Employee Name",
         render: (data: User) =>
           `${data?.firstName ?? ""} ${data?.middleName ?? ""} ${
             data?.lastName ?? ""
@@ -142,10 +143,10 @@ export default function DepartmentUsersComponent() {
           return <span className="capitalize">{value?.gender}</span>;
         },
       },
-      { key: "employeeNumber", name: "User Employee Number" },
+      { key: "employeeNumber", name: "Employee Number" },
       { key: "startDate", name: "Employment Date", isDate: true },
       { key: "tin", name: "TIN" },
-      { name: "Registration Date", key: "createdAt", isDate: true },
+      { name: "Created At", key: "createdAt", isDate: true },
     ],
     filter: [
       [
@@ -171,9 +172,9 @@ export default function DepartmentUsersComponent() {
         console.warn("Unknown action:", action);
     }
   };
-  const handleNewModal = () => {
-    openModal("new");
-  };
+  // const handleNewModal = () => {
+  //   openModal("new");
+  // };
   const renderModal = (
     type: keyof typeof modals,
     title: string,
@@ -194,51 +195,172 @@ export default function DepartmentUsersComponent() {
 
   return (
     <Card shadow="sm" padding="sm">
-      <EntityList
-        viewMode="list"
-        parentStyle="w-full"
-        showArchived={false}
-        showSelector={true}
-        tableKey="users"
-        title=""
-        newButtonText="New"
-        total={departmentUsers?.data?.count || 0}
-        collectionQuery={collection}
-        config={config}
-        items={departmentUsers?.data?.data}
-        itemsLoading={departmentUsers?.isLoading || departmentUsers?.isFetching}
-        showNewButton={false}
-        showNewModal={true}
-        initialPage={1}
-        defaultPageSize={collection.top}
-        pageSize={[20, 30, 50, 100]}
-        onPaginationChange={(skip: number, top: number) => {
-          const after = (skip - 1) * top;
-          setCollection({ ...collection, skip: after, top: top });
-        }}
-        onSearch={(data: string) => {
-          setCollection({
-            ...collection,
-            search: data || "",
-            searchFrom: data ? ["firstName", "middleName", "lastName"] : [],
-          });
-        }}
-        onFilterChange={(
-          data: { field: string; value: string | number | boolean }[]
-        ) => {
-          if (data.length > 0) {
-            setCollection({ ...collection, withArchived: true });
-          } else {
-            setCollection({ ...collection, withArchived: false });
-          }
-        }}
-        onOrder={(data: Order) =>
-          setCollection({ ...collection, orderBy: [data] })
-        }
-        handleAction={handleAction}
-        handleNewModal={handleNewModal}
-      />
+      <Button
+                    onClick={() => openModal("new")}
+                    leftSection={<IconPlus size={16} />}
+                    styles={{
+                      root: {
+                        width: "5rem",
+                        transition: "background-color 0.2s ease",
+                        "&:hover": {
+                          backgroundColor: "#ffeaea",
+                        },
+                        marginBottom: "4px",
+                        marginLeft: "4px",
+                      },
+                    }}
+                  >
+                    New
+                  </Button>
 
+<Table className="mantine-table-optimized" striped highlightOnHover>
+              <Table.Thead>
+                <Table.Tr>
+                  {/* Primary Column */}
+                  <Table.Th
+                    style={{
+                      position: "sticky",
+                      left: 0,
+                      zIndex: 3,
+                      background: "white",
+                    }}
+                  >
+                    {config.primaryColumn.name}
+                  </Table.Th>
+      
+                  {/* Dynamic Visible Columns (excluding primary) */}
+                  {config.visibleColumn
+                    .filter((col) => col.key !== config.primaryColumn.key)
+                    .map((col) => (
+                      <Table.Th
+                        key={Array.isArray(col.key) ? col.key.join(",") : col.key}
+                      >
+                        {col.name}
+                      </Table.Th>
+                    ))}
+      
+                  {/* Actions */}
+                  <Table.Th
+                    style={{
+                      position: "sticky",
+                      right: 0,
+                      zIndex: 3,
+                      background: "white",
+                      width: "20px",
+                    }}
+                  ></Table.Th>
+                </Table.Tr>
+              </Table.Thead>
+      
+              <Table.Tbody>
+                {departmentUsers?.data?.data?.length === 0 ? (
+                  <Table.Tr>
+                    <Table.Td
+                      colSpan={config.visibleColumn.length + 2}
+                      className="text-center py-8 text-gray-500"
+                    >
+                      <div className="flex flex-col items-center">
+                        <IconInbox size={40} />
+                        <p className="mt-2">No users found</p>
+                      </div>
+                    </Table.Td>
+                  </Table.Tr>
+                ) : (
+                  departmentUsers?.data?.data?.map((user) => (
+                    <Table.Tr
+                      key={String(
+                        user[config.identity as keyof User] ?? ""
+                      )}
+                    >
+                      {/* Primary Column */}
+                      <Table.Td
+                        style={{
+                          position: "sticky",
+                          left: 0,
+                          zIndex: 2,
+                          background: "white",
+                        }}
+                      >
+                        {config.primaryColumn.render
+                          ? config.primaryColumn.render(user)
+                          : null}
+                      </Table.Td>
+      
+                      {/* Visible Columns */}
+                      {config.visibleColumn
+                        .filter((col) => col.key !== config.primaryColumn.key)
+                        .map((col) => (
+                          <Table.Td
+                            key={Array.isArray(col.key) ? col.key.join(",") : col.key}
+                          >
+                            {col.render
+                              ? col.render(user)
+                              : typeof col.key === "string"
+                                ? user[col.key as keyof User]
+                                : Array.isArray(col.key)
+                                  ? col.key
+                                      .map(
+                                        (k) => user[k as keyof User]
+                                      )
+                                      .join(" ")
+                                  : null}
+                          </Table.Td>
+                        ))}
+      
+                      {/* Actions */}
+                      <Table.Td
+                        style={{
+                          position: "sticky",
+                          right: 0,
+                          zIndex: 2,
+                          background: "white",
+                        }}
+                      >
+                        <Menu shadow="md" width={160} position="bottom-end" withArrow>
+                          <Menu.Target>
+                            <ActionIcon
+                              variant="subtle"
+                              size="sm"
+                              aria-label="Actions"
+                            >
+                              <IconDotsVertical size={18} />
+                            </ActionIcon>
+                          </Menu.Target>
+                          <Menu.Dropdown>
+                            <Menu.Item
+                              color="blue"
+                              fw={600}
+                              leftSection={<IconEye size={14} />}
+                              onClick={() =>
+                                handleAction({ key: "showMore" }, user)
+                              }
+                            >
+                              Show More
+                            </Menu.Item>
+                            <Menu.Item
+                              color="green" 
+                              fw={600}
+                              leftSection={<IconEdit size={14} />}
+                              onClick={() => handleAction({ key: "edit" }, user)}
+                            >
+                              Edit
+                            </Menu.Item>
+                            <Menu.Item
+                              color="red" 
+                              fw={600}
+                              leftSection={<IconTrash size={14} />}
+                              onClick={() => handleAction({ key: "delete" }, user)}
+                            >
+                              Delete
+                            </Menu.Item>
+                          </Menu.Dropdown>
+                        </Menu>
+                      </Table.Td>
+                    </Table.Tr>
+                  ))
+                )}
+              </Table.Tbody>
+            </Table>
       {renderModal(
         "new",
         "Create User",

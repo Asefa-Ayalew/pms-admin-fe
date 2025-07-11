@@ -1,21 +1,18 @@
 "use client";
 
+import React from "react";
 import DetailsPage from "@/src/shared/component/details-page/details-page.component";
 import EmptyIcon from "@/src/shared/icons/empty-icon";
 import { CollectionQuery } from "@/src/shared/models/collection.model";
-import { LoadingOverlay, Tabs } from "@mantine/core";
-import { IconBuildingBank, IconUserShield } from "@tabler/icons-react";
+import { LoadingOverlay } from "@mantine/core";
 import dayjs from "dayjs";
-import { EyeIcon } from "lucide-react";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useLazyGetRolesQuery } from "../../role/_store/role.query";
 import { useLazyGetUserQuery } from "../_store/user.query";
-import EmergencyContactsComponent from "./emergency-contact-component";
-import UserBankAccountComponent from "./user-bank-account-component";
 
 export default function UserDetailComponent() {
-  const params = useParams();
+  const params =  useParams() // React.use(useParams());
 
   const [getUser, user] = useLazyGetUserQuery();
   const [getRoles, roles] = useLazyGetRolesQuery();
@@ -33,6 +30,7 @@ export default function UserDetailComponent() {
     }
   }, [params?.id, getUser]);
 
+  
   const data = [
     {
       key: "name",
@@ -40,7 +38,7 @@ export default function UserDetailComponent() {
       value: `${user?.data?.firstName ?? ""} ${user?.data?.middleName ?? ""} ${user?.data?.lastName ?? ""}`,
     },
     {
-      key: "userNumber",
+      key: "employeeNumber",
       label: "Employee Number",
       value: user?.data?.employeeNumber ?? "",
     },
@@ -96,6 +94,23 @@ export default function UserDetailComponent() {
           label: "Kebele",
           value: user?.data?.address?.kebele ?? "",
         },
+        {
+          key: "Trial",
+          label: "Trial",
+          value: "",
+          children: [
+            {
+              key: "name",
+              label: "Name",
+              value:  "absent",
+            },
+            {
+              key: "code",
+              label: "Code",
+              value: "trial",
+            },
+          ],
+        },
       ],
     },
     {
@@ -131,22 +146,23 @@ export default function UserDetailComponent() {
   };
 
   return (
-    <Tabs defaultValue="emergency" className="w-full">
-      <Tabs.List className="gap-8 my-2">
-        <Tabs.Tab leftSection={<IconUserShield size={15} />} value="emergency">
-          Contacts
-        </Tabs.Tab>
-        <Tabs.Tab leftSection={<EyeIcon size={15} />} value="detail">
-          Detail
-        </Tabs.Tab>
-        <Tabs.Tab leftSection={<IconBuildingBank size={15} />} value="bank">
-          Bank Account
-        </Tabs.Tab>
-      </Tabs.List>
-      <Tabs.Panel value="emergency">
-        <EmergencyContactsComponent />
-      </Tabs.Panel>
-      <Tabs.Panel value="detail">
+    // <Tabs defaultValue="emergency" className="w-full">
+    //   <Tabs.List className="gap-8 my-2">
+    //     <Tabs.Tab leftSection={<IconUserShield size={15} />} value="emergency">
+    //       Contacts
+    //     </Tabs.Tab>
+    //     <Tabs.Tab leftSection={<EyeIcon size={15} />} value="detail">
+    //       Detail
+    //     </Tabs.Tab>
+    //     <Tabs.Tab leftSection={<IconBuildingBank size={15} />} value="bank">
+    //       Bank Account
+    //     </Tabs.Tab>
+    //   </Tabs.List>
+    //   <Tabs.Panel value="emergency">
+    //     <EmergencyContactsComponent />
+    //     {/* nothing here yet */}
+    //   </Tabs.Panel>
+    //   <Tabs.Panel value="detail">
         <div className="w-full flex-col space-y-4 buser">
           {user?.isLoading || user?.isFetching ? (
             <div className="relative flex items-center justify-center">
@@ -166,10 +182,11 @@ export default function UserDetailComponent() {
             />
           )}
         </div>
-      </Tabs.Panel>
-      <Tabs.Panel value="bank">
-        <UserBankAccountComponent />
-      </Tabs.Panel>
-    </Tabs>
+    //   </Tabs.Panel>
+    //   <Tabs.Panel value="bank">
+    //     <UserBankAccountComponent />
+    //     {/* nothing here yet */}
+    //   </Tabs.Panel>
+    // </Tabs>
   );
 }

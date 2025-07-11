@@ -11,7 +11,7 @@ import {
   Button,
   Flex,
   Group,
-  Input,
+  InputBase,
   Select,
   TextInput,
 } from "@mantine/core";
@@ -24,13 +24,13 @@ import {
   SubmitHandler,
   useForm,
 } from "react-hook-form";
-import ReactInputMask from "react-input-mask";
 import z from "zod";
 import {
   useCreateEmergencyContactMutation,
   useLazyGetEmergencyContactQuery,
   useUpdateEmergencyContactMutation,
 } from "../_store/emergency-contact.query";
+import { IMaskInput } from "react-imask";
 
 interface Props {
   editMode: "new" | "detail" | "view";
@@ -218,7 +218,14 @@ export default function EmergencyContactForm(props: Props) {
                       }))}
                       maxDropdownHeight={400}
                     />
-                    <Input.Wrapper
+                    <InputBase
+                      className=" rounded rounded-l-none w-full"
+                      label="Your phone"
+                      component={IMaskInput}
+                      mask={`${countryCode} 000 000-0000`}
+                      placeholder="Your phone"
+                    />
+                    {/* <Input.Wrapper
                       className="w-full"
                       label="Phone number"
                       required
@@ -232,7 +239,7 @@ export default function EmergencyContactForm(props: Props) {
                         placeholder="Phone number"
                         {...register("phone")}
                       />
-                    </Input.Wrapper>
+                    </Input.Wrapper> */}
                   </div>
                 </Flex>
                 <Flex gap={8}>

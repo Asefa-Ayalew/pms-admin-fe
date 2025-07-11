@@ -90,23 +90,6 @@ export default function PropertyGalleryComponent() {
 
   return (
     <Card shadow="sm" padding="sm">
-      <Button
-        onClick={() => openModal("new")}
-        leftSection={<IconPlus size={16} />}
-        styles={{
-          root: {
-            width: "5rem",
-            transition: "background-color 0.2s ease",
-            "&:hover": {
-              backgroundColor: "#ffeaea",
-            },
-            marginBottom: "4px",
-            marginLeft: "4px",
-          },
-        }}
-      >
-        New
-      </Button>
 
       <Table>
         <Table.Thead>
@@ -165,22 +148,6 @@ export default function PropertyGalleryComponent() {
       </Table>
 
       {renderModal(
-        "new",
-        "Create Gallery",
-        "50%",
-        <GalleryForm editMode="new" onClose={() => closeModal("new")} />
-      )}
-      {renderModal(
-        "edit",
-        "Edit Gallery",
-        "50%",
-        <GalleryForm
-          editMode="detail"
-          onClose={() => closeModal("edit")}
-          data={selectedGallery}
-        />
-      )}
-      {renderModal(
         "view",
         "View Gallery",
         "50%",
@@ -188,15 +155,6 @@ export default function PropertyGalleryComponent() {
           editMode="view"
           onClose={() => closeModal("view")}
           data={selectedGallery}
-        />
-      )}
-      {renderModal(
-        "archive",
-        "Reason",
-        "50%",
-        <ReasonForm
-          id={selectedGallery?.propertyId ?? ""}
-          onClose={() => closeModal("archive")}
         />
       )}
     </Card>

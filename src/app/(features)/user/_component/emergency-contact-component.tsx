@@ -3,10 +3,17 @@ import {
   EmergencyContact,
   UserContactType,
 } from "@/src/models/emergency-contact.model";
-import EntityList from "@/src/shared/entity/entity-list";
-import { CollectionQuery, Order } from "@/src/shared/models/collection.model";
 import { EntityConfig } from "@/src/shared/models/entity-config.model";
-import { Badge, Card, Divider, Modal } from "@mantine/core";
+import {
+  ActionIcon,
+  Badge,
+  Button,
+  Card,
+  Divider,
+  Menu,
+  Modal,
+  Table,
+} from "@mantine/core";
 import { useParams } from "next/navigation";
 import { JSX, useEffect, useState } from "react";
 import {
@@ -16,6 +23,14 @@ import {
 import EmergencyContactForm from "./emergency-contact-form";
 import ReasonFormComponent from "./reason-form.-component";
 import { notifications } from "@mantine/notifications";
+import {
+  IconDotsVertical,
+  IconEdit,
+  IconEye,
+  IconInbox,
+  IconPlus,
+  IconTrash,
+} from "@tabler/icons-react";
 
 export default function EmergencyContactsComponent() {
   const [modals, setModals] = useState({
@@ -44,16 +59,10 @@ export default function EmergencyContactsComponent() {
   const params = useParams();
   const [selectedEmergencyContact, setSelectedEmergencyContact] =
     useState<EmergencyContact>(defaultEmergencyContactValue);
-  const [deleteEmergencyContact, { isLoading: deleting }] =
+  const [deleteEmergencyContact] =
     useDeleteEmergencyContactMutation();
   const [getUser, user] = useLazyGetUserQuery();
 
-  const [collection, setCollection] = useState<CollectionQuery>({
-    skip: 0,
-    top: 20,
-    filter: [[{ field: "userId", value: params.id, operator: "=" }]],
-    orderBy: [{ field: "createdAt", direction: "desc" }],
-  });
   useEffect(() => {
     getUser({
       id: `${params?.id}`,
@@ -61,7 +70,7 @@ export default function EmergencyContactsComponent() {
     });
   }, [params?.id]);
 
-  console.log(deleting);
+ 
   const getContactTypeBadge = (contactType: UserContactType) => {
     const badgeColors: Record<UserContactType, string> = {
       [UserContactType.BAIL]: "orange",
@@ -118,9 +127,6 @@ export default function EmergencyContactsComponent() {
     identity: "id",
     showDetail: false,
     visibleColumn: [
-      { name: "First Name", key: "firstName" },
-      { name: "Middle Name", key: "middleName" },
-      { name: "Last Name", key: "lastName" },
       { name: "Email", key: "email" },
       { name: "Phone", key: "phone" },
       {
@@ -129,7 +135,7 @@ export default function EmergencyContactsComponent() {
         render: (data: EmergencyContact) =>
           getContactTypeBadge(data?.contactType as UserContactType),
       },
-      { name: "Registration Date", key: "createdAt", isDate: true },
+      { name: "Created At", key: "createdAt", isDate: true },
     ],
     newAction: () => openModal("new"),
     actions: [
@@ -177,9 +183,9 @@ export default function EmergencyContactsComponent() {
         console.warn("Unknown action:", action);
     }
   };
-  const handleNewModal = () => {
-    openModal("new");
-  };
+  // const handleNewModal = () => {
+  //   openModal("new");
+  // };
   const renderModal = (
     type: keyof typeof modals,
     title: string,
@@ -200,7 +206,7 @@ export default function EmergencyContactsComponent() {
 
   return (
     <Card shadow="sm" padding="sm">
-      <EntityList
+      {/* <EntityList
         viewMode="list"
         parentStyle="w-full"
         showArchived={false}
@@ -242,7 +248,176 @@ export default function EmergencyContactsComponent() {
         }
         handleAction={handleAction}
         handleNewModal={handleNewModal}
+      /> */}
+      <Button
+        onClick={() => openModal("new")}
+        leftSection={<IconPlus size={16} />}
+        styles={{
+          root: {
+            width: "5rem",
+            transition: "background-color 0.2s ease",
+            "&:hover": {
+              backgroundColor: "#ffeaea",
+            },
+            marginBottom: "4px",
+            marginLeft: "4px",
+          },
+        }}
+      >
+        New
+      </Button>
+      <Table
+  className="mantine-table-optimized border rounded-lg shadow-sm"
+  striped
+  highlightOnHover
+  withColumnBorders
+>
+  <Table.Thead className="bg-gray-50 text-gray-700 text-sm font-semibold">
+    <Table.Tr>
+      {/* Primary Column */}
+      <Table.Th
+        style={{
+          position: "sticky",
+          left: 0,
+          zIndex: 3,
+          background: "white",
+          boxShadow: "2px 0 4px rgba(0, 0, 0, 0.05)",
+        }}
+      >
+        {config.primaryColumn.name}
+      </Table.Th>
+
+      {/* Dynamic Visible Columns */}
+      {config.visibleColumn
+        .filter((col) => col.key !== config.primaryColumn.key)
+        .map((col) => (
+          <Table.Th
+            key={Array.isArray(col.key) ? col.key.join(",") : col.key}
+            className="whitespace-nowrap px-4 py-2"
+          >
+            {col.name}
+          </Table.Th>
+        ))}
+
+      {/* Actions */}
+      <Table.Th
+        style={{
+          position: "sticky",
+          right: 0,
+          zIndex: 3,
+          background: "white",
+          width: "40px",
+          boxShadow: "-2px 0 4px rgba(0, 0, 0, 0.05)",
+        }}
       />
+    </Table.Tr>
+  </Table.Thead>
+
+  <Table.Tbody>
+    {contacts?.length === 0 ? (
+      <Table.Tr>
+        <Table.Td
+          colSpan={config.visibleColumn.length + 2}
+          className="text-center py-12 text-gray-500"
+        >
+          <div className="flex flex-col items-center">
+            <IconInbox size={40} className="mb-2 text-gray-400" />
+            <p className="text-sm">No users found</p>
+          </div>
+        </Table.Td>
+      </Table.Tr>
+    ) : (
+      contacts?.map((contact) => (
+        <Table.Tr
+          key={String(contact[config.identity as keyof EmergencyContact] ?? "")}
+          className="hover:bg-gray-50 transition-colors"
+        >
+          {/* Primary Column */}
+          <Table.Td
+            style={{
+              position: "sticky",
+              left: 0,
+              zIndex: 2,
+              background: "white",
+              boxShadow: "2px 0 4px rgba(0, 0, 0, 0.03)",
+            }}
+            className="font-medium text-gray-800"
+          >
+            {config.primaryColumn.render
+              ? config.primaryColumn.render(contact)
+              : null}
+          </Table.Td>
+
+          {/* Dynamic Visible Columns */}
+          {config.visibleColumn
+            .filter((col) => col.key !== config.primaryColumn.key)
+            .map((col) => (
+              <Table.Td
+                key={Array.isArray(col.key) ? col.key.join(",") : col.key}
+                className="text-sm text-gray-700 px-4 py-2"
+              >
+                {col.render
+                  ? col.render(contact)
+                  : typeof col.key === "string"
+                    ? contact[col.key as keyof EmergencyContact]
+                    : Array.isArray(col.key)
+                      ? col.key
+                          .map((k) => contact[k as keyof EmergencyContact])
+                          .join(" ")
+                      : null}
+              </Table.Td>
+            ))}
+
+          {/* Actions */}
+          <Table.Td
+            style={{
+              position: "sticky",
+              right: 0,
+              zIndex: 2,
+              background: "white",
+              boxShadow: "-2px 0 4px rgba(0, 0, 0, 0.03)",
+            }}
+          >
+            <Menu shadow="md" width={160} position="bottom-end" withArrow>
+              <Menu.Target>
+                <ActionIcon
+                  variant="light"
+                  size="sm"
+                  aria-label="Actions"
+                  className="text-gray-600 hover:text-black"
+                >
+                  <IconDotsVertical size={18} />
+                </ActionIcon>
+              </Menu.Target>
+              <Menu.Dropdown>
+                <Menu.Item
+                  leftSection={<IconEye size={14} />}
+                  onClick={() => handleAction({ key: "showMore" }, contact)}
+                >
+                  Show More
+                </Menu.Item>
+                <Menu.Item
+                  leftSection={<IconEdit size={14} color="green" />}
+                  onClick={() => handleAction({ key: "edit" }, contact)}
+                >
+                  Edit
+                </Menu.Item>
+                <Menu.Item
+                  leftSection={<IconTrash size={14} color="red" />}
+                  onClick={() => handleAction({ key: "delete" }, contact)}
+                  className="text-red-600"
+                >
+                  Delete
+                </Menu.Item>
+              </Menu.Dropdown>
+            </Menu>
+          </Table.Td>
+        </Table.Tr>
+      ))
+    )}
+  </Table.Tbody>
+</Table>
+
 
       {renderModal(
         "new",

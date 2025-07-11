@@ -68,7 +68,9 @@ const modalConfig = {
 };
 
 export default function RoomsComponent() {
-  const [modals, setModals] = useState<Record<keyof typeof modalConfig, boolean>>({
+  const [modals, setModals] = useState<
+    Record<keyof typeof modalConfig, boolean>
+  >({
     new: false,
     edit: false,
     view: false,
@@ -147,10 +149,13 @@ export default function RoomsComponent() {
         <Table.Thead>
           <Table.Tr>
             <Table.Th>Description</Table.Th>
+            <Table.Th>Size</Table.Th>
             <Table.Th>Floor Number</Table.Th>
             <Table.Th>Room Number</Table.Th>
-            <Table.Th>Size</Table.Th>
-            <Table.Th>Type</Table.Th>
+            <Table.Th>Floor Number</Table.Th>
+            <Table.Th>Number of Bed Rooms</Table.Th>
+            <Table.Th>Is Furnished?</Table.Th>
+            <Table.Th>Is Public</Table.Th>
             <Table.Th style={{ width: "15%" }}>Created At</Table.Th>
             <Table.Th style={{ width: "20px" }}></Table.Th>
           </Table.Tr>
@@ -168,11 +173,14 @@ export default function RoomsComponent() {
           ) : (
             rooms?.data.map((room: Room) => (
               <Table.Tr key={room.id}>
-                <Table.Td>{room.description}</Table.Td>
-                <Table.Td>{room.floorNumber}</Table.Td>
-                <Table.Td>{room.roomNumber}</Table.Td>
+                <Table.Td>{room?.description}</Table.Td>
                 <Table.Td>{room.size}</Table.Td>
-                <Table.Td>{room.type}</Table.Td>
+                <Table.Td>{room?.floorNumber}</Table.Td>
+                <Table.Td>{room?.roomNumber}</Table.Td>
+                <Table.Td>{room?.floorNumber}</Table.Td>
+                <Table.Td>{room.numberOfBedRooms}</Table.Td>
+                <Table.Td>{room?.isFurnished ? "Yes" : "No"}</Table.Td>
+                <Table.Td>{room?.makePublic ? "Yes" : "No"}</Table.Td>
                 <Table.Td>{formatDate(room.createdAt)}</Table.Td>
                 <Table.Td>
                   <Menu shadow="md" width={160} position="bottom-end" withArrow>
@@ -187,19 +195,6 @@ export default function RoomsComponent() {
                         onClick={() => handleAction("view", room)}
                       >
                         View
-                      </Menu.Item>
-                      <Menu.Item
-                        leftSection={<IconPencil size={14} />}
-                        onClick={() => handleAction("edit", room)}
-                      >
-                        Edit
-                      </Menu.Item>
-                      <Menu.Item
-                        leftSection={<IconTrash size={14} />}
-                        color="red"
-                        onClick={() => handleAction("archive", room)}
-                      >
-                        Delete
                       </Menu.Item>
                     </Menu.Dropdown>
                   </Menu>

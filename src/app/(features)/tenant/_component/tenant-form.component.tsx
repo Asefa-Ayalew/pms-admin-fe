@@ -104,8 +104,7 @@ export default function TenantForm(props: Props) {
       try {
         const response = await createTenant(requestData).unwrap();
         if (response) {
-          onCreating?.(false);
-          navigate.push(`/tenants/detail/${response?.id}`);
+          props.onClose();
         }
       } catch (err) {
         notifications.show({
@@ -119,10 +118,10 @@ export default function TenantForm(props: Props) {
       try {
         const response = await updateTenant({
           ...requestData,
-          id: `${params?.id}`,
+          id: `${props.data?.id}`,
         }).unwrap();
-        if (response) {
-          navigate.push(`/tenants/detail/${response?.id}`);
+        if(response) {
+          props.onClose();
         }
       } catch (error) {
         console.log(error);

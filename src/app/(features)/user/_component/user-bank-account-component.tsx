@@ -4,16 +4,32 @@ import { useParams } from "next/navigation";
 import { JSX, useEffect, useState } from "react";
 
 import { BankAccount, OwnerType } from "@/src/models/bank-account.model";
-import EntityList from "@/src/shared/entity/entity-list";
-import { CollectionQuery, Order } from "@/src/shared/models/collection.model";
+import { CollectionQuery } from "@/src/shared/models/collection.model";
 import {
   EntityConfig,
   entityViewMode,
 } from "@/src/shared/models/entity-config.model";
-import { Badge, Card, Divider, Modal } from "@mantine/core";
+import {
+  ActionIcon,
+  Badge,
+  Button,
+  Card,
+  Divider,
+  Menu,
+  Modal,
+  Table,
+} from "@mantine/core";
 import { useLazyGetBankAccountsQuery } from "../_store/bank-account.query";
 import BankAccountForm from "./bank-account-form";
 import ReasonFormComponent from "./reason-form.-component";
+import {
+  IconDotsVertical,
+  IconEdit,
+  IconEye,
+  IconInbox,
+  IconPlus,
+  IconTrash,
+} from "@tabler/icons-react";
 
 const defaultBankAccountValue: BankAccount = {
   accountNumber: "",
@@ -29,7 +45,6 @@ export default function UserBankAccountComponent() {
   const params = useParams();
   // Component states
 
-  const [check, setCheck] = useState(false);
   const [selectedBankAccount, setSelectedType] = useState<BankAccount>();
   const [viewMode, setViewMode] = useState<entityViewMode>("list");
 
@@ -72,11 +87,6 @@ export default function UserBankAccountComponent() {
     identity: "id",
     showDetail: false,
     visibleColumn: [
-      // {
-      //     key: "ownerName",
-      //     name: "Owner Name",
-      //     render: (data: BankAccount) => `${data?.ownerName ?? ""}`,
-      // },
       {
         key: "accountNumber",
         name: "Account Number",
@@ -121,7 +131,7 @@ export default function UserBankAccountComponent() {
       },
       {
         key: "createdAt",
-        name: "Registration Date",
+        name: "Created At",
         isDate: true,
       },
     ],
@@ -167,9 +177,7 @@ export default function UserBankAccountComponent() {
         console.warn("Unknown action:", action);
     }
   };
-  const handleNewModal = () => {
-    openModal("new");
-  };
+
   const renderModal = (
     type: keyof typeof modals,
     title: string,
@@ -190,58 +198,170 @@ export default function UserBankAccountComponent() {
   console.log(viewMode);
   return (
     <Card className="flex w-full">
-      <EntityList
-        parentStyle="w-full"
-        viewMode="list"
-        check={check}
-        showArchived={false}
-        showSelector={true}
-        tableKey="bankAccounts"
-        title=""
-        newButtonText="New"
-        total={bankAccounts?.data?.count || 0}
-        collectionQuery={bankAccountCollection}
-        config={config}
-        showNewButton={false}
-        showNewModal={true}
-        items={bankAccounts?.data?.data}
-        initialPage={1}
-        defaultPageSize={20}
-        pageSize={[20, 30, 50, 100]}
-        onShowSelector={(e) => setCheck(e)}
-        onPaginationChange={(skip: number, top: number) => {
-          const after = (skip - 1) * top;
-          setBankAccountCollection({
-            ...bankAccountCollection,
-            skip: after,
-            top: top,
-          });
+      <Button
+        onClick={() => openModal("new")}
+        leftSection={<IconPlus size={16} />}
+        styles={{
+          root: {
+            width: "5rem",
+            transition: "background-color 0.2s ease",
+            "&:hover": {
+              backgroundColor: "#ffeaea",
+            },
+            marginBottom: "4px",
+            marginLeft: "4px",
+          },
         }}
-        onSearch={(data: string) => {
-          setBankAccountCollection({
-            ...bankAccountCollection,
-            search: data || "",
-            searchFrom: data
-              ? ["ownerName", "accountNumber", "bankName", "bankCode"]
-              : [],
-          });
-        }}
-        onFilterChange={(
-          data: { field: string; value: string | number | boolean }[]
-        ) => {
-          if (bankAccountCollection?.filter || data.length > 0) {
-            // setCollection({ ...collection, filter: data });
-          }
-        }}
-        onOrder={(data: Order) =>
-          setBankAccountCollection({
-            ...bankAccountCollection,
-            orderBy: [data],
-          })
-        }
-        handleAction={handleAction}
-        handleNewModal={handleNewModal}
-      />
+      >
+        New
+      </Button>
+      <Table className="mantine-table-optimized" striped highlightOnHover>
+        <Table.Thead>
+          <Table.Tr>
+            {/* Primary Column */}
+            <Table.Th
+              style={{
+                position: "sticky",
+                left: 0,
+                zIndex: 3,
+                background: "white",
+              }}
+            >
+              {config.primaryColumn.name}
+            </Table.Th>
+
+            {/* Dynamic Visible Columns (excluding primary) */}
+            {config.visibleColumn
+              .filter((col) => col.key !== config.primaryColumn.key)
+              .map((col) => (
+                <Table.Th
+                  key={Array.isArray(col.key) ? col.key.join(",") : col.key}
+                >
+                  {col.name}
+                </Table.Th>
+              ))}
+
+            {/* Actions */}
+            <Table.Th
+              style={{
+                position: "sticky",
+                right: 0,
+                zIndex: 3,
+                background: "white",
+                width: "20px",
+              }}
+            ></Table.Th>
+          </Table.Tr>
+        </Table.Thead>
+
+        <Table.Tbody>
+          {bankAccounts?.data?.data?.length === 0 ? (
+            <Table.Tr>
+              <Table.Td
+                colSpan={config.visibleColumn.length + 2}
+                className="text-center py-8 text-gray-500"
+              >
+                <div className="flex flex-col items-center">
+                  <IconInbox size={40} />
+                  <p className="mt-2">No users found</p>
+                </div>
+              </Table.Td>
+            </Table.Tr>
+          ) : (
+            bankAccounts?.data?.data?.map((account: BankAccount) => (
+              <Table.Tr
+                key={String(
+                  account[config.identity as keyof BankAccount] ?? ""
+                )}
+              >
+                {/* Primary Column */}
+                <Table.Td
+                  style={{
+                    position: "sticky",
+                    left: 0,
+                    zIndex: 2,
+                    background: "white",
+                  }}
+                >
+                  {config.primaryColumn.render
+                    ? config.primaryColumn.render(account)
+                    : null}
+                </Table.Td>
+
+                {/* Visible Columns */}
+                {config.visibleColumn
+                  .filter((col) => col.key !== config.primaryColumn.key)
+                  .map((col) => (
+                    <Table.Td
+                      key={Array.isArray(col.key) ? col.key.join(",") : col.key}
+                    >
+                      {col.render
+                        ? col.render(account)
+                        : typeof col.key === "string"
+                          ? account[col.key as keyof BankAccount]
+                          : Array.isArray(col.key)
+                            ? col.key
+                                .map((k) => account[k as keyof BankAccount])
+                                .join(" ")
+                            : null}
+                    </Table.Td>
+                  ))}
+
+                {/* Actions */}
+                <Table.Td
+                  style={{
+                    position: "sticky",
+                    right: 0,
+                    zIndex: 2,
+                    background: "white",
+                  }}
+                >
+                  <Menu shadow="md" width={160} position="bottom-end" withArrow>
+                    <Menu.Target>
+                      <ActionIcon
+                        variant="subtle"
+                        size="sm"
+                        aria-label="Actions"
+                      >
+                        <IconDotsVertical size={18} />
+                      </ActionIcon>
+                    </Menu.Target>
+                    <Menu.Dropdown>
+                      <Menu.Item
+                        color="blue"
+                        fw={600}
+                        leftSection={<IconEye size={14} />}
+                        onClick={() =>
+                          handleAction({ key: "showMore" }, account)
+                        }
+                      >
+                        Show More
+                      </Menu.Item>
+                      <Menu.Item
+                        color="green"
+                        fw={600}
+                        leftSection={<IconEdit size={14} />}
+                        onClick={() => handleAction({ key: "edit" }, account)}
+                      >
+                        Edit
+                      </Menu.Item>
+                      <Menu.Item
+                        color="red"
+                        fw={600}
+                        leftSection={<IconTrash size={14} />}
+                        onClick={() => handleAction({ key: "delete" }, account)}
+                      >
+                        Delete
+                      </Menu.Item>
+                    </Menu.Dropdown>
+                  </Menu>
+                </Table.Td>
+              </Table.Tr>
+            ))
+          )}
+        </Table.Tbody>
+      </Table>
+
       {renderModal(
         "new",
         "Create Bank Account",
