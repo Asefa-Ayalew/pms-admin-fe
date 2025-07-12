@@ -96,7 +96,7 @@ export const bankAccountQuery = appApi.injectEndpoints({
         method: "PUT",
         data: newData,
       }),
-      invalidatesTags: ["BankAccountInfo"],
+      invalidatesTags: ["BankAccounts"],
       async onQueryStarted(param, { dispatch, queryFulfilled }) {
         try {
           const { data } = await queryFulfilled;
@@ -131,8 +131,8 @@ export const bankAccountQuery = appApi.injectEndpoints({
         }
       },
     }),
-    archiveBankAccount: builder.mutation<BankAccount, CollectionQuery>({
-      query: (data: CollectionQuery) => ({
+    archiveBankAccount: builder.mutation<BankAccount, any>({
+      query: (data: any) => ({
         url: `${BANK_ACCOUNT_ENDPOINT.archive}/${data?.id}`,
         method: "DELETE",
       }),

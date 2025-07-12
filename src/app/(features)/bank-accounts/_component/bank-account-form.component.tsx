@@ -3,12 +3,11 @@
 import { BankAccount, OwnerType } from "@/src/models/bank-account.model";
 import { NewBankAccountSchema } from "@/src/schemas/new-bank-account-schema";
 import BankListJson from "@/src/shared/constants/bank-list.json";
+import { CollectionQuery } from "@/src/shared/models/collection.model";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Box,
   Button,
-  Flex,
-  Group,
   LoadingOverlay,
   Modal,
   Select,
@@ -22,21 +21,20 @@ import {
 } from "@tabler/icons-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { FieldErrors, useForm } from "react-hook-form";
+import { useForm, SubmitErrorHandler, SubmitHandler } from "react-hook-form";
 import z from "zod";
 import {
-  useArchiveBankAccountMutation,
   useCreateBankAccountMutation,
   useDeleteBankAccountMutation,
   useLazyGetBankAccountQuery,
-  useLazyGetUserQuery,
-  useRestoreBankAccountMutation,
+  useLazyGetUsersQuery,
   useUpdateBankAccountMutation,
 } from "../_store/bank-account.query";
+import { User } from "@/src/models/user.model";
+import { notifications } from "@mantine/notifications";
 
 interface Props {
   editMode: "new" | "detail" | "view";
-  accountId?: string;
   onClose: () => void;
   onCreating?: (data: boolean) => void;
   data?: BankAccount;
@@ -50,7 +48,7 @@ const defaultValue: BankAccount = {
   bankCode: "",
   ownerName: "",
   ownerId: "",
-  isPreferred: false,
+  isPreferred: true,
   ownerType: OwnerType.INDIVIDUAL,
 };
 
@@ -62,8 +60,8 @@ const bankCodes = BankListJson.map((bank) => ({
     index === self.findIndex((t) => t.value === value.value)
 );
 
-export default function BankAccountForm(props: Props) {
-  const { editMode, onCreating, accountId } = props;
+export default function BankAccountFormComponent(props: Props) {
+  const { editMode, onCreating } = props;
   const params = useParams();
   const navigate = useRouter();
 
@@ -74,11 +72,14 @@ export default function BankAccountForm(props: Props) {
   const [getBankAccount, bankAccount] = useLazyGetBankAccountQuery();
   const [createBankAccount, createResponse] = useCreateBankAccountMutation();
   const [updateBankAccount, updateResponse] = useUpdateBankAccountMutation();
-  const [archiveBankAccount, archiveResponse] = useArchiveBankAccountMutation();
-  const [restoreBankAccount, restoreResponse] = useRestoreBankAccountMutation();
   const [deleteBankAccount, deleteResponse] = useDeleteBankAccountMutation();
 
-  const [getUser, user] = useLazyGetUserQuery();
+  const [getUsers, users] = useLazyGetUsersQuery();
+  const [collection] = useState<CollectionQuery>({
+    skip: 0,
+    top: 50,
+    orderBy: [{ field: "createdAt", direction: "desc" }],
+  });
 
   const {
     register,
@@ -92,93 +93,87 @@ export default function BankAccountForm(props: Props) {
     mode: "all",
   });
 
+  // Fetch bank account details when in 'detail' mode
   useEffect(() => {
-    if (editMode === "detail" && accountId) {
-      getBankAccount({ id: `${accountId}` }).then((response) => {
-        if (response?.data) {
-          reset({
-            ...response?.data,
-          });
-        }
-      });
+    getUsers(collection);
+    if (props.data) {
+      reset({ ...props.data });
     } else {
       reset({
         ...defaultValue,
       });
     }
-  }, [params?.id, accountId, editMode]);
+  }, [params?.id, editMode, collection, getUsers]);
 
-  function onSubmit(data: FormSchema) {
-    const currentData = {
-      ...data,
-      ownerId: user?.data?.id ?? "",
-      ownerName: `${user?.data?.firstName} ${user?.data?.middleName}`,
-      accountNumber: data.accountNumber,
-      bankName: data.bankName,
-      bankCode: data.bankCode,
-      tenantId: data.tenantId,
-      isPreferred: data.isPreferred,
-      ownerType: data.ownerType,
-    } satisfies BankAccount;
+  const onSubmit: SubmitHandler<BankAccount> = async (data) => {
     if (editMode === "new") {
-      createBankAccount(currentData).then((response) => {
-        if (response?.data) {
-          onCreating?.(false);
-          if (!onCreating) {
-            props.onClose();
-          }
-        }
-      });
-    } else {
-      const updatedData = {
-        ...currentData,
-        id: bankAccount?.data?.id,
-      };
-      updateBankAccount(updatedData).then((response) => {
-        if (response?.data) {
-          props.onClose();
-        }
-      });
-    }
-  }
+      try {
+        const response = await createBankAccount({
+          ...data,
+        }).unwrap();
 
+        if (response) {
+          notifications.show({
+            title: "Success",
+            message: "Bank Account created successfully",
+            color: "green",
+          });
+        }
+      } catch (err) {
+        notifications.show({
+          title: "Error",
+          message: "Sorry Not created successfully" + err,
+          color: "red",
+        });
+      }
+    } else {
+      try {
+        const response = await updateBankAccount({
+          ...data,
+          id: `${props?.data?.id}`,
+        });
+        if (response) {
+          notifications.show({
+            title: "Success",
+            message: "Bank Account Updated successfully",
+            color: "green",
+          });
+        }
+      } catch (err) {
+        notifications.show({
+          title: "Error",
+          message: "Sorry Bank Account not updated successfully" + err,
+          color: "red",
+        });
+      }
+    }
+  };
+
+  // Delete bank account handler
   function handleDeleteBankAccount() {
     if (!selectedBankAccount?.id) return;
 
-    deleteBankAccount(selectedBankAccount?.id).then((response) => {
+    deleteBankAccount(`${params?.id}`).then((response) => {
       if (response?.data) {
         setOpenDeleteModal(false);
-        navigate.push("/user");
+        navigate.push("/bank-accounts");
       }
     });
   }
 
-  useEffect(() => {
-    getUser({
-      id: `${params?.id}`,
-    });
-  }, [params?.id]);
-  const onError = (error: FieldErrors) => {
-    console.log("Error", error);
+  const onError: SubmitErrorHandler<FormSchema> = (errors) => {
+    console.log("Form Errors", errors);
   };
-  useEffect(() => {
-    if (editMode === "detail") {
-      if (bankAccount?.data) {
-        reset({ ...bankAccount.data });
-      } else if (props.data) {
-        console.log(props.data);
-        reset({ ...props.data });
-      } else {
-        reset({ ...defaultValue });
-      }
-    }
-  }, [props.data, bankAccount, editMode, reset]);
   const isPreferred = watch("isPreferred");
+  const ownerLists = users?.data?.data?.map((user: User) => ({
+    value: user.id,
+    label: `${user.firstName} ${user.lastName}`,
+  }));
 
   return (
-    <Box>
-      {props?.editMode !== "view" ? (
-        <Box className="w-full p-4 flex-col space-y-4 buser">
+    <div className="w-full flex-col space-y-4 buser">
+      {editMode !== "view" ? (
+        <div className="w-full flex relative p-2">
           <LoadingOverlay
             visible={bankAccount?.isLoading || bankAccount?.isFetching}
             zIndex={1000}
@@ -190,21 +185,24 @@ export default function BankAccountForm(props: Props) {
             autoComplete="off"
             className="w-full"
           >
-            <Box className="flex w-full justify-center">
-              <Group mt="xl"></Group>
-              <Box className="px-2 w-full mt-4 flex-col space-y-4">
-                <Flex gap="8">
+            <div className="flex w-full justify-center">
+              <div className="w-full flex-col space-y-4">
+                {/* Account Number Input */}
+                <div className="w-full flex space-x-4 mt-4">
                   <TextInput
                     label="Account Number"
-                    className="w-full"
+                    className="w-1/2"
                     required
                     placeholder="Account Number"
                     {...register("accountNumber")}
                     error={errors?.accountNumber?.message}
                   />
+
+                  {/* Bank Select Dropdown */}
+
                   <Select
                     label="Bank Name"
-                    className="w-full"
+                    className="w-1/2"
                     data={bankCodes}
                     value={watch("bankCode")}
                     onChange={(value) => {
@@ -216,25 +214,54 @@ export default function BankAccountForm(props: Props) {
                     }}
                     required
                   />
-                </Flex>
-                <Flex gap="8">
+                </div>
+                <div className="w-full flex space-x-4 mt-4">
+                  <Select
+                    label="Owner"
+                    className="w-1/2"
+                    data={
+                      ownerLists?.filter(
+                        (user) => user.value !== undefined
+                      ) as {
+                        value: string;
+                        label: string;
+                      }[]
+                    }
+                    value={watch("ownerId")}
+                    onChange={(value) => {
+                      const selectedUser = ownerLists?.find(
+                        (user) => user.value === value
+                      );
+                      setValue("ownerId", selectedUser?.value ?? "");
+                      setValue("ownerName", selectedUser?.label ?? "");
+                    }}
+                    searchable
+                  />
                   <Select
                     label="Owner Type"
-                    className="w-full"
+                    className="w-1/2"
                     value={watch("ownerType")}
                     onChange={(value) =>
                       setValue("ownerType", value as OwnerType)
                     }
                     data={[
                       { value: OwnerType.INDIVIDUAL, label: "Individual" },
-                      { value: OwnerType.GOVERNMENTAL, label: "Governmental" },
+                      {
+                        value: OwnerType.GOVERNMENTAL,
+                        label: "Governmental",
+                      },
                       { value: OwnerType.COMPANY, label: "Company" },
-                      { value: OwnerType.ORGANIZATION, label: "Organization" },
+                      {
+                        value: OwnerType.ORGANIZATION,
+                        label: "Organization",
+                      },
                     ]}
                     error={errors?.ownerType?.message}
                   />
+                </div>
+                <div className="w-full flex space-x-4 mt-4">
                   <Switch
-                    className="mt-7 w-full"
+                    className="mt-7"
                     checked={isPreferred}
                     label="Is Preferred?"
                     onChange={(e) => {
@@ -244,9 +271,10 @@ export default function BankAccountForm(props: Props) {
                       });
                     }}
                   />
-                </Flex>
+                </div>
+
                 {/* Action Buttons */}
-                <Box className="w-full flex space-x-4  justify-end mt-4">
+                <div className="w-full flex space-x-4 justify-end mt-4">
                   <Button
                     variant="default"
                     className="bg-none"
@@ -268,9 +296,6 @@ export default function BankAccountForm(props: Props) {
                         setOpenDeleteModal(true);
                         setSelectedBankAccount(bankAccount?.data);
                       }}
-                      loading={
-                        archiveResponse?.isLoading || restoreResponse?.isLoading
-                      }
                       leftSection={
                         bankAccount?.data?.archivedAt ? (
                           <IconArrowBack size={15} />
@@ -293,11 +318,11 @@ export default function BankAccountForm(props: Props) {
                     }
                     leftSection={<IconDeviceFloppy size={15} />}
                   >
-                    {editMode === "new" ? "Save" : "Update"}
+                    Save
                   </Button>
-                </Box>
-              </Box>
-            </Box>
+                </div>
+              </div>
+            </div>
           </form>
 
           <Modal
@@ -309,7 +334,7 @@ export default function BankAccountForm(props: Props) {
               Are you sure you want to delete this bank account? This action
               cannot be undone.
             </p>
-            <Flex className="flex space-x-4 justify-end mt-4">
+            <div className="flex space-x-4 justify-end mt-4">
               <Button
                 variant="outline"
                 onClick={() => setOpenDeleteModal(false)}
@@ -325,25 +350,49 @@ export default function BankAccountForm(props: Props) {
               >
                 Delete
               </Button>
-            </Flex>
+            </div>
           </Modal>
-        </Box>
+        </div>
       ) : (
-        <Box className="w-full">
-          <tr className="flex border-t border-b border-dashed">
-            <td className="w-1/3 p-2 bg-gray-100 text-gray-900 border-r">
-              {"Owner Name"}
+        <Box className="w-full text-sm text-gray-900">
+          <tr className="flex border-b border-gray-300 border-dashed">
+            <td className="w-1/3 p-2 bg-gray-100 border-gray-300">
+              {"Bank Name"}
             </td>
-            <td className="p-2">{props?.data?.ownerName}</td>
+            <td className="p-2">{props?.data?.bankName}</td>
           </tr>
-          <tr className="flex border-b border-dashed">
-            <td className="w-1/3 p-2 bg-gray-100 text-gray-900 border-r">
+          <tr className="flex border-b border-gray-300 border-dashed">
+            <td className="w-1/3 p-2 bg-gray-100 border-gray-300">
+              {"Bank Code"}
+            </td>
+            <td className="p-2">{props.data?.bankCode}</td>
+          </tr>
+          <tr className="flex border-b border-gray-300 border-dashed">
+            <td className="w-1/3 p-2 bg-gray-100 border-gray-300">
               {"Account Number"}
             </td>
             <td className="p-2">{props.data?.accountNumber}</td>
           </tr>
+          <tr className="flex border-b border-gray-300 border-dashed">
+            <td className="w-1/3 p-2 bg-gray-100 border-gray-300">
+              {"Owner Name"}
+            </td>
+            <td className="p-2">{props.data?.ownerName}</td>
+          </tr>
+          <tr className="flex border-b border-gray-300 border-dashed">
+            <td className="w-1/3 p-2 bg-gray-100 border-gray-300">
+              {"Owner Type"}
+            </td>
+            <td className="p-2">{props.data?.ownerType}</td>
+          </tr>
+          <tr className="flex border-b border-gray-300 border-dashed">
+            <td className="w-1/3 p-2 bg-gray-100 border-gray-300">
+              {"Is Preferred"}
+            </td>
+            <td className="p-2">{props.data?.isPreferred ? "Yes" : "No"}</td>
+          </tr>
         </Box>
       )}
-    </Box>
+    </div>
   );
 }

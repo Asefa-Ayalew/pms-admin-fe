@@ -16,12 +16,6 @@ export type RoutePermissions = {
 };
 
 export const PROTECTED_ROUTES: RoutePermissions = {
-  "/my-organization": {
-    allowedRoles: ["SA", "OM"],
-    restrictedRoles: ["OPSWR"],
-    requiresAuth: true,
-  },
-
   "/analytics": {
     allowedRoles: ["SA", "OM", "FI"],
     restrictedRoles: ["OPSWR"],
@@ -57,10 +51,5 @@ export const NAV_ITEMS = {
       { label: "Roles", path: "/role" },
       { label: "Departments", path: "/departments" },
     ],
-  },
-  SETTINGS: {
-    label: "Settings",
-    icon: IconAdjustments,
-    children: [{ label: "My Organization", path: "/my-organizations" }],
   },
 } as const;

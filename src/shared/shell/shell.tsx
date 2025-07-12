@@ -106,14 +106,6 @@ const generateNavData = (
         link: child.path,
       })),
     },
-    {
-      label: NAV_ITEMS.SETTINGS.label,
-      icon: NAV_ITEMS.SETTINGS.icon,
-      links: NAV_ITEMS.SETTINGS.children.map((child) => ({
-        label: child.label,
-        link: child.path,
-      })),
-    },
   ].filter(Boolean) as NavItem[];
 
   return navItems

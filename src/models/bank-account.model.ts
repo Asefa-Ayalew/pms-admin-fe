@@ -5,6 +5,7 @@ export interface BankAccount {
     bankName: string;
     bankCode: string;
     ownerName?: string;
+    remark?: string;
     ownerId?: string;
     isPreferred: boolean;
     ownerType: OwnerType;

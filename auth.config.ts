@@ -100,16 +100,21 @@ export const authConfig: NextAuthConfig = {
       }
 
       // Handle token expiration
+      console.log('accessToken', token?.accessToken)
       if (token.accessToken) {
         const currentTimestamp = Math.floor(Date.now() / 1000);
         const decodedToken = decodeJwt(token.accessToken as string);
 
         const tokenExpiry = decodedToken.exp;
         const bufferTime = 30;
+        console.log('curresnttiemstamp', currentTimestamp);
+        console.log('decodedToken', decodedToken);
+        console.log('tokenExpiry', tokenExpiry);
 
         if (tokenExpiry && currentTimestamp >= tokenExpiry - bufferTime) {
           console.log("Token needs refresh, requesting new token...");
           const newToken = await refreshAccessToken(token as Partial<Token>);
+          console.log('newToken', newToken);
           if ("error" in newToken && newToken.error) {
             console.log("Token refresh failed:", newToken.error);
             return { ...token };
