@@ -37,13 +37,6 @@ const defaultRoom: Room = {
 };
 
 const modalConfig = {
-  new: {
-    title: "Create Room",
-    size: "60%",
-    component: (onClose: () => void) => (
-      <RoomForm editMode="new" onClose={onClose} />
-    ),
-  },
   edit: {
     title: "Edit Room",
     size: "60%",
@@ -71,7 +64,6 @@ export default function RoomsComponent() {
   const [modals, setModals] = useState<
     Record<keyof typeof modalConfig, boolean>
   >({
-    new: false,
     edit: false,
     view: false,
     archive: false,
@@ -127,23 +119,6 @@ export default function RoomsComponent() {
 
   return (
     <Card shadow="sm" padding="sm">
-      <Button
-        onClick={() => openModal("new")}
-        leftSection={<IconPlus size={16} />}
-        styles={{
-          root: {
-            width: "5rem",
-            transition: "background-color 0.2s ease",
-            "&:hover": {
-              backgroundColor: "#ffeaea",
-            },
-            marginBottom: "4px",
-            marginLeft: "4px",
-          },
-        }}
-      >
-        New
-      </Button>
 
       <Table>
         <Table.Thead>

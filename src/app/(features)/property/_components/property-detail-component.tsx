@@ -93,7 +93,7 @@ export default function PropertyDetailComponent() {
           profileData={profileData}
           config={config}
           isLoading={isLoading || isFetching}
-          hideEdit={true}
+          hideEdit={false}
         />
       )}
     </div>

@@ -2,6 +2,10 @@ import {
   IconAdjustments,
   IconBuildingBank,
   IconBuildingEstate,
+  IconCalendar,
+  IconCurrency,
+  IconMoneybag,
+  IconSocial,
   IconUser,
 } from "@tabler/icons-react";
 import { RoleKey } from "../auth/hooks/useRoleGuard";
@@ -50,6 +54,27 @@ export const NAV_ITEMS = {
       { label: "Users", path: "/user" },
       { label: "Roles", path: "/role" },
       { label: "Departments", path: "/departments" },
+    ],
+  },
+   INTERACTIONS: {
+    label: "Interactions",
+    icon: IconSocial,
+    children: [
+      {
+        label: "FAQs",
+        icon: IconMoneybag,
+        path: "/faq",
+      },
+      {
+        label: "Feed Backs",
+        icon: IconCalendar,
+        path: "/feed-back",
+      },
+      {
+        label: "Testimonials",
+        icon: IconCurrency,
+        path: "/testimonial",
+      },
     ],
   },
 } as const;

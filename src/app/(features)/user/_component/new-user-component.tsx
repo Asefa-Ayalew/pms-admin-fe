@@ -31,7 +31,7 @@ import {
 import dayjs from "dayjs";
 import { useSession } from "next-auth/react";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState, useMemo } from "react"; 
+import { useEffect, useState, useMemo } from "react";
 import { Controller, FieldErrors, useForm } from "react-hook-form";
 
 import z from "zod";
@@ -296,151 +296,21 @@ export default function NewUserComponent(props: Props) {
         },
       ],
     },
-    // {
-    //   key: "contact",
-    //   label: "User Contact",
-    //   value: "",
-    //   level: 1,
-    //   children: Object.entries(
-    //     (user?.data?.userContacts ?? []).reduce<Record<string, EmergencyContact[]>>(
-    //       (acc, contact) => {
-    //         const type = contact.contactType ?? "Other";
-    //         if (!acc[type]) acc[type] = [];
-    //         acc[type].push(contact);
-    //         return acc;
-    //       },
-    //       {}
-    //     )
-    //   ).map(([contactType, contacts]) => ({
-    //     key: `contact-group-${contactType}`,
-    //     label: `${contactType.charAt(0).toUpperCase() + contactType.slice(1).toLowerCase()} Contact(s)`,
-    //     value: "",
-    //     level: 2,
-    //     children: contacts.map((contact, idx) => ({
-    //       key: `contact-${contactType}-${idx}`,
-    //       label: `Contact ${idx + 1}`,
-    //       value: "",
-    //       level: 3,
-    //       children: [
-    //         {
-    //           key: `contact-${contactType}-${idx}-name`,
-    //           label: "Name",
-    //           value: `${contact.firstName} ${contact.middleName} ${contact.lastName}`,
-    //         },
-    //         {
-    //           key: `contact-${contactType}-${idx}-email`,
-    //           label: "Email",
-    //           value: contact.email,
-    //         },
-    //         {
-    //           key: `contact-${contactType}-${idx}-phone`,
-    //           label: "Phone",
-    //           value: contact.phone,
-    //         },
-    //         {
-    //           key: `contact-${contactType}-${idx}-address`,
-    //           label: "Address",
-    //           value: "",
-    //           level: 4,
-    //           children: [
-    //             {
-    //               key: `contact-${contactType}-${idx}-country`,
-    //               label: "Country",
-    //               value: contact.address?.country ?? "",
-    //             },
-    //             {
-    //               key: `contact-${contactType}-${idx}-city`,
-    //               label: "City",
-    //               value: contact.address?.city ?? "",
-    //             },
-    //             {
-    //               key: `contact-${contactType}-${idx}-subcity`,
-    //               label: "Subcity",
-    //               value: contact.address?.subcity ?? "",
-    //             },
-    //             {
-    //               key: `contact-${contactType}-${idx}-woreda`,
-    //               label: "Woreda",
-    //               value: contact.address?.woreda ?? "",
-    //             },
-    //             {
-    //               key: `contact-${contactType}-${idx}-kebele`,
-    //               label: "Kebele",
-    //               value: contact.address?.kebele ?? "",
-    //             },
-    //           ],
-    //         },
-    //       ],
-    //     })),
-    //   })),
-    // },
-    // {
-    //   key: "bankAccounts",
-    //   label: "Bank Accounts",
-    //   value: "",
-    //   level: 1,
-    //   children: Object.entries(
-    //     (bankAccounts?.data?.data ?? []).reduce<Record<string, BankAccount[]>>(
-    //       (acc, account) => {
-    //         const groupKey =
-    //           account.bankName ?? account.bankCode ?? "Unknown Bank";
-    //         if (!acc[groupKey]) acc[groupKey] = [];
-    //         acc[groupKey].push(account);
-    //         return acc;
-    //       },
-    //       {}
-    //     )
-    //   ).map(([bankGroup, accounts]) => ({
-    //     key: `bank-group-${bankGroup}`,
-    //     label: bankGroup,
-    //     value: "",
-    //     level: 2,
-    //     children: accounts.map((account, idx) => ({
-    //       key: `bank-${bankGroup}-${idx}`,
-    //       label: `Account ${idx + 1}`,
-    //       value: "",
-    //       level: 3,
-    //       children: [
-    //         {
-    //           key: `bank-${bankGroup}-${idx}-accountNumber`,
-    //           label: "Account Number",
-    //           value: account.accountNumber,
-    //         },
-    //         {
-    //           key: `bank-${bankGroup}-${idx}-bankCode`,
-    //           label: "Bank Code",
-    //           value: account.bankCode,
-    //         },
-    //         {
-    //           key: `bank-${bankGroup}-${idx}-isPreferred`,
-    //           label: "Preferred",
-    //           value: account.isPreferred ? "Yes" : "No",
-    //         },
-    //         {
-    //           key: `bank-${bankGroup}-${idx}-ownerType`,
-    //           label: "Owner Type",
-    //           value: account.ownerType,
-    //         },
-    //       ],
-    //     })),
-    //   })),
-    // },
     {
       key: "roles",
       label: "Roles",
       value: user?.data?.userRoles
         ? user?.data?.userRoles
-            .map((userRole) => userRole?.role?.name?.toUpperCase())
-            .filter(Boolean)
+          .map((userRole) => userRole?.role?.name?.toUpperCase())
+          .filter(Boolean)
         : [],
     },
   ];
 
   const profileData = {
     image: "",
-    name: `${user?.data?.firstName ?? ""} ${user?.data?.middleName ?? ""} ${
-      user?.data?.lastName ?? ""
-    }`,
+    name: `${user?.data?.firstName ?? ""} ${user?.data?.middleName ?? ""} ${user?.data?.lastName ?? ""
+      }`,
     type: "",
     address: "",
     phone: "",
@@ -450,9 +320,8 @@ export default function NewUserComponent(props: Props) {
   const config = {
     editUrl: `#`,
     isProfile: false,
-    title: `${user?.data?.firstName ?? ""} ${user?.data?.middleName ?? ""} ${
-      user?.data?.lastName ?? ""
-    }`,
+    title: `${user?.data?.firstName ?? ""} ${user?.data?.middleName ?? ""} ${user?.data?.lastName ?? ""
+      }`,
     widthClass: "w-full",
   };
   return (
@@ -474,11 +343,6 @@ export default function NewUserComponent(props: Props) {
       )}
       {isEditMode ? (
         <>
-          <div className="flex px-4 items-center justify-center">
-            <h3 className="text-2xl font-semibold">
-              {editMode === "new" ? "New User Registration" : "User Detail"}
-            </h3>
-          </div>
           <div className="w-full flex justify-center relative">
             <LoadingOverlay
               visible={

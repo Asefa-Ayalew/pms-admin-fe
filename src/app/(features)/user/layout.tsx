@@ -14,7 +14,7 @@ import {
   entityViewMode,
 } from "@/src/shared/models/entity-config.model";
 import { useParams } from "next/navigation";
-import { useLazyGetUsersQuery } from "./_store/user.query";
+import { useLazyGetUserQuery, useLazyGetUsersQuery } from "./_store/user.query";
 import {
   IconAdjustments,
   IconDownload,
@@ -28,7 +28,6 @@ export default function UserListPage({
   children: React.ReactNode;
 }) {
   const params = useParams();
-  //Component states
   const [viewMode, setViewMode] = useState<entityViewMode>("list");
   const [collection, setCollection] = useState<CollectionQuery>({
     skip: 0,
@@ -36,7 +35,9 @@ export default function UserListPage({
     orderBy: [{ field: "createdAt", direction: "desc" }],
   });
 
-  const [getUser, { data: users, isLoading, error }] = useLazyGetUsersQuery();
+  const [getUsers, { data: users, isLoading, error }] = useLazyGetUsersQuery();
+  const [getUser, { data: user}] = useLazyGetUserQuery();
+
  
   const behaviorConfig: TableBehaviorConfig = useMemo(
     () => ({
@@ -97,7 +98,7 @@ export default function UserListPage({
         label: "Refresh Properties",
         icon: <IconRefreshDot size={18} />,
         color: "blue",
-        onClick: () => getUser({ skip: 0, top: 20 }),
+        onClick: () => getUsers({ skip: 0, top: 20 }),
         tooltip: "Refresh user data",
         position: "top",
         order: 1,
@@ -135,39 +136,23 @@ export default function UserListPage({
         order: 2,
       },
     ],
-    [getUser]
+    [getUsers]
   );
-  // const renderCustomLeftToolbar = useCallback(() => {
-  //   return (
-  //     <div className="flex items-center gap-2">
-  //       <Button
-  //         leftSection={<IconUserPlus size={16} />}
-  //         size="sm"
-  //         color="green"
-  //       >
-  //         Add New User
-  //       </Button>
 
-  //       <TextInput placeholder="Search users..." size="sm" className="w-64" />
-  //     </div>
-  //   );
-  // }, []);
 
   useEffect(() => {
-    getUser(collection);
+    getUsers(collection);
   }, [collection]);
 
-  // useEffect(() => {
-  //   setSelectedType(users?.data?.find((user) => user?.id === `${params?.id}`));
-  // });
 
   useEffect(() => {
     if (params?.id !== undefined) {
+      getUser({id: String(params.id)})
       setViewMode("detail");
     } else {
       setViewMode("list");
     }
-  }, [setViewMode, params]);
+  }, [setViewMode, params, getUser]);
 
   const config = useMemo<EntityConfig<User>>(
     () => ({
@@ -212,7 +197,6 @@ export default function UserListPage({
     }),
     []
   );
-  // const viewMode: entityViewMode = params?.id !== undefined ? "detail" : "list";
 
   const styleConfig: TableStyleConfig = useMemo(
     () => ({
@@ -229,7 +213,7 @@ export default function UserListPage({
   return (
     <EntityList
       title="users"
-      detailTitle="User Detail"
+      detailTitle={(params?.id !== 'new' && user ) ? user?.firstName : 'New User'}
       config={config}
       viewMode={viewMode}
       detail={children}

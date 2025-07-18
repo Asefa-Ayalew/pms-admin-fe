@@ -92,7 +92,7 @@ export const tenantQuery = appApi.injectEndpoints({
         method: "PUT",
         data: newData,
       }),
-      invalidatesTags: ["TenantInfo"],
+      invalidatesTags: ["Tenants"],
       async onQueryStarted(param, { dispatch, queryFulfilled }) {
         try {
           const { data } = await queryFulfilled;

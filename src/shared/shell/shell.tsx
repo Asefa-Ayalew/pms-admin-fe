@@ -106,6 +106,14 @@ const generateNavData = (
         link: child.path,
       })),
     },
+    {
+      label: NAV_ITEMS.INTERACTIONS.label,
+      icon: NAV_ITEMS.INTERACTIONS.icon,
+      links: NAV_ITEMS.INTERACTIONS.children.map((child) => ({
+        label: child.label,
+        link: child.path,
+      })),
+    },
   ].filter(Boolean) as NavItem[];
 
   return navItems

@@ -258,6 +258,16 @@ export default function RoomForm(props: Props) {
           </tr>
         </Box>
       )}
+      <Box className="flex justify-end mt-2">
+        <Button
+          variant="filled"
+          bg={"primary.4"}
+          type="button"
+          onClick={() => props.onClose()}
+        >
+          Close
+        </Button>
+      </Box>
     </Box>
   );
 }

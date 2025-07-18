@@ -10,7 +10,10 @@ export const appApi = createApi({
     "Properties",
     "Tenants",
     "Rooms",
-    "BankAccounts"
+    "BankAccounts",
+    "FAQs",
+    "FeedBacks",
+    "Testimonials"
   ],
   endpoints: () => ({}),
 });

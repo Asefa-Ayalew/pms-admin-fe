@@ -21,8 +21,6 @@ export default function RoleListPage({
 }) {
   const params = useParams();
 
-  //Component states
-  // const [selectedRole, setSelectedType] = useState<Role>();
   const [viewMode, setViewMode] = useState<entityViewMode>("list");
   const [collection, setCollection] = useState<CollectionQuery>({
     skip: 0,
@@ -33,20 +31,14 @@ export default function RoleListPage({
     orderBy: [{ field: "createdAt", direction: "desc" }],
   });
 
-  //Rtk hooks
   const [getRole, { data: role, isLoading, error }] = useLazyGetRolesQuery();
   const [getUsers, users] = useLazyGetUsersQuery();
   useEffect(() => {
     getRole(collection);
   }, [collection]);
 
-  // useEffect(() => {
-  //   setSelectedType(
-  //     role?.data?.find((role: Role) => role?.id === `${params?.id}`)
-  //   );
-  // }, [params?.id, role?.data]);
 
- const behaviorConfig: TableBehaviorConfig = useMemo(
+  const behaviorConfig: TableBehaviorConfig = useMemo(
     () => ({
       enableColumnFilters: true,
       enableGlobalFilter: true,
@@ -68,36 +60,36 @@ export default function RoleListPage({
     []
   );
   const handlePaginationChange = useCallback(
-     (pageIndex: number, pageSize: number) => {
-       setCollection((prev) => ({
-         ...prev,
-         skip: pageIndex - 1,
-         top: pageSize,
-       }));
-     },
-     []
-   );
-   const onSearch = (search: string) => {
-     setCollection((prev) => ({
-       ...prev,
-       skip: 0,
-       search: search,
-     }));
-   };
- 
-   const onFilter = (filter: any[]) => {
-     setCollection((prev) => ({
-       ...prev,
-       filter, 
-     }));
-   };
-  
-   const onOrder = (order: { field: string; direction: "desc" | "asc" }) => {
-     setCollection((prev) => ({
-       ...prev,
-       orderBy: [order],
-     }));
-   }; //Rtk hooks
+    (pageIndex: number, pageSize: number) => {
+      setCollection((prev) => ({
+        ...prev,
+        skip: pageIndex - 1,
+        top: pageSize,
+      }));
+    },
+    []
+  );
+  const onSearch = (search: string) => {
+    setCollection((prev) => ({
+      ...prev,
+      skip: 0,
+      search: search,
+    }));
+  };
+
+  const onFilter = (filter: any[]) => {
+    setCollection((prev) => ({
+      ...prev,
+      filter,
+    }));
+  };
+
+  const onOrder = (order: { field: string; direction: "desc" | "asc" }) => {
+    setCollection((prev) => ({
+      ...prev,
+      orderBy: [order],
+    }));
+  };
   const customActions: CustomToolbarAction[] = useMemo(
     () => [
       {
@@ -145,21 +137,6 @@ export default function RoleListPage({
     ],
     [getRole]
   );
-  // const renderCustomLeftToolbar = useCallback(() => {
-  //   return (
-  //     <div className="flex items-center gap-2">
-  //       <Button
-  //         leftSection={<IconUserPlus size={16} />}
-  //         size="sm"
-  //         color="green"
-  //       >
-  //         Add New User
-  //       </Button>
-
-  //       <TextInput placeholder="Search roles..." size="sm" className="w-64" />
-  //     </div>
-  //   );
-  // }, []);
 
   console.log(users, setUserCollection);
   useEffect(() => {
@@ -175,67 +152,61 @@ export default function RoleListPage({
   }, [setViewMode, params]);
 
   const config = useMemo<EntityConfig<Role>>(
-      () => ({
-    primaryColumn: { key: "name", name: "Role Name" },
-    rootUrl: "/role",
-    identity: "id",
-    visibleColumn: [
-      { key: "name", name: "Role Name" },
-      { key: "key", name: "Role Short Code" },
-      { key: "description", name: "Role Description" },
-      // {
-      //   key: "users",
-      //   name: "# of Users",
-      //   render: (data: Role) =>
-      //     users?.data?.data?.filter((user: User) => user?.userRoles?.filter((role: any) => role.roleId === data.id)).length ?? 0,
-      // },
-      { key: "createdAt", name: "Created At", isDate: true },
-    ],
-  }),
+    () => ({
+      primaryColumn: { key: "name", name: "Role Name" },
+      rootUrl: "/role",
+      identity: "id",
+      visibleColumn: [
+        { key: "name", name: "Role Name" },
+        { key: "key", name: "Role Short Code" },
+        { key: "description", name: "Role Description" },
+        { key: "createdAt", name: "Created At", isDate: true },
+      ],
+    }),
     []
   );
 
   const data = role?.data;
   const styleConfig: TableStyleConfig = useMemo(
-      () => ({
-        primaryColor: "blue",
-        dangerColor: "red",
-        fontSize: "xs",
-        density: "xs",
-        shadowLevel: "xs",
-        borderColor: "border-gray-200",
-        rowHoverColor: "var(--mantine-color-blue-50)",
-      }),
-      []
-    );
+    () => ({
+      primaryColor: "blue",
+      dangerColor: "red",
+      fontSize: "xs",
+      density: "xs",
+      shadowLevel: "xs",
+      borderColor: "border-gray-200",
+      rowHoverColor: "var(--mantine-color-blue-50)",
+    }),
+    []
+  );
   return (
     <div className="flex w-full">
       <EntityList
-            title="roles"
-            detailTitle="Role Detail"
-            config={config}
-            viewMode={viewMode}
-            detail={children}
-            defaultPageSize={20}
-            pageSizeOptions={[10, 20, 30, 50, 100]}
-            _showTotal={true}
-            tableKey="roles"
-            dataLoadMode="static"
-            items={data || []}
-            total={role?.count || 0}
-            itemsLoading={isLoading}
-            styleConfig={styleConfig}
-            behaviorConfig={behaviorConfig}
-            errorText={
-              error ? "Failed to load roles. Please try again." : undefined
-            }
-            noDataText="No role found"
-            customActions={customActions}
-            onPaginationChange={handlePaginationChange}
-            onSearch={onSearch}
-            onOrder={onOrder}
-            onFilterChange={onFilter}
-          />
+        title="roles"
+        detailTitle="Role Detail"
+        config={config}
+        viewMode={viewMode}
+        detail={children}
+        defaultPageSize={20}
+        pageSizeOptions={[10, 20, 30, 50, 100]}
+        _showTotal={true}
+        tableKey="roles"
+        dataLoadMode="static"
+        items={data || []}
+        total={role?.count || 0}
+        itemsLoading={isLoading}
+        styleConfig={styleConfig}
+        behaviorConfig={behaviorConfig}
+        errorText={
+          error ? "Failed to load roles. Please try again." : undefined
+        }
+        noDataText="No role found"
+        customActions={customActions}
+        onPaginationChange={handlePaginationChange}
+        onSearch={onSearch}
+        onOrder={onOrder}
+        onFilterChange={onFilter}
+      />
     </div>
   );
 }

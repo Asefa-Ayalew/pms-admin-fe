@@ -14,7 +14,7 @@ import {
   EntityConfig,
   entityViewMode,
 } from "@/src/shared/models/entity-config.model";
-import { useLazyGetDepartmentsQuery } from "./_store/department.query";
+import { useGetDepartmentQuery, useLazyGetDepartmentQuery, useLazyGetDepartmentsQuery } from "./_store/department.query";
 import {
   IconAdjustments,
   IconDownload,
@@ -29,38 +29,27 @@ export default function DepartmentListPage({
 }) {
   const params = useParams();
 
-  // Component states
-  // const [selectedDepartment, setSelectedType] = useState<Department>();
   const [viewMode, setViewMode] = useState<entityViewMode>("list");
   const [collectionQuery, setCollectionQuery] = useState<CollectionQuery>({
     skip: 0,
     top: 20,
     orderBy: [{ field: "createdAt", direction: "desc" }],
   });
-  // const [userCollection] = useState<CollectionQuery>({
-  //   orderBy: [{ field: "createdAt", direction: "desc" }],
-  // });
 
-  // RTK hooks
   const [
-    getDepartment,
+    getDepartments,
     { data: departments, isLoading: isLoadingDepartments, error },
   ] = useLazyGetDepartmentsQuery();
-  // const [getUsers, users] = useLazyGetUsersQuery();
+
+  const [ getDepartment, {data: department}] = useLazyGetDepartmentQuery()
 
   useEffect(() => {
-    getDepartment(collectionQuery);
-  }, [collectionQuery, getDepartment]);
+    getDepartments(collectionQuery);
+  }, [collectionQuery, getDepartments]);
 
-  // useEffect(() => {
-  //   getUsers(userCollection);
-  // }, [userCollection, getUsers]);
-
-  // useEffect(() => {
-  //   setSelectedType(
-  //     departments?.data?.find((item) => item?.id === `${params?.id}`)
-  //   );
-  // }, [params?.id, departments?.data]);
+  useEffect(() => {
+    getDepartment({id: String(params.id)})
+  }, [getDepartments, params.id])
 
   useEffect(() => {
     setViewMode(params?.id !== undefined ? "detail" : "list");
@@ -81,12 +70,6 @@ export default function DepartmentListPage({
           name: "Department Name",
           render: (data: Department) => `${data?.name ?? ""}`,
         },
-        // {
-        //   key: "users",
-        //   name: "# of Users",
-        //   render: (data: Department) =>
-        //     users?.data?.data?.filter((user: User) => user.departmentId === data.id).length ?? 0,
-        // },
         {
           key: "createdAt",
           name: "Created At",
@@ -97,7 +80,6 @@ export default function DepartmentListPage({
     []
   );
 
-  // const viewMode: entityViewMode = params?.id !== undefined ? "detail" : "list";
 
   const styleConfig: TableStyleConfig = useMemo(
     () => ({
@@ -172,7 +154,7 @@ export default function DepartmentListPage({
         label: "Refresh Departments",
         icon: <IconRefreshDot size={18} />,
         color: "blue",
-        onClick: () => getDepartment({ skip: 0, top: 20 }),
+        onClick: () => getDepartments({ skip: 0, top: 20 }),
         tooltip: "Refresh department data",
         position: "top",
         order: 1,
@@ -210,34 +192,15 @@ export default function DepartmentListPage({
         order: 2,
       },
     ],
-    [getDepartment]
+    [getDepartments]
   );
 
-  // const renderCustomLeftToolbar = useCallback(() => {
-  //   return (
-  //     <div className="flex items-center gap-2">
-  //       <Button
-  //         leftSection={<IconUserPlus size={16} />}
-  //         size="sm"
-  //         color="green"
-  //       >
-  //         Add New Property
-  //       </Button>
-
-  //       <TextInput
-  //         placeholder="Search Departments..."
-  //         size="sm"
-  //         className="w-64"
-  //       />
-  //     </div>
-  //   );
-  // }, []);
 
   return (
     <div className="flex w-full">
       <EntityList
         title="Departments"
-        detailTitle="Department Detail"
+        detailTitle={params.id !== 'new'  ? (department?.name ?? 'Department Detail') : 'New Department'}
         config={config}
         viewMode={viewMode}
         detail={children}
