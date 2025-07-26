@@ -1,16 +1,17 @@
 "use client";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { CollectionQuery } from "@/src/shared/models/collection.model";
-import FeedBackForm from "./_component/feed-back-form.component";
-import { useLazyGetFeedBacksQuery } from "./_store/feed-back.query";
+import FeedbackForm from "./_component/feed-back-form.component";
+import { useDeleteFeedbackMutation, useLazyGetArchivedFeedbacksQuery, useLazyGetFeedbacksQuery, useRestoreFeedbackMutation } from "./_store/feed-back.query";
 import SharedTable from "@/src/shared/table/shared-table";
-import type { TableConfig } from "@/src/shared/models/table-config";
+import type { Actions, TableConfig } from "@/src/shared/models/table-config";
 import { Modal, Divider } from "@mantine/core";
 import { IconEye, IconPencil, IconTrash } from "@tabler/icons-react";
 import ReasonForm from "./_component/reason-form.component";
-import { FeedBack } from "@/src/models/feed-back.model";
+import { Feedback } from "@/src/models/feed-back.model";
+import { modals } from '@mantine/modals';
 
-const defaultFeedBack: FeedBack = {
+const defaultFeedback: Feedback = {
   id: "",
   name: "",
   subject: "",
@@ -24,33 +25,33 @@ const modalConfig = {
     title: "New Feed Back",
     size: "60%",
     component: (onClose: () => void) => (
-      <FeedBackForm editMode="new" onClose={onClose} />
+      <FeedbackForm editMode="new" onClose={onClose} />
     ),
   },
   edit: {
     title: "Edit Feed Back",
     size: "60%",
-    component: (onClose: () => void, feedBack: FeedBack) => (
-      <FeedBackForm editMode="detail" onClose={onClose} data={feedBack} />
+    component: (onClose: () => void, feedBack: Feedback) => (
+      <FeedbackForm editMode="detail" onClose={onClose} data={feedBack} />
     ),
   },
   view: {
     title: "View Feed Back",
     size: "60%",
-    component: (onClose: () => void, feedBack: FeedBack) => (
-      <FeedBackForm editMode="view" onClose={onClose} data={feedBack} />
+    component: (onClose: () => void, feedBack: Feedback) => (
+      <FeedbackForm editMode="view" onClose={onClose} data={feedBack} />
     ),
   },
   archive: {
     title: "Reason",
     size: "50%",
-    component: (onClose: () => void, feedBack: FeedBack) => (
+    component: (onClose: () => void, feedBack: Feedback) => (
       <ReasonForm id={feedBack?.id ?? ""} onClose={onClose} />
     ),
   },
 };
 
-export default function FeedBacksComponent() {
+export default function FeedbacksComponent() {
   const [collectionQuery, setCollectionQuery] = useState<CollectionQuery>({
     skip: 0,
     top: 10,
@@ -58,7 +59,7 @@ export default function FeedBacksComponent() {
     search: "",
   });
 
-  const [modals, setModals] = useState<
+  const [modal, setModals] = useState<
     Record<keyof typeof modalConfig, boolean>
   >({
     new: false,
@@ -67,27 +68,84 @@ export default function FeedBacksComponent() {
     archive: false,
   });
 
-  const [selectedFeedBack, setSelectedFeedBack] =
-    useState<FeedBack>(defaultFeedBack);
-  const [getFeedBacks, { data: feedBacks, isLoading }] = useLazyGetFeedBacksQuery();
+  const [selectedFeedback, setSelectedFeedback] =
+    useState<Feedback>(defaultFeedback);
+  const [view, setView] = useState<"list" | "archived">("list");
+
+  const [getFeedbacks, { data: feedbacks, isLoading }] = useLazyGetFeedbacksQuery();
+  const [getArchivedFeedbacks, { data: archivedFeedbacks, isLoading: archivedFeedbacksLoading }] = useLazyGetArchivedFeedbacksQuery()
+  const [restoreFeedback] = useRestoreFeedbackMutation();
+  const [deleteFeedback] = useDeleteFeedbackMutation();
 
   useEffect(() => {
-    getFeedBacks(collectionQuery);
-  }, [collectionQuery, getFeedBacks]);
+    if (view === 'list') {
+      getFeedbacks(collectionQuery);
+    }
+  }, [collectionQuery, getFeedbacks, view]);
 
-  const openModal = (type: keyof typeof modalConfig, feedBack?: FeedBack) => {
-    setSelectedFeedBack(feedBack ?? defaultFeedBack);
+  useEffect(() => {
+    if (view === 'archived') {
+      getArchivedFeedbacks(collectionQuery)
+    }
+  }, [collectionQuery, getArchivedFeedbacks, view])
+  useEffect(() => {
+    getFeedbacks(collectionQuery);
+  }, [collectionQuery, getFeedbacks]);
+
+  const openModal = (type: keyof typeof modalConfig, feedBack?: Feedback) => {
+    setSelectedFeedback(feedBack ?? defaultFeedback);
     setModals((prev) => ({ ...prev, [type]: true }));
   };
 
   const closeModal = (type: keyof typeof modalConfig) => {
     setModals((prev) => ({ ...prev, [type]: false }));
-    setSelectedFeedBack(defaultFeedBack);
+    setSelectedFeedback(defaultFeedback);
   };
 
-  const handleAction = (action: { key: string }, feedBack?: FeedBack) => {
-    openModal(action.key as keyof typeof modalConfig, feedBack);
-  };
+     const handleAction = (action: { key: string }, feedback?: Feedback) => {
+      openModal(action.key as keyof typeof modalConfig, feedback);
+
+      if (action.key === 'delete' && feedback?.id) {
+        handleDelete(feedback);
+      } else if (action.key === 'restore') {
+        restoreFeedback(String(feedback?.id));
+      }
+    };
+
+    const handleDelete = (feedback: Feedback) => {
+      modals.openConfirmModal({
+        title: (
+          <span className="text-lg font-semibold text-gray-800">
+            Confirm Deletion
+          </span>
+        ),
+        centered: true,
+        children: (
+          <div className="space-y-2 text-sm text-gray-700">
+            <p>
+              Are you sure you want to delete this <span className="text-red-600 font-medium">document type</span>? This action
+              <strong> cannot </strong> be undone.
+            </p>
+            <p>
+              <strong className="text-gray-800">Name:</strong>{' '}
+              <span className="text-gray-700">{feedback?.name}</span>
+            </p>
+          </div>
+        ),
+        labels: {
+          confirm: 'Delete',
+          cancel: 'Cancel',
+        },
+        confirmProps: {
+          color: 'red',
+          variant: 'filled',
+        },
+        onConfirm: () => {
+          deleteFeedback(String(feedback?.id));
+        },
+      });
+    };
+
 
   const handlePaginationChange = useCallback(
     (pageIndex: number, pageSize: number) => {
@@ -122,76 +180,105 @@ export default function FeedBacksComponent() {
       return (
         <Modal
           key={key}
-          opened={modals[key]}
+          opened={modal[key]}
           onClose={() => closeModal(key)}
           title={title}
           centered
           size={size}
         >
           <Divider />
-          {component(() => closeModal(key), selectedFeedBack)}
+          {component(() => closeModal(key), selectedFeedback)}
         </Modal>
       );
     });
 
-  const config = useMemo<TableConfig<FeedBack>>(
+      const listActions: Actions[] = [
+    {
+      label: "Edit",
+      key: "edit",
+      icon: IconPencil,
+      size: "16",
+    },
+    {
+      label: "Archive",
+      key: "archive",
+      icon: IconTrash,
+      size: "16",
+      type: "danger",
+    },
+  ];
+
+  const archivedActions: Actions[] = [
+    {
+      label: "Restore",
+      key: "restore",
+      icon: IconPencil,
+      size: "16",
+    },
+    {
+      label: "Delete",
+      key: "delete",
+      icon: IconTrash,
+      size: "16",
+      type: "danger",
+    },
+  ];
+
+  const config = useMemo<TableConfig<Feedback>>(
     () => ({
       columns: [
         {
           key: "name",
           name: "Name",
-          render: (data: FeedBack) => `${data?.name ?? ""}`,
+          render: (data: Feedback) => `${data?.name ?? ""}`,
         },
         {
           key: "subject",
           name: "Subject",
-          render: (data: FeedBack) => `${data?.subject ?? ""}`,
+          render: (data: Feedback) => `${data?.subject ?? ""}`,
         },
         {
           key: "email",
           name: "Email",
-          render: (data: FeedBack) => `${data?.email ?? ""}`,
+          render: (data: Feedback) => `${data?.email ?? ""}`,
         },
         {
           key: "phone",
           name: "Phone Number",
-          render: (data: FeedBack) => `${data?.phone ?? ""}`,
+          render: (data: Feedback) => `${data?.phone ?? ""}`,
         },
         {
           key: "message",
           name: "Message",
-          render: (data: FeedBack) => `${data?.message ?? ""}`,
+          render: (data: Feedback) => `${data?.message ?? ""}`,
         },
       ],
-      actions: [
-        { label: "Show More", icon: IconEye, size: "16", key: "view" },
+       actions: [
         {
-          label: "Edit",
-          key: "edit",
-          icon: IconPencil,
+          label: "Show More",
+          key: "view",
+          icon: IconEye,
           size: "16",
-          divider: true,
         },
-        {
-          label: "Delete",
-          key: "archive",
-          icon: IconTrash,
-          size: "16",
-          type: "danger",
-        },
+        ...(view === "list" ? listActions : archivedActions),
       ],
+
     }),
-    []
+    [view]
   );
+
 
   return (
     <SharedTable
-      title={"Feed Backs"}
+      title={view === 'list' ? "Feedbacks" : 'Archived Feedbacks'}
       config={config}
-      items={feedBacks?.data}
-      total={feedBacks?.data?.length}
-      itemsLoading={isLoading}
+      items={view === 'list' ? feedbacks?.data : archivedFeedbacks?.data}
+      total={view === 'list' ? feedbacks?.total : archivedFeedbacks?.total}
+      itemsLoading={view === 'list' ? isLoading : archivedFeedbacksLoading}
       collectionQuery={collectionQuery}
+      view={view}
+      showNewButton={view === 'list'}
+      onViewChange={setView}
       onPaginationChange={handlePaginationChange}
       onSearch={onSearch}
       onOrder={onOrder}

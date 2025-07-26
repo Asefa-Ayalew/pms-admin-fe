@@ -103,7 +103,7 @@ export default function TestimonialForm(props: Props) {
         if (response) {
           notifications.show({
             title: "Success",
-            message: "Feed Back created successfully",
+            message: "Testimonial created successfully",
             color: "green",
           });
           props.onClose();
@@ -126,7 +126,7 @@ export default function TestimonialForm(props: Props) {
         if (response) {
           notifications.show({
             title: "Success",
-            message: "Feed Back Updated successfully",
+            message: "Testimonial Updated successfully",
             color: "green",
           });
           props.onClose()
@@ -134,14 +134,14 @@ export default function TestimonialForm(props: Props) {
       } catch (err) {
         notifications.show({
           title: "Error",
-          message: "Sorry Feed Back not updated successfully" + err,
+          message: "Sorry Testimonial not updated successfully" + err,
           color: "red",
         });
       }
     }
   };
 
-  // Delete Feed Back handler
+  // Delete Testimonial handler
   function handleDeleteTestimonial() {
     if (!selectedTestimonial?.id) return;
 
@@ -162,7 +162,7 @@ export default function TestimonialForm(props: Props) {
       {editMode !== "view" ? (
         <div className="w-full flex relative p-2">
           <form
-            name="Feed Back form"
+            name="Testimonial form"
             onSubmit={handleSubmit(onSubmit, onError)}
             autoComplete="off"
             className="w-full"
@@ -199,7 +199,6 @@ export default function TestimonialForm(props: Props) {
                   control={control}
                   render={({ field: { name, value, onChange } }) => (
                     <NumberInput
-                      className="w-1/2"
                       name={name}
                       label="Rating"
                       placeholder="Rating"
@@ -270,10 +269,10 @@ export default function TestimonialForm(props: Props) {
           <Modal
             opened={openDeleteModal}
             onClose={() => setOpenDeleteModal(false)}
-            title={`Delete Feed Back?`}
+            title={`Delete Testimonial?`}
           >
             <p className="text-sm">
-              Are you sure you want to delete this Feed Back? This action
+              Are you sure you want to delete this Testimonial? This action
               cannot be undone.
             </p>
             <div className="flex space-x-4 justify-end mt-4">

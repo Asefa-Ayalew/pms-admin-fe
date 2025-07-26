@@ -1,5 +1,6 @@
 export const TESTIMONIAL_ENDPOINT = {
     list: `${process.env.NEXT_PUBLIC_APP_API}/testimonials/get-testimonials`,
+      listArchivedTestimonials: `${process.env.NEXT_PUBLIC_APP_API}/testimonials/get-archived-testimonials`,
     create: `${process.env.NEXT_PUBLIC_APP_API}/testimonials/create-testimonial`,
     detail: `${process.env.NEXT_PUBLIC_APP_API}/testimonials/get-testimonial`,
     update: `${process.env.NEXT_PUBLIC_APP_API}/testimonials/update-testimonial`,

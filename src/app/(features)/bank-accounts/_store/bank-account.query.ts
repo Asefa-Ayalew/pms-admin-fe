@@ -131,12 +131,35 @@ export const bankAccountQuery = appApi.injectEndpoints({
         }
       },
     }),
-    archiveBankAccount: builder.mutation<BankAccount, any>({
-      query: (data: any) => ({
-        url: `${BANK_ACCOUNT_ENDPOINT.archive}/${data?.id}`,
+    getArchivedBankAccounts: builder.query<Collection<BankAccount>, CollectionQuery>({
+      query: (data: CollectionQuery) => ({
+        url: BANK_ACCOUNT_ENDPOINT.listArchivedBankAccounts,
+        method: "GET",
+        params: collectionQueryBuilder(data),
+      }),
+      async onQueryStarted(param, { queryFulfilled }) {
+        try {
+          const { data } = await queryFulfilled;
+          if (data) {
+            bankAccountCollection = param;
+          }
+        } catch (error: unknown) {
+          notifications.show({
+            title: "Error",
+            message:
+              (error as AppError)?.error?.data?.message || "Error, try again",
+            color: "red",
+          });
+        }
+      },
+    }),
+    archiveBankAccount: builder.mutation<BankAccount, { id: string; remark: string }>({
+      query: (data) => ({
+        url: `${BANK_ACCOUNT_ENDPOINT.archive}`,
+        data,
         method: "DELETE",
       }),
-
+      invalidatesTags: ["BankAccounts"],
       async onQueryStarted(param, { dispatch, queryFulfilled }) {
         try {
           const { data } = await queryFulfilled;
@@ -177,17 +200,16 @@ export const bankAccountQuery = appApi.injectEndpoints({
         } catch (error: unknown) {
           notifications.show({
             title: "Error",
-            message: (error as AppError)?.error?.data?.message
-              ? (error as AppError)?.error?.data?.message
-              : "Error try again",
+            message:
+              (error as AppError)?.error?.data?.message || "Error, try again",
             color: "red",
           });
         }
       },
     }),
-    restoreBankAccount: builder.mutation<BankAccount, CollectionQuery>({
-      query: (data: CollectionQuery) => ({
-        url: `${BANK_ACCOUNT_ENDPOINT.restore}/${data?.id}`,
+    restoreBankAccount: builder.mutation<BankAccount, string>({
+      query: (id: string) => ({
+        url: `${BANK_ACCOUNT_ENDPOINT.restore}/${id}`,
         method: "POST",
       }),
 
@@ -197,44 +219,28 @@ export const bankAccountQuery = appApi.injectEndpoints({
           if (data) {
             dispatch(
               bankAccountQuery.util.updateQueryData(
-                "getBankAccounts",
+                "getArchivedBankAccounts",
                 bankAccountCollection,
                 (draft) => {
-                  if (data) {
-                    draft.data = draft?.data?.map((bankAccount) => {
-                      if (bankAccount.id === data.id)
-                        return { ...data, archivedDate: null };
-                      else {
-                        return bankAccount;
-                      }
-                    });
-                  }
-                }
-              )
-            );
-            dispatch(
-              bankAccountQuery.util.updateQueryData(
-                "getBankAccount",
-                param,
-                (draft) => {
-                  if (data) {
-                    draft.archivedAt = "";
+                  if (draft?.data) {
+                    draft.data = draft.data.filter(
+                      (bankAccount) => bankAccount.id !== data.id
+                    );
                   }
                 }
               )
             );
             notifications.show({
               title: "Success",
-              message: "Successfully restored",
+              message: "Successfully Restored",
               color: "green",
             });
           }
         } catch (error: unknown) {
           notifications.show({
             title: "Error",
-            message: (error as AppError)?.error?.data?.message
-              ? (error as AppError)?.error?.data?.message
-              : "Error try again",
+            message:
+              (error as AppError)?.error?.data?.message || "Error, try again",
             color: "red",
           });
         }
@@ -252,7 +258,7 @@ export const bankAccountQuery = appApi.injectEndpoints({
           if (data) {
             dispatch(
               bankAccountQuery.util.updateQueryData(
-                "getBankAccounts",
+                "getArchivedBankAccounts",
                 bankAccountCollection,
                 (draft) => {
                   if (data) {
@@ -264,9 +270,10 @@ export const bankAccountQuery = appApi.injectEndpoints({
                 }
               )
             );
+
             notifications.show({
               title: "Success",
-              message: "Successfully deleted",
+              message: "Successfully Deleted",
               color: "green",
             });
           }
@@ -346,6 +353,7 @@ export const bankAccountQuery = appApi.injectEndpoints({
 
 export const {
   useLazyGetBankAccountQuery,
+  useLazyGetArchivedBankAccountsQuery,
   useArchiveBankAccountMutation,
   useGetBankAccountQuery,
   useRestoreBankAccountMutation,

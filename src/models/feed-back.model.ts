@@ -1,4 +1,4 @@
-export interface FeedBack {
+export interface Feedback {
     id?: string;
     tenantId?: string;
     tenantName?: string;

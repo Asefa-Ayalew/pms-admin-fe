@@ -14,6 +14,7 @@ import {
   Divider,
   Collapse,
   Checkbox,
+  Tooltip,
 } from "@mantine/core";
 import {
   IconPlus,
@@ -24,6 +25,8 @@ import {
   IconChevronUp,
   IconChevronRight,
   IconFilter,
+  IconList,
+  IconArchive,
 } from "@tabler/icons-react";
 import React, { type ReactElement, useCallback, useState } from "react";
 import type { Column, TableConfig } from "../models/table-config";
@@ -38,12 +41,14 @@ interface Props<T> {
   total?: number;
   itemsLoading?: boolean;
   collectionQuery?: CollectionQuery;
+  view: "list" | "archived";
 
   defaultPageSize?: number;
   pageSizeOptions?: number[];
 
   onPaginationChange?: (skip: number, top: number) => void;
   onSearch?: FunctionType;
+  onViewChange: (view: "list" | "archived") => void;
   onFilterChange?: (filters: Filter[][]) => void;
   onOrder?: (order: { field: string; direction: "asc" | "desc" }) => void;
   handleAction?: (action: { key: string }, item?: T) => void;
@@ -62,8 +67,10 @@ export default function SharedTable<T extends { id?: string | number }>(
     total = 0,
     itemsLoading = false,
     collectionQuery = { top: 10, skip: 0 },
+    view,
     defaultPageSize = 20,
     pageSizeOptions = [10, 20, 30, 50, 100],
+    onViewChange,
     onPaginationChange,
     onSearch,
     onFilterChange,
@@ -78,6 +85,7 @@ export default function SharedTable<T extends { id?: string | number }>(
     undefined
   );
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
+
 
   const pageSize = collectionQuery?.top || defaultPageSize;
   const currentPage = Math.floor((collectionQuery?.skip || 0) / pageSize) + 1;
@@ -162,7 +170,8 @@ export default function SharedTable<T extends { id?: string | number }>(
       </Card>
 
       <Card shadow="sm" padding="sm">
-        <div className="flex items-center justify-between mb-4">
+        <div className={`flex items-center mb-4 ${showNewButton ? "justify-between" : "justify-end"
+          }`}>
           {showNewButton && (
             <Button
               leftSection={<IconPlus size={16} />}
@@ -215,6 +224,35 @@ export default function SharedTable<T extends { id?: string | number }>(
                 </Menu.Dropdown>
               </Menu>
             )}
+            <div className="flex gap-2">
+              <Tooltip label="Show List" withArrow position="bottom">
+                <ActionIcon
+                  variant="light"
+                  size="lg"
+                  onClick={() => onViewChange("list")}
+                  className={`transition-colors rounded-md ${view === "list"
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-100 text-gray-500 hover:bg-blue-100 hover:text-blue-600"
+                    }`}
+                >
+                  <IconList size={20} />
+                </ActionIcon>
+              </Tooltip>
+
+              <Tooltip label="Show Archived" withArrow position="bottom">
+                <ActionIcon
+                  variant="light"
+                  size="lg"
+                  onClick={() => onViewChange("archived")}
+                  className={`transition-colors rounded-md ${view === "archived"
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-100 text-gray-500 hover:bg-blue-100 hover:text-blue-600"
+                    }`}
+                >
+                  <IconArchive size={20} />
+                </ActionIcon>
+              </Tooltip>
+            </div>
           </div>
         </div>
 
@@ -421,6 +459,7 @@ export default function SharedTable<T extends { id?: string | number }>(
               style={{ width: 60 }}
             />
             <Pagination
+              size="sm"
               total={Math.ceil((total ?? 1) / pageSize)}
               value={currentPage}
               onChange={handlePaginationChange}

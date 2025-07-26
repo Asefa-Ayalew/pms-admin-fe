@@ -18,7 +18,8 @@ export type RoleKey =
   | "FLTM"
   | "OTA"
   | "OM"
-  | "SA";
+  | "SA"
+  | "Admin"
 
 interface UseRoleGuardReturn {
   hasAccess: boolean;
@@ -35,7 +36,6 @@ interface UseRoleGuardReturn {
   notAllowed: (roles: RoleKey[]) => boolean;
 }
 
-// Extend the default session types
 declare module "next-auth" {
   interface User {
     profile: UserProfile;
@@ -66,22 +66,17 @@ export const useRoleGuard = (): UseRoleGuardReturn => {
   const checkAccess = useMemo(
     () =>
       (requiredRoles: RoleKey[]): boolean => {
-        // Handle loading state
         if (status === "loading" || isLoading) return false;
 
-        // Handle unauthenticated state
         if (!session) {
           router.push("/auth/signin");
           return false;
         }
 
-        // Super admin or power user has access to everything
-        // if (hasRole("SA") || isPowerUser && ) return true;
-        if (activeRole?.key === "SA" || isPowerUser) return true;
+        if (activeRole === "SA" || isPowerUser) return true;
 
-        // Check if user has any of the required roles
         const hasRequiredRole = requiredRoles.some(
-          (role) => activeRole?.key === role
+          (role) => activeRole === role
         );
         if (!hasRequiredRole) {
           router.push("/unauthorized");
@@ -105,29 +100,26 @@ export const useRoleGuard = (): UseRoleGuardReturn => {
   const protectRoutesFromRoles = useMemo(
     () =>
       (restrictedRoles: RoleKey[]): boolean => {
-        // Handle loading state
         if (status === "loading" || isLoading) return false;
 
-        // Handle unauthenticated state
         if (!session || !user || !userRoles.length) return false;
 
-        // Check if user has any of the restricted roles
-        return !restrictedRoles.some((role) => activeRole?.key === role);
+        return !restrictedRoles.some((role) => activeRole === role);
       },
     [status, isLoading, session, user, userRoles, activeRole]
   );
 
   const canView = useMemo(
     () => (roles: RoleKey[]) => {
-      if (activeRole?.key === "SA" || isPowerUser) return true;
-      return roles.some((role) => activeRole?.key === role);
+      if (activeRole === "SA" || isPowerUser) return true;
+      return roles.some((role) => activeRole === role);
     },
     [activeRole, isPowerUser]
   );
 
   const notAllowed = useMemo(
     () => (roles: RoleKey[]) => {
-      if (roles.some((role) => activeRole?.key === role)) {
+      if (roles.some((role) => activeRole === role)) {
         return false;
       }
       return true;
@@ -146,7 +138,7 @@ export const useRoleGuard = (): UseRoleGuardReturn => {
     isAuthenticated: status === "authenticated",
     isLoading: status === "loading" || isLoading,
     isInitialized: status !== "loading" && !isLoading,
-    activeRole: activeRole?.key ?? null,
+    activeRole: activeRole ?? null,
     isPowerUser,
   };
 };

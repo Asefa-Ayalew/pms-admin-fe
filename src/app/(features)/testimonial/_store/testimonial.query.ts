@@ -125,12 +125,35 @@ export const testimonialQuery = appApi.injectEndpoints({
         }
       },
     }),
-    archiveTestimonial: builder.mutation<Testimonial, any>({
-      query: (data: any) => ({
-        url: `${TESTIMONIAL_ENDPOINT.archive}/${data?.id}`,
+    getArchivedTestimonials: builder.query<Collection<Testimonial>, CollectionQuery>({
+      query: (data: CollectionQuery) => ({
+        url: TESTIMONIAL_ENDPOINT.listArchivedTestimonials,
+        method: "GET",
+        params: collectionQueryBuilder(data),
+      }),
+      async onQueryStarted(param, { queryFulfilled }) {
+        try {
+          const { data } = await queryFulfilled;
+          if (data) {
+            testimonialCollection = param;
+          }
+        } catch (error: unknown) {
+          notifications.show({
+            title: "Error",
+            message:
+              (error as AppError)?.error?.data?.message || "Error, try again",
+            color: "red",
+          });
+        }
+      },
+    }),
+    archiveTestimonial: builder.mutation<Testimonial, { id: string; remark: string }>({
+      query: (data) => ({
+        url: `${TESTIMONIAL_ENDPOINT.archive}`,
+        data,
         method: "DELETE",
       }),
-
+      invalidatesTags: ["Testimonials"],
       async onQueryStarted(param, { dispatch, queryFulfilled }) {
         try {
           const { data } = await queryFulfilled;
@@ -171,17 +194,16 @@ export const testimonialQuery = appApi.injectEndpoints({
         } catch (error: unknown) {
           notifications.show({
             title: "Error",
-            message: (error as AppError)?.error?.data?.message
-              ? (error as AppError)?.error?.data?.message
-              : "Error try again",
+            message:
+              (error as AppError)?.error?.data?.message || "Error, try again",
             color: "red",
           });
         }
       },
     }),
-    restoreTestimonial: builder.mutation<Testimonial, CollectionQuery>({
-      query: (data: CollectionQuery) => ({
-        url: `${TESTIMONIAL_ENDPOINT.restore}/${data?.id}`,
+    restoreTestimonial: builder.mutation<Testimonial, string>({
+      query: (id: string) => ({
+        url: `${TESTIMONIAL_ENDPOINT.restore}/${id}`,
         method: "POST",
       }),
 
@@ -191,44 +213,28 @@ export const testimonialQuery = appApi.injectEndpoints({
           if (data) {
             dispatch(
               testimonialQuery.util.updateQueryData(
-                "getTestimonials",
+                "getArchivedTestimonials",
                 testimonialCollection,
                 (draft) => {
-                  if (data) {
-                    draft.data = draft?.data?.map((testimonial) => {
-                      if (testimonial.id === data.id)
-                        return { ...data, archivedDate: null };
-                      else {
-                        return testimonial;
-                      }
-                    });
-                  }
-                }
-              )
-            );
-            dispatch(
-              testimonialQuery.util.updateQueryData(
-                "getTestimonial",
-                param,
-                (draft) => {
-                  if (data) {
-                    draft.archivedAt = new Date();
+                  if (draft?.data) {
+                    draft.data = draft.data.filter(
+                      (testimonial) => testimonial.id !== data.id
+                    );
                   }
                 }
               )
             );
             notifications.show({
               title: "Success",
-              message: "Successfully restored",
+              message: "Successfully Restored",
               color: "green",
             });
           }
         } catch (error: unknown) {
           notifications.show({
             title: "Error",
-            message: (error as AppError)?.error?.data?.message
-              ? (error as AppError)?.error?.data?.message
-              : "Error try again",
+            message:
+              (error as AppError)?.error?.data?.message || "Error, try again",
             color: "red",
           });
         }
@@ -246,7 +252,7 @@ export const testimonialQuery = appApi.injectEndpoints({
           if (data) {
             dispatch(
               testimonialQuery.util.updateQueryData(
-                "getTestimonials",
+                "getArchivedTestimonials",
                 testimonialCollection,
                 (draft) => {
                   if (data) {
@@ -258,9 +264,10 @@ export const testimonialQuery = appApi.injectEndpoints({
                 }
               )
             );
+
             notifications.show({
               title: "Success",
-              message: "Successfully deleted",
+              message: "Successfully Deleted",
               color: "green",
             });
           }
@@ -281,6 +288,7 @@ export const testimonialQuery = appApi.injectEndpoints({
 
 export const {
   useLazyGetTestimonialQuery,
+  useLazyGetArchivedTestimonialsQuery,
   useArchiveTestimonialMutation,
   useGetTestimonialQuery,
   useRestoreTestimonialMutation,

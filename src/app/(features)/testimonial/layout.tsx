@@ -2,13 +2,14 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { CollectionQuery } from "@/src/shared/models/collection.model";
 import SharedTable from "@/src/shared/table/shared-table";
-import type { TableConfig } from "@/src/shared/models/table-config";
+import type { Actions, TableConfig } from "@/src/shared/models/table-config";
 import { Modal, Divider } from "@mantine/core";
 import { IconEye, IconPencil, IconTrash } from "@tabler/icons-react";
 import ReasonForm from "./_component/reason-form.component";
 import { Testimonial } from "@/src/models/testimonial.model";
 import TestimonialForm from "./_component/testimonial-form.component";
-import { useLazyGetTestimonialsQuery } from "./_store/testimonial.query";
+import { useDeleteTestimonialMutation, useLazyGetArchivedTestimonialsQuery, useLazyGetTestimonialsQuery, useRestoreTestimonialMutation } from "./_store/testimonial.query";
+import { modals } from '@mantine/modals';
 
 const defaultTestimonial: Testimonial = {
   id: "",
@@ -20,21 +21,21 @@ const defaultTestimonial: Testimonial = {
 
 const modalConfig = {
   new: {
-    title: "New Feed Back",
+    title: "New Testimonial",
     size: "60%",
     component: (onClose: () => void) => (
       <TestimonialForm editMode="new" onClose={onClose} />
     ),
   },
   edit: {
-    title: "Edit Feed Back",
+    title: "Edit Testimonial",
     size: "60%",
     component: (onClose: () => void, testimonial: Testimonial) => (
       <TestimonialForm editMode="detail" onClose={onClose} data={testimonial} />
     ),
   },
   view: {
-    title: "View Feed Back",
+    title: "View Testimonial",
     size: "60%",
     component: (onClose: () => void, testimonial: Testimonial) => (
       <TestimonialForm editMode="view" onClose={onClose} data={testimonial} />
@@ -57,7 +58,7 @@ export default function TestimonialsComponent() {
     search: "",
   });
 
-  const [modals, setModals] = useState<
+  const [modal, setModals] = useState<
     Record<keyof typeof modalConfig, boolean>
   >({
     new: false,
@@ -68,11 +69,25 @@ export default function TestimonialsComponent() {
 
   const [selectedTestimonial, setSelectedTestimonial] =
     useState<Testimonial>(defaultTestimonial);
+  const [view, setView] = useState<"list" | "archived">("list");
+
   const [getTestimonials, { data: testimonials, isLoading }] = useLazyGetTestimonialsQuery();
+  const [getArchivedTestimonials, { data: archivedTestimonials, isLoading: archivedTestimonialsLoading }] = useLazyGetArchivedTestimonialsQuery()
+
+  const [restoreTestimonial] = useRestoreTestimonialMutation();
+  const [deleteTestimonial] = useDeleteTestimonialMutation();
 
   useEffect(() => {
-    getTestimonials(collectionQuery);
-  }, [collectionQuery, getTestimonials]);
+    if (view === 'list') {
+      getTestimonials(collectionQuery);
+    }
+  }, [collectionQuery, getTestimonials, view]);
+
+  useEffect(() => {
+    if (view === 'archived') {
+      getArchivedTestimonials(collectionQuery)
+    }
+  }, [collectionQuery, getArchivedTestimonials, view])
 
   const openModal = (type: keyof typeof modalConfig, testimonial?: Testimonial) => {
     setSelectedTestimonial(testimonial ?? defaultTestimonial);
@@ -84,9 +99,49 @@ export default function TestimonialsComponent() {
     setSelectedTestimonial(defaultTestimonial);
   };
 
-  const handleAction = (action: { key: string }, testimonial?: Testimonial) => {
-    openModal(action.key as keyof typeof modalConfig, testimonial);
-  };
+    const handleAction = (action: { key: string }, testimonial?: Testimonial) => {
+      openModal(action.key as keyof typeof modalConfig, testimonial);
+
+      if (action.key === 'delete' && testimonial?.id) {
+        handleDelete(testimonial);
+      } else if (action.key === 'restore') {
+        restoreTestimonial(String(testimonial?.id));
+      }
+    };
+
+    const handleDelete = (testimonial: Testimonial) => {
+      modals.openConfirmModal({
+        title: (
+          <span className="text-lg font-semibold text-gray-800">
+            Confirm Deletion
+          </span>
+        ),
+        centered: true,
+        children: (
+          <div className="space-y-2 text-sm text-gray-700">
+            <p>
+              Are you sure you want to delete this <span className="text-red-600 font-medium">document type</span>? This action
+              <strong> cannot </strong> be undone.
+            </p>
+            <p>
+              <strong className="text-gray-800">Message:</strong>{' '}
+              <span className="text-gray-700">{testimonial?.message}</span>
+            </p>
+          </div>
+        ),
+        labels: {
+          confirm: 'Delete',
+          cancel: 'Cancel',
+        },
+        confirmProps: {
+          color: 'red',
+          variant: 'filled',
+        },
+        onConfirm: () => {
+          deleteTestimonial(String(testimonial?.id));
+        },
+      });
+    };
 
   const handlePaginationChange = useCallback(
     (pageIndex: number, pageSize: number) => {
@@ -121,7 +176,7 @@ export default function TestimonialsComponent() {
       return (
         <Modal
           key={key}
-          opened={modals[key]}
+          opened={modal[key]}
           onClose={() => closeModal(key)}
           title={title}
           centered
@@ -132,6 +187,38 @@ export default function TestimonialsComponent() {
         </Modal>
       );
     });
+
+      const listActions: Actions[] = [
+    {
+      label: "Edit",
+      key: "edit",
+      icon: IconPencil,
+      size: "16",
+    },
+    {
+      label: "Archive",
+      key: "archive",
+      icon: IconTrash,
+      size: "16",
+      type: "danger",
+    },
+  ];
+
+  const archivedActions: Actions[] = [
+    {
+      label: "Restore",
+      key: "restore",
+      icon: IconPencil,
+      size: "16",
+    },
+    {
+      label: "Delete",
+      key: "delete",
+      icon: IconTrash,
+      size: "16",
+      type: "danger",
+    },
+  ];
 
   const config = useMemo<TableConfig<Testimonial>>(
     () => ({
@@ -163,34 +250,30 @@ export default function TestimonialsComponent() {
         },
       ],
       actions: [
-        { label: "Show More", icon: IconEye, size: "16", key: "view" },
         {
-          label: "Edit",
-          key: "edit",
-          icon: IconPencil,
+          label: "Show More",
+          key: "view",
+          icon: IconEye,
           size: "16",
-          divider: true,
         },
-        {
-          label: "Delete",
-          key: "archive",
-          icon: IconTrash,
-          size: "16",
-          type: "danger",
-        },
+        ...(view === "list" ? listActions : archivedActions),
       ],
+
     }),
-    []
+    [view]
   );
 
   return (
     <SharedTable
-      title={"Feed Backs"}
+      title={view === 'list' ? "Testimonials" : 'Archived Testimonials'}
       config={config}
-      items={testimonials?.data}
-      total={testimonials?.data?.length}
-      itemsLoading={isLoading}
+      items={view === 'list' ? testimonials?.data : archivedTestimonials?.data}
+      total={view === 'list' ? testimonials?.total : archivedTestimonials?.total}
+      itemsLoading={view === 'list' ? isLoading : archivedTestimonialsLoading}
       collectionQuery={collectionQuery}
+      view={view}
+      showNewButton={view === 'list'}
+      onViewChange={setView}
       onPaginationChange={handlePaginationChange}
       onSearch={onSearch}
       onOrder={onOrder}

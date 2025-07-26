@@ -8,16 +8,16 @@ import { collectionQueryBuilder } from "@/src/shared/utitlity/collection-query-b
 import { appApi } from "@/src/store/app.api";
 import { notifications } from "@mantine/notifications";
 import { AppError } from "@/src/models/app-interfaces";
-import { FeedBack } from "@/src/models/feed-back.model";
+import { Feedback } from "@/src/models/feed-back.model";
 import { FEEDBACK_ENDPOINT } from "./feed-back.endpoint";
 
-let feedBackCollection: CollectionQuery;
+let feedbackCollection: CollectionQuery;
 let tenantCollection: CollectionQuery;
 let userCollection: CollectionQuery;
 
-export const feedBackQuery = appApi.injectEndpoints({
+export const feedbackQuery = appApi.injectEndpoints({
   endpoints: (builder) => ({
-    getFeedBack: builder.query<FeedBack, CollectionQuery>({
+    getFeedback: builder.query<Feedback, CollectionQuery>({
       query: (data: CollectionQuery) => ({
         url: `${FEEDBACK_ENDPOINT.detail}/${data?.id}`,
         method: "GET",
@@ -25,18 +25,18 @@ export const feedBackQuery = appApi.injectEndpoints({
       }),
     }),
 
-    getFeedBacks: builder.query<Collection<FeedBack>, CollectionQuery>({
+    getFeedbacks: builder.query<Collection<Feedback>, CollectionQuery>({
       query: (data: CollectionQuery) => ({
         url: FEEDBACK_ENDPOINT.list,
         method: "GET",
         params: collectionQueryBuilder(data),
       }),
-      providesTags: ["FeedBacks"],
+      providesTags: ["Feedbacks"],
       async onQueryStarted(param, { queryFulfilled }) {
         try {
           const { data } = await queryFulfilled;
           if (data) {
-            feedBackCollection = param;
+            feedbackCollection = param;
           }
         } catch (error: unknown) {
           notifications.show({
@@ -49,21 +49,21 @@ export const feedBackQuery = appApi.injectEndpoints({
       },
     }),
 
-    createFeedBack: builder.mutation<FeedBack, FeedBack>({
-      query: (newData: FeedBack) => ({
+    createFeedback: builder.mutation<Feedback, Feedback>({
+      query: (newData: Feedback) => ({
         url: `${FEEDBACK_ENDPOINT.create}`,
         method: "POST",
         data: newData,
       }),
-      invalidatesTags: ["FeedBacks"],
+      invalidatesTags: ["Feedbacks"],
       async onQueryStarted(param, { dispatch, queryFulfilled }) {
         try {
           const { data } = await queryFulfilled;
           if (data) {
             dispatch(
-              feedBackQuery.util.updateQueryData(
-                "getFeedBacks",
-                feedBackCollection,
+              feedbackQuery.util.updateQueryData(
+                "getFeedbacks",
+                feedbackCollection,
                 (draft) => {
                   if (data) {
                     draft.data.push(data);
@@ -84,21 +84,21 @@ export const feedBackQuery = appApi.injectEndpoints({
       },
     }),
 
-    updateFeedBack: builder.mutation<FeedBack, FeedBack>({
-      query: (newData: FeedBack) => ({
+    updateFeedback: builder.mutation<Feedback, Feedback>({
+      query: (newData: Feedback) => ({
         url: `${FEEDBACK_ENDPOINT.update}`,
         method: "PUT",
         data: newData,
       }),
-      invalidatesTags: ["FeedBacks"],
+      invalidatesTags: ["Feedbacks"],
       async onQueryStarted(param, { dispatch, queryFulfilled }) {
         try {
           const { data } = await queryFulfilled;
           if (data) {
             dispatch(
-              feedBackQuery.util.updateQueryData(
-                "getFeedBacks",
-                feedBackCollection,
+              feedbackQuery.util.updateQueryData(
+                "getFeedbacks",
+                feedbackCollection,
                 (draft) => {
                   if (data) {
                     draft.data = draft?.data?.map((item) =>
@@ -125,26 +125,49 @@ export const feedBackQuery = appApi.injectEndpoints({
         }
       },
     }),
-    archiveFeedBack: builder.mutation<FeedBack, any>({
-      query: (data: any) => ({
-        url: `${FEEDBACK_ENDPOINT.archive}/${data?.id}`,
+ getArchivedFeedbacks: builder.query<Collection<Feedback>, CollectionQuery>({
+      query: (data: CollectionQuery) => ({
+        url: FEEDBACK_ENDPOINT.listArchivedFeedbacks,
+        method: "GET",
+        params: collectionQueryBuilder(data),
+      }),
+      async onQueryStarted(param, { queryFulfilled }) {
+        try {
+          const { data } = await queryFulfilled;
+          if (data) {
+            feedbackCollection = param;
+          }
+        } catch (error: unknown) {
+          notifications.show({
+            title: "Error",
+            message:
+              (error as AppError)?.error?.data?.message || "Error, try again",
+            color: "red",
+          });
+        }
+      },
+    }),
+    archiveFeedback: builder.mutation<Feedback, { id: string; remark: string }>({
+      query: (data) => ({
+        url: `${FEEDBACK_ENDPOINT.archive}`,
+        data,
         method: "DELETE",
       }),
-
+      invalidatesTags: ["Feedbacks"],
       async onQueryStarted(param, { dispatch, queryFulfilled }) {
         try {
           const { data } = await queryFulfilled;
           if (data) {
             dispatch(
-              feedBackQuery.util.updateQueryData(
-                "getFeedBacks",
-                feedBackCollection,
+              feedbackQuery.util.updateQueryData(
+                "getFeedbacks",
+                feedbackCollection,
                 (draft) => {
                   if (data) {
-                    draft.data = draft?.data?.map((feedBack) => {
-                      if (feedBack.id === data.id) return data;
+                    draft.data = draft?.data?.map((feedback) => {
+                      if (feedback.id === data.id) return data;
                       else {
-                        return feedBack;
+                        return feedback;
                       }
                     });
                   }
@@ -152,8 +175,8 @@ export const feedBackQuery = appApi.injectEndpoints({
               )
             );
             dispatch(
-              feedBackQuery.util.updateQueryData(
-                "getFeedBack",
+              feedbackQuery.util.updateQueryData(
+                "getFeedback",
                 param,
                 (draft) => {
                   if (data) {
@@ -171,17 +194,16 @@ export const feedBackQuery = appApi.injectEndpoints({
         } catch (error: unknown) {
           notifications.show({
             title: "Error",
-            message: (error as AppError)?.error?.data?.message
-              ? (error as AppError)?.error?.data?.message
-              : "Error try again",
+            message:
+              (error as AppError)?.error?.data?.message || "Error, try again",
             color: "red",
           });
         }
       },
     }),
-    restoreFeedBack: builder.mutation<FeedBack, CollectionQuery>({
-      query: (data: CollectionQuery) => ({
-        url: `${FEEDBACK_ENDPOINT.restore}/${data?.id}`,
+    restoreFeedback: builder.mutation<Feedback, string>({
+      query: (id: string) => ({
+        url: `${FEEDBACK_ENDPOINT.restore}/${id}`,
         method: "POST",
       }),
 
@@ -190,64 +212,48 @@ export const feedBackQuery = appApi.injectEndpoints({
           const { data } = await queryFulfilled;
           if (data) {
             dispatch(
-              feedBackQuery.util.updateQueryData(
-                "getFeedBacks",
-                feedBackCollection,
+              feedbackQuery.util.updateQueryData(
+                "getArchivedFeedbacks",
+                feedbackCollection,
                 (draft) => {
-                  if (data) {
-                    draft.data = draft?.data?.map((feedBack) => {
-                      if (feedBack.id === data.id)
-                        return { ...data, archivedDate: null };
-                      else {
-                        return feedBack;
-                      }
-                    });
-                  }
-                }
-              )
-            );
-            dispatch(
-              feedBackQuery.util.updateQueryData(
-                "getFeedBack",
-                param,
-                (draft) => {
-                  if (data) {
-                    draft.archivedAt = new Date();
+                  if (draft?.data) {
+                    draft.data = draft.data.filter(
+                      (feedback) => feedback.id !== data.id
+                    );
                   }
                 }
               )
             );
             notifications.show({
               title: "Success",
-              message: "Successfully restored",
+              message: "Successfully Restored",
               color: "green",
             });
           }
         } catch (error: unknown) {
           notifications.show({
             title: "Error",
-            message: (error as AppError)?.error?.data?.message
-              ? (error as AppError)?.error?.data?.message
-              : "Error try again",
+            message:
+              (error as AppError)?.error?.data?.message || "Error, try again",
             color: "red",
           });
         }
       },
     }),
-    deleteFeedBack: builder.mutation<boolean, string>({
+    deleteFeedback: builder.mutation<boolean, string>({
       query: (id: string) => ({
         url: `${FEEDBACK_ENDPOINT.delete}/${id}`,
         method: "DELETE",
       }),
-      invalidatesTags: ["FeedBacks"],
+      invalidatesTags: ["Feedbacks"],
       async onQueryStarted(id, { dispatch, queryFulfilled }) {
         try {
           const { data } = await queryFulfilled;
           if (data) {
             dispatch(
-              feedBackQuery.util.updateQueryData(
-                "getFeedBacks",
-                feedBackCollection,
+              feedbackQuery.util.updateQueryData(
+                "getArchivedFeedbacks",
+                feedbackCollection,
                 (draft) => {
                   if (data) {
                     draft.data = draft?.data?.filter(
@@ -258,9 +264,10 @@ export const feedBackQuery = appApi.injectEndpoints({
                 }
               )
             );
+
             notifications.show({
               title: "Success",
-              message: "Successfully deleted",
+              message: "Successfully Deleted",
               color: "green",
             });
           }
@@ -280,12 +287,13 @@ export const feedBackQuery = appApi.injectEndpoints({
 });
 
 export const {
-  useLazyGetFeedBackQuery,
-  useArchiveFeedBackMutation,
-  useGetFeedBackQuery,
-  useRestoreFeedBackMutation,
-  useLazyGetFeedBacksQuery,
-  useCreateFeedBackMutation,
-  useUpdateFeedBackMutation,
-  useDeleteFeedBackMutation,
-} = feedBackQuery;
+  useLazyGetFeedbackQuery,
+  useLazyGetArchivedFeedbacksQuery,
+  useArchiveFeedbackMutation,
+  useGetFeedbackQuery,
+  useRestoreFeedbackMutation,
+  useLazyGetFeedbacksQuery,
+  useCreateFeedbackMutation,
+  useUpdateFeedbackMutation,
+  useDeleteFeedbackMutation,
+} = feedbackQuery;

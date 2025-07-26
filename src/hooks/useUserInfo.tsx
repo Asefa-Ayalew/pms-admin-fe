@@ -1,6 +1,5 @@
 import { useGetUserInfoQuery } from "@/src/app/(features)/user/_store/user.query";
 import {
-  ActiveRole,
   Organization,
   UserProfile,
   UserRole,
@@ -15,14 +14,14 @@ interface UseUserInfoReturn {
   error: unknown;
   organization: Organization | null;
   userRoles: UserRole[];
-  activeRole: ActiveRole | null;
+  activeRole: string | null;
   isAdmin: boolean;
   isPowerUser: boolean;
   hasRole: (roleKey: string) => boolean;
 }
 
 interface JwtPayload {
-  activeRole: ActiveRole;
+  activeRole: string;
   [key: string]: unknown;
 }
 

@@ -127,12 +127,35 @@ export const faqQuery = appApi.injectEndpoints({
         }
       },
     }),
-    archiveFAQ: builder.mutation<FAQ, any>({
-      query: (data: any) => ({
-        url: `${FAQ_ENDPOINT.archive}/${data?.id}`,
+     getArchivedFAQs: builder.query<Collection<FAQ>, CollectionQuery>({
+      query: (data: CollectionQuery) => ({
+        url: FAQ_ENDPOINT.listArchivedFAQs,
+        method: "GET",
+        params: collectionQueryBuilder(data),
+      }),
+      async onQueryStarted(param, { queryFulfilled }) {
+        try {
+          const { data } = await queryFulfilled;
+          if (data) {
+            faqCollection = param;
+          }
+        } catch (error: unknown) {
+          notifications.show({
+            title: "Error",
+            message:
+              (error as AppError)?.error?.data?.message || "Error, try again",
+            color: "red",
+          });
+        }
+      },
+    }),
+    archiveFAQ: builder.mutation<FAQ, { id: string; remark: string }>({
+      query: (data) => ({
+        url: `${FAQ_ENDPOINT.archive}`,
+        data,
         method: "DELETE",
       }),
-
+      invalidatesTags: ["FAQs"],
       async onQueryStarted(param, { dispatch, queryFulfilled }) {
         try {
           const { data } = await queryFulfilled;
@@ -143,10 +166,10 @@ export const faqQuery = appApi.injectEndpoints({
                 faqCollection,
                 (draft) => {
                   if (data) {
-                    draft.data = draft?.data?.map((faq) => {
-                      if (faq.id === data.id) return data;
+                    draft.data = draft?.data?.map((FAQ) => {
+                      if (FAQ.id === data.id) return data;
                       else {
-                        return faq;
+                        return FAQ;
                       }
                     });
                   }
@@ -154,11 +177,15 @@ export const faqQuery = appApi.injectEndpoints({
               )
             );
             dispatch(
-              faqQuery.util.updateQueryData("getFAQ", param, (draft) => {
-                if (data) {
-                  draft.archivedAt = data?.archivedAt;
+              faqQuery.util.updateQueryData(
+                "getFAQ",
+                param,
+                (draft) => {
+                  if (data) {
+                    draft.archivedAt = data?.archivedAt;
+                  }
                 }
-              })
+              )
             );
             notifications.show({
               title: "Success",
@@ -170,15 +197,15 @@ export const faqQuery = appApi.injectEndpoints({
           notifications.show({
             title: "Error",
             message:
-              (error as AppError)?.error?.data?.message ?? "Error, try again",
+              (error as AppError)?.error?.data?.message || "Error, try again",
             color: "red",
           });
         }
       },
     }),
-    restoreFAQ: builder.mutation<FAQ, CollectionQuery>({
-      query: (data: CollectionQuery) => ({
-        url: `${FAQ_ENDPOINT.restore}/${data?.id}`,
+    restoreFAQ: builder.mutation<FAQ, string>({
+      query: (id: string) => ({
+        url: `${FAQ_ENDPOINT.restore}/${id}`,
         method: "POST",
       }),
 
@@ -188,31 +215,20 @@ export const faqQuery = appApi.injectEndpoints({
           if (data) {
             dispatch(
               faqQuery.util.updateQueryData(
-                "getFAQs",
+                "getArchivedFAQs",
                 faqCollection,
                 (draft) => {
-                  if (data) {
-                    draft.data = draft?.data?.map((faq) => {
-                      if (faq.id === data.id)
-                        return { ...data, archivedDate: null };
-                      else {
-                        return faq;
-                      }
-                    });
+                  if (draft?.data) {
+                    draft.data = draft.data.filter(
+                      (FAQ) => FAQ.id !== data.id
+                    );
                   }
                 }
               )
             );
-            dispatch(
-              faqQuery.util.updateQueryData("getFAQ", param, (draft) => {
-                if (data) {
-                  draft.archivedAt = "";
-                }
-              })
-            );
             notifications.show({
               title: "Success",
-              message: "Successfully restored",
+              message: "Successfully Restored",
               color: "green",
             });
           }
@@ -238,7 +254,7 @@ export const faqQuery = appApi.injectEndpoints({
           if (data) {
             dispatch(
               faqQuery.util.updateQueryData(
-                "getFAQs",
+                "getArchivedFAQs",
                 faqCollection,
                 (draft) => {
                   if (data) {
@@ -253,7 +269,7 @@ export const faqQuery = appApi.injectEndpoints({
 
             notifications.show({
               title: "Success",
-              message: "Successfully deleted",
+              message: "Successfully Deleted",
               color: "green",
             });
           }
@@ -274,6 +290,7 @@ export const faqQuery = appApi.injectEndpoints({
 
 export const {
   useLazyGetFAQQuery,
+  useLazyGetArchivedFAQsQuery,
   useArchiveFAQMutation,
   useGetFAQQuery,
   useRestoreFAQMutation,

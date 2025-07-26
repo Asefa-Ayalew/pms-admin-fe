@@ -30,23 +30,19 @@ export async function refreshAccessToken(token: Partial<Token> | JWT) {
       }
     );
 
-    console.log("refresh token response", response);
     if (!response.ok) {
       if (response.status === 401) {
-        console.warn("Refresh token expired");
         return { ...token, error: "RefreshTokenExpired" };
       }
       throw new Error("Failed to refresh token");
     }
 
     const data = await response.json();
-    console.log("refresh token data", data);
     const returnData = {
       ...token,
       accessToken: data.token,
       refreshToken: data.refreshToken,
     };
-    console.log("returnData", returnData);
     return returnData;
   } catch (error: unknown) {
     if (error instanceof Error) {
@@ -59,7 +55,6 @@ export async function refreshAccessToken(token: Partial<Token> | JWT) {
   }
 }
 
-// Function to update token with new user data
 export async function updateTokenWithUserData(session: {
   accessToken: string;
   refreshToken: string;
@@ -71,7 +66,6 @@ export async function updateTokenWithUserData(session: {
       refreshToken: session.refreshToken,
     };
   } catch (error) {
-    console.error("Error updating token with user data:", error);
     return session;
   }
 }
@@ -83,9 +77,7 @@ export const authConfig: NextAuthConfig = {
   trustHost: true,
 
   callbacks: {
-    // Handle JWT callback
     async jwt({ token, user, trigger, session }) {
-      // First login
       if (user) {
         const authUser = user as unknown as AuthResponse;
         return {
@@ -94,29 +86,22 @@ export const authConfig: NextAuthConfig = {
         };
       }
 
-      // Handle user profile update
       if (trigger === "update") {
         return updateTokenWithUserData(session);
       }
 
-      // Handle token expiration
-      console.log('accessToken', token?.accessToken)
       if (token.accessToken) {
         const currentTimestamp = Math.floor(Date.now() / 1000);
         const decodedToken = decodeJwt(token.accessToken as string);
 
         const tokenExpiry = decodedToken.exp;
         const bufferTime = 30;
-        console.log('curresnttiemstamp', currentTimestamp);
-        console.log('decodedToken', decodedToken);
-        console.log('tokenExpiry', tokenExpiry);
 
         if (tokenExpiry && currentTimestamp >= tokenExpiry - bufferTime) {
-          console.log("Token needs refresh, requesting new token...");
+           await handleLogout();
           const newToken = await refreshAccessToken(token as Partial<Token>);
-          console.log('newToken', newToken);
+         console.log('newToken', newToken);
           if ("error" in newToken && newToken.error) {
-            console.log("Token refresh failed:", newToken.error);
             return { ...token };
           }
 
@@ -127,10 +112,8 @@ export const authConfig: NextAuthConfig = {
       return token;
     },
 
-    // Handle session callback
     async session({ session, token }) {
       if (token.error) {
-        // Handle session error with proper error message
         throw new Error(token.error as string);
       }
 
@@ -142,13 +125,11 @@ export const authConfig: NextAuthConfig = {
     },
 
     authorized: async ({ auth, request }) => {
-      // Allow public paths
       const pathname = request.nextUrl?.pathname;
       if (pathname?.startsWith("/auth/")) {
         return true;
       }
 
-      // Require auth for all other paths
       return !!auth;
     },
   },
@@ -190,18 +171,14 @@ export const authConfig: NextAuthConfig = {
             throw new Error("Login failed");
           }
 
-          console.log("accessToken", accessToken);
-          console.log("refreshToken", refreshToken);
-          console.log("profile", profile);
 
-          // Map the returned data to match the User type
           return {
-            id: profile.id, // Assuming `profile` contains an `id` field
-            name: profile.name, // Assuming `profile` contains a `name` field
-            email: profile.email, // Assuming `profile` contains an `email` field
+            id: profile.id, 
+            name: profile.name,
+            email: profile.email,
             accessToken,
             refreshToken,
-            profile, // Include the profile object to match the User type
+            profile, 
           };
         } catch (error: unknown) {
           console.error(

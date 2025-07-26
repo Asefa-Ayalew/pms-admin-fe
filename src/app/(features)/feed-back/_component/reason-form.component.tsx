@@ -4,8 +4,8 @@ import { Box, Button, Group, Textarea } from "@mantine/core";
 import { IconArchive } from "@tabler/icons-react";
 import { FieldErrors, SubmitHandler, useForm } from "react-hook-form";
 import z from "zod";
-import { useArchiveFeedBackMutation } from "../_store/feed-back.query";
 import { notifications } from "@mantine/notifications";
+import { useArchiveFeedbackMutation } from "../_store/feed-back.query";
 
 interface Props {
   type?: "feedBack";
@@ -25,7 +25,7 @@ const defaultValue: FormSchema = {
 };
 export default function ReasonForm(props: Props) {
   const [archiveFeedBack, { isLoading: archivingFeedBack }] =
-    useArchiveFeedBackMutation();
+    useArchiveFeedbackMutation();
   const {
     register,
     handleSubmit,
