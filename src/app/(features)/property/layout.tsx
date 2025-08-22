@@ -4,6 +4,7 @@ import { useParams, usePathname } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import {
+  useLazyGetArchivedPropertiesQuery,
   useLazyGetPropertiesQuery,
   useLazyGetPropertyQuery,
 } from "./_store/property.query";
@@ -14,12 +15,10 @@ import {
 import { Property } from "@/src/models/property.model";
 import { formatDate } from "@/src/shared/utils/date-utils";
 import EntityList, {
-  CustomToolbarAction,
   TableBehaviorConfig,
   TableStyleConfig,
 } from "@/src/shared/entity/entity-list";
 import { CollectionQuery } from "@/src/shared/models/collection.model";
-import { IconRefreshDot, IconUserPlus } from "@tabler/icons-react";
 
 export default function PropertyListPage({
   children,
@@ -33,15 +32,28 @@ export default function PropertyListPage({
     top: 20,
     orderBy: [{ field: "createdAt", direction: "desc" }],
   });
+  const [view, setView] = useState<"list" | "archived">("list");
 
-  const [getProperties, { data: propertyData, isLoading, error }] =
+  const [getProperties, { data: properties, isLoading, error }] =
     useLazyGetPropertiesQuery();
 
   const [getProperty, { data: selectedProperty }] = useLazyGetPropertyQuery();
+  const [
+    getArchivedProperties,
+    { data: archivedProperties, isLoading: archivedPropertiesLoading },
+  ] = useLazyGetArchivedPropertiesQuery();
 
   useEffect(() => {
-    getProperties(collectionQuery);
-  }, [getProperties, collectionQuery]);
+    if (view === "list") {
+      getProperties(collectionQuery);
+    }
+  }, [collectionQuery, getProperties, view]);
+
+  useEffect(() => {
+    if (view === "archived") {
+      getArchivedProperties(collectionQuery);
+    }
+  }, [collectionQuery, getArchivedProperties, view]);
 
   useEffect(() => {
     if (params?.id) {
@@ -52,24 +64,14 @@ export default function PropertyListPage({
   const config = useMemo<EntityConfig<Property>>(
     () => ({
       primaryColumn: {
-        key: "description",
-        name: "Description",
-        render: (data: Property) => `${data?.description ?? ""}`,
+        key: "size",
+        name: "Size",
+        render: (data: Property) => `${data?.size ?? ""}`,
       },
       rootUrl: "/property",
       detailUrl: "detail",
       identity: "id",
       visibleColumn: [
-        {
-          key: "description",
-          name: "Description",
-          render: (data: Property) => {
-            const words = data?.description?.split(" ") ?? [];
-            return words.length > 3
-              ? `${words.slice(0, 3).join(" ")}...`
-              : (data?.description ?? "");
-          },
-        },
         {
           key: "size",
           name: "Size",
@@ -132,6 +134,13 @@ export default function PropertyListPage({
       orderBy: [order],
     }));
   };
+  const onRefresh = useCallback(() => {
+    if (view === "list") {
+      getProperties(collectionQuery);
+    } else {
+      getArchivedProperties(collectionQuery);
+    }
+  }, [collectionQuery, getProperties, getArchivedProperties, view]);
 
   const styleConfig: TableStyleConfig = useMemo(
     () => ({
@@ -168,11 +177,19 @@ export default function PropertyListPage({
     []
   );
 
+  const total = view === "list" ? properties?.total : archivedProperties?.total;
+  const items = view === "list" ? properties?.data : archivedProperties?.data;
+  const itemsLoading = view === "list" ? isLoading : archivedPropertiesLoading;
+
   return (
     <EntityList
-      title="Properties"
+      title={view === "list" ? "Properties" : "Archived Properties"}
+      items={items ?? []}
+      total={total ?? 0}
+      itemsLoading={itemsLoading ?? false}
       detailTitle={selectedProperty?.description}
       config={config}
+      view={view}
       viewMode={viewMode}
       detail={children}
       defaultPageSize={20}
@@ -180,12 +197,10 @@ export default function PropertyListPage({
       _showTotal={true}
       tableKey="properties"
       dataLoadMode="static"
-      items={propertyData?.data || []}
-      total={propertyData?.count || 0}
-      itemsLoading={isLoading}
+      showNewButton={false}
+      onViewChange={setView}
       styleConfig={styleConfig}
       behaviorConfig={behaviorConfig}
-      showNewButton={false}
       errorText={
         error ? "Failed to load properties. Please try again." : undefined
       }
@@ -194,6 +209,7 @@ export default function PropertyListPage({
       onSearch={onSearch}
       onOrder={onOrder}
       onFilterChange={onFilter}
+      onRefresh={onRefresh}
     />
   );
 }

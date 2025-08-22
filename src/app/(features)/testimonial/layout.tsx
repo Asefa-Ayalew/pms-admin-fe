@@ -243,11 +243,6 @@ export default function TestimonialsComponent() {
           name: "Rating",
           render: (data: Testimonial) => `${data?.rating ?? ""}`,
         },
-        {
-          key: "message",
-          name: "Message",
-          render: (data: Testimonial) => `${data?.message ?? ""}`,
-        },
       ],
       actions: [
         {

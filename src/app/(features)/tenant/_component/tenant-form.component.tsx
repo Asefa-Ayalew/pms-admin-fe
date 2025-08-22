@@ -4,18 +4,8 @@ import { Tenant } from "@/src/models/tenant.model";
 import { NewTenantSchema } from "@/src/schemas/new-tenant-schema";
 import countryJson from "@/src/shared/constants/country-json.json";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  Box,
-  Button,
-  LoadingOverlay,
-  Select,
-  TextInput,
-} from "@mantine/core";
-import {
-  IconDeviceFloppy,
-  IconPlus,
-  IconTrash,
-} from "@tabler/icons-react";
+import { Box, Button, LoadingOverlay, Select, TextInput } from "@mantine/core";
+import { IconDeviceFloppy, IconPlus, IconTrash } from "@tabler/icons-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { FieldErrors, SubmitHandler, useForm } from "react-hook-form";
@@ -64,7 +54,8 @@ export default function TenantForm(props: Props) {
 
   const [countryCode, setCountryCode] = useState<string>("+251");
 
-  const [___, tenant] = useLazyGetTenantQuery();
+  const [getTenant, { data: tenant, isLoading: detailLoading }] =
+    useLazyGetTenantQuery();
   const [createTenant, createResponse] = useCreateTenantMutation();
   const [updateTenant, updateResponse] = useUpdateTenantMutation();
   const [archiveTenant, __] = useArchiveTenantMutation();
@@ -156,28 +147,33 @@ export default function TenantForm(props: Props) {
     newSecondaryEmails[index] = value;
     setSecondaryEmails(newSecondaryEmails);
   };
+
   useEffect(() => {
-    if (editMode === "detail") {
-      if (tenant?.data) {
-        reset({
-          ...tenant.data,
-          secondaryPhoneNumbers: tenant.data.secondaryPhoneNumbers || [],
-          secondaryEmails: tenant.data.secondaryEmails || [],
-        });
-        setSecondaryPhoneNumbers(tenant.data.secondaryPhoneNumbers || []);
-        setSecondaryEmails(tenant.data.secondaryEmails || []);
-      } else {
-        reset(defaultValue);
-      }
+    getTenant({ id: String(params.id) });
+  }, [getTenant, params.id]);
+  console.log("tenant", tenant);
+  console.log("editMode", editMode);
+
+  useEffect(() => {
+    if (tenant) {
+      reset({
+        ...tenant,
+        secondaryPhoneNumbers: tenant.secondaryPhoneNumbers || [],
+        secondaryEmails: tenant.secondaryEmails || [],
+      });
+      setSecondaryPhoneNumbers(tenant.secondaryPhoneNumbers || []);
+      setSecondaryEmails(tenant.secondaryEmails || []);
+    } else {
+      reset(defaultValue);
     }
-  }, [params?.id, editMode]);
+  }, [params?.id]);
 
   return (
     <>
       <div className="w-full p-4 flex-col space-y-4">
         <div className="w-full flex justify-center relative">
           <LoadingOverlay
-            visible={tenant?.isLoading || tenant?.isFetching}
+            visible={detailLoading}
             zIndex={1000}
             overlayProps={{ radius: "sm", blur: 2 }}
           />
@@ -327,10 +323,7 @@ export default function TenantForm(props: Props) {
 
                 {/* Buttons */}
                 <div className="w-full flex space-x-4 justify-end mt-4">
-                  <Button
-                    variant="default"
-                    onClick={() => reset(defaultValue)}
-                  >
+                  <Button variant="default" onClick={() => reset(defaultValue)}>
                     Reset
                   </Button>
                   <Button
@@ -351,7 +344,6 @@ export default function TenantForm(props: Props) {
           </form>
         </div>
       </div>
-
     </>
   );
 }

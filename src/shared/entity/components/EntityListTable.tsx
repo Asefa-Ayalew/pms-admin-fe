@@ -275,7 +275,7 @@ export const EntityListTable = <T extends Record<string, any>>({
               {viewMode === "detail" && (
                 <th
                   scope="col"
-                  className="py-3 bg-primary-500 text-white px-2 w-1/12"
+                  className="py-3 bg-primary-500 text-white px-2 w-8%"
                 >
                   <span className="sr-only">Actions</span>
                 </th>

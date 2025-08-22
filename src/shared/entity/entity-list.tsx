@@ -24,16 +24,16 @@ import {
   Pagination,
   Paper,
   Select,
-  TextInput,
   Tooltip,
 } from "@mantine/core";
 import {
+  IconArchive,
   IconChevronRight,
   IconEdit,
   IconFilter,
+  IconList,
   IconPlus,
   IconRefresh,
-  IconSearch,
   IconTrash,
 } from "@tabler/icons-react";
 import {
@@ -154,8 +154,10 @@ interface Props<T extends Record<string, any>> {
   newButtonText?: string;
   showExport?: boolean;
   showArchived?: boolean;
+  showArchivedList?: boolean;
   showSelector?: boolean;
   parentStyle?: string;
+  view?: "list" | "archived";
   styleConfig?: TableStyleConfig;
   behaviorConfig?: TableBehaviorConfig;
 
@@ -187,6 +189,7 @@ interface Props<T extends Record<string, any>> {
   handleNewModal?: () => void;
   hideToolbar?: boolean;
   onRefresh?: () => void;
+  onViewChange?: (view: "list" | "archived") => void;
 
   renderCustomTopToolbar?: () => ReactNode;
   renderCustomBottomToolbar?: () => ReactNode;
@@ -304,8 +307,9 @@ export default function EntityList<T extends Record<string, any>>(
 
     showNewButton = true,
     // showNewModal = false,
-    newButtonText = "New",
+    newButtonText,
     showArchived = false,
+    showArchivedList = true,
     header,
     parentStyle,
     showExport,
@@ -380,6 +384,8 @@ export default function EntityList<T extends Record<string, any>>(
       compactPagination: true,
       paginationSize: "xs",
     },
+    view = "list",
+    onViewChange,
   } = props;
 
   const router = useRouter();
@@ -608,10 +614,19 @@ export default function EntityList<T extends Record<string, any>>(
           ? `${config.rootUrl}/${config.detailUrl}/${identity}`
           : `${config.rootUrl}/${identity}`;
 
-        router.push(detailPath);
+        let finalPath = detailPath;
+
+        if (showArchivedList) {
+          const archivedParam = view === "archived" ? "true" : "false";
+          finalPath = `${detailPath}?archived=${archivedParam}`;
+        }
+        console.log("Navigating to detail:", finalPath);
+        console.log("showArchivedList:", showArchivedList);
+        
+        router.push(finalPath);
       }
     },
-    [externalDetail, config, router]
+    [externalDetail, config, router, showArchivedList, view]
   );
 
   const handleShowArchived = useCallback(
@@ -925,14 +940,6 @@ export default function EntityList<T extends Record<string, any>>(
         behaviorConfig.positionToolbarAlertBanner || "top",
 
       renderTopToolbarCustomActions: () => {
-        if (
-          sortedTopActions.length === 0 &&
-          !renderCustomLeftToolbar &&
-          !renderCustomTopToolbar
-        ) {
-          return null;
-        }
-
         if (renderCustomTopToolbar) {
           return (
             <div style={{ fontSize: "16px" }}>{renderCustomTopToolbar()}</div>
@@ -976,13 +983,13 @@ export default function EntityList<T extends Record<string, any>>(
                 </Tooltip>
 
                 {showNewButton && (
-                  <Tooltip label={`Create new ${newButtonText}`}>
+                  <Tooltip label={`Create new ${newButtonText ?? "item"}`}>
                     <ActionIcon
                       color={styleConfig.primaryColor || "blue"}
                       variant="filled"
                       component={Link}
                       href={`${setting?.rootUrl}/new`}
-                      aria-label={`Create new ${newButtonText}`}
+                      aria-label={`Create new ${newButtonText ?? "item"}`}
                     >
                       <IconPlus size={18} />
                     </ActionIcon>
@@ -993,6 +1000,44 @@ export default function EntityList<T extends Record<string, any>>(
           </Group>
         );
       },
+
+      renderToolbarInternalActions: () => (
+        <>
+          {showArchivedList && (
+            <Group gap="xs" wrap="nowrap" ml="xs">
+              <Tooltip label="Show List" withArrow position="bottom">
+                <ActionIcon
+                  variant="light"
+                  size="lg"
+                  onClick={() => onViewChange?.("list")}
+                  className={`transition-colors rounded-md ${
+                    view === "list"
+                      ? "bg-blue-600 text-white"
+                      : "bg-gray-100 text-gray-500 hover:bg-blue-100 hover:text-blue-600"
+                  }`}
+                >
+                  <IconList size={20} />
+                </ActionIcon>
+              </Tooltip>
+
+              <Tooltip label="Show Archived" withArrow position="bottom">
+                <ActionIcon
+                  variant="light"
+                  size="lg"
+                  onClick={() => onViewChange?.("archived")}
+                  className={`transition-colors rounded-md ${
+                    view === "archived"
+                      ? "bg-blue-600 text-white"
+                      : "bg-gray-100 text-gray-500 hover:bg-blue-100 hover:text-blue-600"
+                  }`}
+                >
+                  <IconArchive size={20} />
+                </ActionIcon>
+              </Tooltip>
+            </Group>
+          )}
+        </>
+      ),
 
       renderBottomToolbarCustomActions: () => {
         if (viewMode === "detail") {
@@ -1072,57 +1117,63 @@ export default function EntityList<T extends Record<string, any>>(
       renderRowActions: ({ row }: { row: MRT_Row<T> }) => {
         if (setting?.hasActions) {
           return (
-            <Group gap="xs" wrap="nowrap">
-              {setting.actions?.map((action) => {
-                const IconComponent =
-                  action.icon === "IconEdit"
-                    ? IconEdit
-                    : action.icon === "IconTrash"
-                      ? IconTrash
-                      : null;
+            <div className="group relative items-center">
+              <Group gap="xs" wrap="nowrap">
+                {setting.actions?.map((action) => {
+                  const IconComponent =
+                    action.icon === "IconEdit"
+                      ? IconEdit
+                      : action.icon === "IconTrash"
+                        ? IconTrash
+                        : null;
 
-                return (
+                  return (
+                    <ActionIcon
+                      key={action.key}
+                      size="sm"
+                      variant="light"
+                      color={
+                        action.type === "danger"
+                          ? styleConfig.dangerColor || "red"
+                          : styleConfig.primaryColor || "blue"
+                      }
+                      onClick={() => handleAction(action, row.original)}
+                      aria-label={action.label}
+                    >
+                      {IconComponent && <IconComponent size={16} />}
+                    </ActionIcon>
+                  );
+                })}
+
+                {setting?.showDetail && (
                   <ActionIcon
-                    key={action.key}
                     size="sm"
                     variant="light"
-                    color={
-                      action.type === "danger"
-                        ? styleConfig.dangerColor || "red"
-                        : styleConfig.primaryColor || "blue"
-                    }
-                    onClick={() => handleAction(action, row.original)}
-                    aria-label={action.label}
+                    color={styleConfig.primaryColor || "blue"}
+                    onClick={() => handleDetail(row.original)}
+                    aria-label="View details"
+                    className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 items-center"
                   >
-                    {IconComponent && <IconComponent size={16} />}
+                    <IconChevronRight />
                   </ActionIcon>
-                );
-              })}
-
-              {setting?.showDetail && (
-                <ActionIcon
-                  size="sm"
-                  variant="light"
-                  color={styleConfig.primaryColor || "blue"}
-                  onClick={() => handleDetail(row.original)}
-                  aria-label="View details"
-                >
-                  <IconChevronRight />
-                </ActionIcon>
-              )}
-            </Group>
+                )}
+              </Group>
+            </div>
           );
         } else if (setting?.showDetail) {
           return (
-            <ActionIcon
-              size="sm"
-              variant="light"
-              color={styleConfig.primaryColor || "blue"}
-              onClick={() => handleDetail(row.original)}
-              aria-label="View details"
-            >
-              <IconChevronRight />
-            </ActionIcon>
+            <div className="group relative items-center">
+              <ActionIcon
+                size="sm"
+                variant="light"
+                color={styleConfig.primaryColor || "blue"}
+                onClick={() => handleDetail(row.original)}
+                aria-label="View details"
+                className="opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+              >
+                <IconChevronRight />
+              </ActionIcon>
+            </div>
           );
         }
 
@@ -1198,7 +1249,6 @@ export default function EntityList<T extends Record<string, any>>(
           : undefined,
         style: {
           cursor: setting?.showDetail ? "pointer" : "default",
-          color: "#334155",
           fontSize: "14px",
           paddingTop: "10px",
           paddingBottom: "10px",

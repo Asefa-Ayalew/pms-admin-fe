@@ -127,146 +127,162 @@ export const tenantQuery = appApi.injectEndpoints({
         }
       },
     }),
-    archiveTenant: builder.mutation<Tenant, any>({
-      query: (data: any) => ({
-        url: `${TENANT_ENDPOINT.archive}/${data?.id}`,
-        method: "DELETE",
-      }),
-
-      async onQueryStarted(param, { dispatch, queryFulfilled }) {
-        try {
-          const { data } = await queryFulfilled;
-          if (data) {
-            dispatch(
-              tenantQuery.util.updateQueryData(
-                "getTenants",
-                tenantCollection,
-                (draft) => {
-                  if (data) {
-                    draft.data = draft?.data?.map((tenant) => {
-                      if (tenant.id === data.id) return data;
-                      else {
-                        return tenant;
-                      }
-                    });
-                  }
-                }
-              )
-            );
-            dispatch(
-              tenantQuery.util.updateQueryData("getTenant", param, (draft) => {
-                if (data) {
-                  draft.archivedAt = data?.archivedAt;
-                }
-              })
-            );
+     getArchivedTenants: builder.query<Collection<Tenant>, CollectionQuery>({
+        query: (data: CollectionQuery) => ({
+          url: TENANT_ENDPOINT.listArchivedTenants,
+          method: "GET",
+          params: collectionQueryBuilder(data),
+        }),
+        async onQueryStarted(param, { queryFulfilled }) {
+          try {
+            const { data } = await queryFulfilled;
+            if (data) {
+              tenantCollection = param;
+            }
+          } catch (error: unknown) {
             notifications.show({
-              title: "Success",
-              message: "Successfully archived",
-              color: "green",
+              title: "Error",
+              message:
+                (error as AppError)?.error?.data?.message || "Error, try again",
+              color: "red",
             });
           }
-        } catch (error: unknown) {
-          notifications.show({
-            title: "Error",
-            message:
-              (error as AppError)?.error?.data?.message ?? "Error, try again",
-            color: "red",
-          });
-        }
-      },
-    }),
-    restoreTenant: builder.mutation<Tenant, CollectionQuery>({
-      query: (data: CollectionQuery) => ({
-        url: `${TENANT_ENDPOINT.restore}/${data?.id}`,
-        method: "POST",
+        },
       }),
-
-      async onQueryStarted(param, { dispatch, queryFulfilled }) {
-        try {
-          const { data } = await queryFulfilled;
-          if (data) {
-            dispatch(
-              tenantQuery.util.updateQueryData(
-                "getTenants",
-                tenantCollection,
-                (draft) => {
-                  if (data) {
-                    draft.data = draft?.data?.map((tenant) => {
-                      if (tenant.id === data.id)
-                        return { ...data, archivedDate: null };
-                      else {
-                        return tenant;
-                      }
-                    });
+      archiveTenant: builder.mutation<Tenant, { id: string; remark: string }>({
+        query: (data) => ({
+          url: `${TENANT_ENDPOINT.archive}`,
+          data,
+          method: "DELETE",
+        }),
+        invalidatesTags: ["Tenants"],
+        async onQueryStarted(param, { dispatch, queryFulfilled }) {
+          try {
+            const { data } = await queryFulfilled;
+            if (data) {
+              dispatch(
+                tenantQuery.util.updateQueryData(
+                  "getTenants",
+                  tenantCollection,
+                  (draft) => {
+                    if (data) {
+                      draft.data = draft?.data?.map((tenant) => {
+                        if (tenant.id === data.id) return data;
+                        else {
+                          return tenant;
+                        }
+                      });
+                    }
                   }
-                }
-              )
-            );
-            dispatch(
-              tenantQuery.util.updateQueryData("getTenant", param, (draft) => {
-                if (data) {
-                  draft.archivedAt = "";
-                }
-              })
-            );
+                )
+              );
+              dispatch(
+                tenantQuery.util.updateQueryData(
+                  "getTenant",
+                  param,
+                  (draft) => {
+                    if (data) {
+                      draft.archivedAt = data?.archivedAt;
+                    }
+                  }
+                )
+              );
+              notifications.show({
+                title: "Success",
+                message: "Successfully archived",
+                color: "green",
+              });
+            }
+          } catch (error: unknown) {
             notifications.show({
-              title: "Success",
-              message: "Successfully restored",
-              color: "green",
+              title: "Error",
+              message:
+                (error as AppError)?.error?.data?.message || "Error, try again",
+              color: "red",
             });
           }
-        } catch (error: unknown) {
-          notifications.show({
-            title: "Error",
-            message:
-              (error as AppError)?.error?.data?.message || "Error, try again",
-            color: "red",
-          });
-        }
-      },
-    }),
-    deleteTenant: builder.mutation<boolean, string>({
-      query: (id: string) => ({
-        url: `${TENANT_ENDPOINT.delete}/${id}`,
-        method: "DELETE",
+        },
       }),
-      invalidatesTags: ["Tenants"],
-      async onQueryStarted(id, { dispatch, queryFulfilled }) {
-        try {
-          const { data } = await queryFulfilled;
-          if (data) {
-            dispatch(
-              tenantQuery.util.updateQueryData(
-                "getTenants",
-                tenantCollection,
-                (draft) => {
-                  if (data) {
-                    draft.data = draft?.data?.filter(
-                      (item) => item.id?.toString() !== id
-                    );
-                    draft.count -= 1;
+      restoreTenant: builder.mutation<Tenant, string>({
+        query: (id: string) => ({
+          url: `${TENANT_ENDPOINT.restore}/${id}`,
+          method: "POST",
+        }),
+  
+        async onQueryStarted(param, { dispatch, queryFulfilled }) {
+          try {
+            const { data } = await queryFulfilled;
+            if (data) {
+              dispatch(
+                tenantQuery.util.updateQueryData(
+                  "getArchivedTenants",
+                  tenantCollection,
+                  (draft) => {
+                    if (draft?.data) {
+                      draft.data = draft.data.filter(
+                        (tenant) => tenant.id !== data.id
+                      );
+                    }
                   }
-                }
-              )
-            );
-
+                )
+              );
+              notifications.show({
+                title: "Success",
+                message: "Successfully Restored",
+                color: "green",
+              });
+            }
+          } catch (error: unknown) {
             notifications.show({
-              title: "Success",
-              message: "Successfully deleted",
-              color: "green",
+              title: "Error",
+              message:
+                (error as AppError)?.error?.data?.message || "Error, try again",
+              color: "red",
             });
           }
-        } catch (error: unknown) {
-          notifications.show({
-            title: "Error",
-            message:
-              (error as AppError)?.error?.data?.message || "Error, try again",
-            color: "red",
-          });
-        }
-      },
-    }),
+        },
+      }),
+      deleteTenant: builder.mutation<boolean, string>({
+        query: (id: string) => ({
+          url: `${TENANT_ENDPOINT.delete}/${id}`,
+          method: "DELETE",
+        }),
+        invalidatesTags: ["Tenants"],
+        async onQueryStarted(id, { dispatch, queryFulfilled }) {
+          try {
+            const { data } = await queryFulfilled;
+            if (data) {
+              dispatch(
+                tenantQuery.util.updateQueryData(
+                  "getArchivedTenants",
+                  tenantCollection,
+                  (draft) => {
+                    if (data) {
+                      draft.data = draft?.data?.filter(
+                        (item) => item.id?.toString() !== id
+                      );
+                      draft.count -= 1;
+                    }
+                  }
+                )
+              );
+  
+              notifications.show({
+                title: "Success",
+                message: "Successfully Deleted",
+                color: "green",
+              });
+            }
+          } catch (error: unknown) {
+            notifications.show({
+              title: "Error",
+              message:
+                (error as AppError)?.error?.data?.message || "Error, try again",
+              color: "red",
+            });
+          }
+        },
+      }),
   }),
 
   overrideExisting: true,
@@ -274,6 +290,7 @@ export const tenantQuery = appApi.injectEndpoints({
 
 export const {
   useLazyGetTenantQuery,
+  useLazyGetArchivedTenantsQuery,
   useArchiveTenantMutation,
   useGetTenantQuery,
   useRestoreTenantMutation,

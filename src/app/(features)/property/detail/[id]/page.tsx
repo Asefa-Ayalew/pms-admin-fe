@@ -5,8 +5,12 @@ import PropertyGalleryComponent from "../../_components/property-gallery.compone
 import ServicesComponent from "../../_components/services-component";
 import { IconDoor, IconInfoCircle, IconPhoto, IconSettings } from "@tabler/icons-react";
 import RoomsComponent from "../../_components/rooms-component";
+import { useParams, useSearchParams } from "next/navigation";
 
 export default function PropertyDetailPage() {
+  const params = useParams();
+   const searchParams = useSearchParams();
+  const archived = searchParams.get("archived") === "true";
   return (
     <Tabs defaultValue="detail" className="w-full">
       <Tabs.List className="gap-8 my-2">

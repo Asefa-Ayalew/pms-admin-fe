@@ -9,7 +9,11 @@ import {
   EntityConfig,
   entityViewMode,
 } from "@/src/shared/models/entity-list-config";
-import { useLazyGetTenantQuery, useLazyGetTenantsQuery } from "./_store/tenant.query";
+import {
+  useLazyGetArchivedTenantsQuery,
+  useLazyGetTenantQuery,
+  useLazyGetTenantsQuery,
+} from "./_store/tenant.query";
 import SharedEntity from "@/src/shared/entity-table/shared-table";
 
 export default function TenantListPage({
@@ -20,26 +24,33 @@ export default function TenantListPage({
   const params = useParams();
 
   const [viewMode, setViewMode] = useState<entityViewMode>("list");
+  const [view, setView] = useState<"list" | "archived">("list");
   const [collectionQuery, setCollectionQuery] = useState<CollectionQuery>({
     skip: 0,
     top: 20,
     orderBy: [{ field: "createdAt", direction: "desc" }],
   });
 
+  const [getTenants, { data: tenants, isLoading: isLoadingTenants, error }] =
+    useLazyGetTenantsQuery();
   const [
-    getTenants,
-    { data: tenants, isLoading: isLoadingTenants, error },
-  ] = useLazyGetTenantsQuery();
+    getArchivedTenants,
+    { data: archivedTenants, isLoading: archivedTenantsLoading },
+  ] = useLazyGetArchivedTenantsQuery();
 
-  const [getTenant, { data: tenant }] = useLazyGetTenantQuery()
-
-  useEffect(() => {
-    getTenants(collectionQuery);
-  }, [collectionQuery, getTenants]);
+  const [getTenant, { data: tenant }] = useLazyGetTenantQuery();
 
   useEffect(() => {
-    getTenant({ id: String(params.id) })
-  }, [getTenants, params.id])
+    if (view === "list") {
+      getTenants(collectionQuery);
+    } else {
+      getArchivedTenants(collectionQuery);
+    }
+  }, [collectionQuery, getTenants, view]);
+
+  useEffect(() => {
+    getTenant({ id: String(params.id) });
+  }, [getTenant, params.id]);
 
   useEffect(() => {
     setViewMode(params?.id !== undefined ? "detail" : "list");
@@ -88,12 +99,11 @@ export default function TenantListPage({
       ],
       showDetail: true,
       routing: (data) => {
-        return `detail/${data?.id}`
-      }
+        return `detail/${data?.id}`;
+      },
     }),
     []
   );
-
 
   const handlePaginationChange = useCallback(
     (pageIndex: number, pageSize: number) => {
@@ -127,18 +137,22 @@ export default function TenantListPage({
     }));
   };
 
-
   return (
     <SharedEntity
-      title="Tenants"
-      detailTitle={params.id !== 'new' ? (tenant?.name ?? 'Tenant Detail') : 'New Tenant'}
+      title={view === "list" ? "Tenants" : "Archived Tenants"}
+      detailTitle={
+        params.id !== "new" ? (tenant?.name ?? "Tenant Detail") : "New Tenant"
+      }
       config={config}
       detail={children}
-      defaultPageSize={20}
-      pageSizeOptions={[10, 20, 30, 50, 100]}
-      items={tenants?.data || []}
-      total={tenants?.count || 0}
-      itemsLoading={isLoadingTenants}
+      items={view === "list" ? tenants?.data : archivedTenants?.data}
+      total={view === "list" ? tenants?.data?.length : archivedTenants?.data?.length}
+      itemsLoading={view === "list" ? isLoadingTenants : archivedTenantsLoading}
+      collectionQuery={collectionQuery}
+      view={view}
+      viewMode={viewMode}
+      showNewButton={view === "list"}
+      onViewChange={setView}
       onPaginationChange={handlePaginationChange}
       onSearch={onSearch}
       onOrder={onOrder}

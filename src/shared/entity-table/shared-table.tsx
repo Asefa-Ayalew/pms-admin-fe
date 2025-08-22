@@ -14,6 +14,8 @@ import {
   Divider,
   Collapse,
   Checkbox,
+  Tooltip,
+  Paper,
 } from "@mantine/core";
 import {
   IconPlus,
@@ -24,12 +26,25 @@ import {
   IconChevronUp,
   IconChevronRight,
   IconFilter,
+  IconList,
+  IconArchive,
 } from "@tabler/icons-react";
-import React, { type ReactElement, ReactNode, useCallback, useEffect, useState } from "react";
+import React, {
+  type ReactElement,
+  ReactNode,
+  useCallback,
+  useEffect,
+  useState,
+} from "react";
 import type { CollectionQuery, Filter } from "../models/collection.model";
-import { Column, EntityConfig, entityViewMode } from "../models/entity-list-config";
+import {
+  Column,
+  EntityConfig,
+  entityViewMode,
+} from "../models/entity-list-config";
 import { useParams, useRouter } from "next/navigation";
 import clsx from "clsx";
+import { HeaderComponent } from "./components/header.component";
 
 type FunctionType = (args: any) => void;
 
@@ -46,6 +61,8 @@ interface Props<T> {
   defaultPageSize?: number;
   pageSizeOptions?: number[];
   viewMode?: entityViewMode;
+  view?: "list" | "archived";
+  onViewChange: (view: "list" | "archived") => void;
 
   onPaginationChange?: (skip: number, top: number) => void;
   onSearch?: FunctionType;
@@ -72,6 +89,8 @@ export default function SharedEntity<T extends { id?: string | number }>(
     defaultPageSize = 20,
     pageSizeOptions = [10, 20, 30, 50, 100],
     viewMode: externalViewMode,
+    view = "list",
+    onViewChange,
     onPaginationChange,
     onSearch,
     onFilterChange,
@@ -91,6 +110,7 @@ export default function SharedEntity<T extends { id?: string | number }>(
   const [viewMode, setViewMode] = useState<entityViewMode>(
     externalViewMode || "list"
   );
+  const [fullScreen, setFullScreen] = useState<boolean>(false);
 
   const pageSize = collectionQuery?.top || defaultPageSize;
   const currentPage = Math.floor((collectionQuery?.skip || 0) / pageSize) + 1;
@@ -196,34 +216,42 @@ export default function SharedEntity<T extends { id?: string | number }>(
     }
   }, [params?.id, externalViewMode]);
 
-  console.log('viewMode', viewMode);
-  console.log(config.primaryColumn?.["name"])
   return (
-    <>
-      <Card shadow="sm" padding="sm" className="mb-2 text-gray-900">
-        <Title order={3}>{title || config?.name}</Title>
-      </Card>
-      <div className="flex space-x-4">
-        <div className={viewMode === 'detail' ? 'w-1/4' : 'w-full'}>
-
+    <div className="flex space-x-4">
+      <div className={viewMode === "detail" ? "w-1/3" : "w-full"}>
+        <Card shadow="sm" padding="sm" className="mb-2 text-gray-900">
+          <Title order={3}>{title || config?.name}</Title>
+        </Card>
+        <div>
           <Card shadow="sm" padding="sm" className="w-full">
-            <div className="flex items-center justify-between mb-4">
+            <div
+              className={`flex items-center mb-4 ${
+                showNewButton ? "justify-between" : "justify-end"
+              }`}
+            >
+              {" "}
               {showNewButton && (
                 <Button
                   leftSection={<IconPlus size={16} />}
-                  onClick={() => handleAction?.({ key: "new" })}
+                  onClick={() => {
+                    if (viewMode === "list") {
+                      router.push(`${config?.rootUrl}/new`);
+                    } else {
+                      handleAction?.({ key: "new" });
+                    }
+                  }}
+                  className="mr-8"
                 >
                   New
                 </Button>
               )}
-
               <div className="flex items-center gap-2">
                 <TextInput
                   placeholder="Search..."
                   leftSection={<IconSearch size={16} />}
                   onChange={handleSearchChange}
                   defaultValue={collectionQuery?.search || ""}
-                  style={{ width: viewMode === 'detail' ? 250 : 500 }}
+                  style={{ width: viewMode === "detail" ? 200 : 500 }}
                 />
 
                 {availableFilters.length > 0 && (
@@ -260,6 +288,37 @@ export default function SharedEntity<T extends { id?: string | number }>(
                     </Menu.Dropdown>
                   </Menu>
                 )}
+                <div className="flex gap-2">
+                  <Tooltip label="Show List" withArrow position="bottom">
+                    <ActionIcon
+                      variant="light"
+                      size="lg"
+                      onClick={() => onViewChange("list")}
+                      className={`transition-colors rounded-md ${
+                        view === "list"
+                          ? "bg-blue-600 text-white"
+                          : "bg-gray-100 text-gray-500 hover:bg-blue-100 hover:text-blue-600"
+                      }`}
+                    >
+                      <IconList size={20} />
+                    </ActionIcon>
+                  </Tooltip>
+
+                  <Tooltip label="Show Archived" withArrow position="bottom">
+                    <ActionIcon
+                      variant="light"
+                      size="lg"
+                      onClick={() => onViewChange("archived")}
+                      className={`transition-colors rounded-md ${
+                        view === "archived"
+                          ? "bg-blue-600 text-white"
+                          : "bg-gray-100 text-gray-500 hover:bg-blue-100 hover:text-blue-600"
+                      }`}
+                    >
+                      <IconArchive size={20} />
+                    </ActionIcon>
+                  </Tooltip>
+                </div>
               </div>
             </div>
 
@@ -269,11 +328,16 @@ export default function SharedEntity<T extends { id?: string | number }>(
                   {renderExpandedContent && (
                     <Table.Th style={{ width: 40 }} className="bg-gray-200" />
                   )}
-                  {viewMode === 'detail' ? (
+                  {viewMode === "detail" ? (
                     <Table.Th
-                      style={{ cursor: config.primaryColumn?.hideSort ? "default" : "pointer" }}
+                      style={{
+                        cursor: config.primaryColumn?.hideSort
+                          ? "default"
+                          : "pointer",
+                      }}
                       onClick={() => {
-                        if (!config.primaryColumn?.hideSort) handleSorting(config.primaryColumn.key as string);
+                        if (!config.primaryColumn?.hideSort)
+                          handleSorting(config.primaryColumn.key as string);
                       }}
                       className="bg-gray-200"
                     >
@@ -284,7 +348,9 @@ export default function SharedEntity<T extends { id?: string | number }>(
                             <IconChevronUp
                               size={14}
                               color={
-                                getSortDirection(config.primaryColumn.key as string) === "asc"
+                                getSortDirection(
+                                  config.primaryColumn.key as string
+                                ) === "asc"
                                   ? "#1f2937"
                                   : "#9ca3af"
                               }
@@ -292,7 +358,9 @@ export default function SharedEntity<T extends { id?: string | number }>(
                             <IconChevronDown
                               size={14}
                               color={
-                                getSortDirection(config.primaryColumn.key as string) === "desc"
+                                getSortDirection(
+                                  config.primaryColumn.key as string
+                                ) === "desc"
                                   ? "#1f2937"
                                   : "#9ca3af"
                               }
@@ -306,7 +374,9 @@ export default function SharedEntity<T extends { id?: string | number }>(
                       {config.visibleColumn.map((col, idx) => (
                         <Table.Th
                           key={idx}
-                          style={{ cursor: col.hideSort ? "default" : "pointer" }}
+                          style={{
+                            cursor: col.hideSort ? "default" : "pointer",
+                          }}
                           onClick={() => {
                             if (!col.hideSort) handleSorting(col.key as string);
                           }}
@@ -319,7 +389,8 @@ export default function SharedEntity<T extends { id?: string | number }>(
                                 <IconChevronUp
                                   size={14}
                                   color={
-                                    getSortDirection(col.key as string) === "asc"
+                                    getSortDirection(col.key as string) ===
+                                    "asc"
                                       ? "#1f2937"
                                       : "#9ca3af"
                                   }
@@ -327,7 +398,8 @@ export default function SharedEntity<T extends { id?: string | number }>(
                                 <IconChevronDown
                                   size={14}
                                   color={
-                                    getSortDirection(col.key as string) === "desc"
+                                    getSortDirection(col.key as string) ===
+                                    "desc"
                                       ? "#1f2937"
                                       : "#9ca3af"
                                   }
@@ -339,7 +411,9 @@ export default function SharedEntity<T extends { id?: string | number }>(
                       ))}
                     </>
                   )}
-                  {(config.hasActions || config.actions || config?.showDetail) && (
+                  {(config.hasActions ||
+                    config.actions ||
+                    config?.showDetail) && (
                     <Table.Th style={{ width: 50 }} className="bg-gray-200" />
                   )}
                 </Table.Tr>
@@ -404,10 +478,14 @@ export default function SharedEntity<T extends { id?: string | number }>(
                             </ActionIcon>
                           </Table.Td>
                         )}
-                        {viewMode === 'detail' ? (
+                        {viewMode === "detail" ? (
                           <Table.Td
-                            className={`${config.primaryColumn?.tdClass ?? ""} ${params.id === item?.id ? "bg-gray-300" : ""
-                              }`}>
+                            className={`${config.primaryColumn?.tdClass ?? ""} ${
+                              params.id === item?.id
+                                ? "bg-blue-600 text-white"
+                                : ""
+                            }`}
+                          >
                             {config.primaryColumn?.render
                               ? config.primaryColumn.render(item)
                               : renderCell(item, config.primaryColumn)}
@@ -416,65 +494,85 @@ export default function SharedEntity<T extends { id?: string | number }>(
                           <>
                             {config.visibleColumn.map((col, colIdx) => (
                               <Table.Td key={colIdx} className={col.tdClass}>
-                                {col.render ? col.render(item) : renderCell(item, col)}
+                                {col.render
+                                  ? col.render(item)
+                                  : renderCell(item, col)}
                               </Table.Td>
-                            ))}</>
+                            ))}
+                          </>
                         )}
                         {(config.hasActions || config?.actions) && (
-                          <Table.Td className="w-20">
-                            <Menu
-                              shadow="md"
-                              width={160}
-                              position="bottom-end"
-                              withArrow
-                            >
-                              <Menu.Target>
-                                <ActionIcon variant="subtle" size="sm">
-                                  <IconDotsVertical size={16} />
-                                </ActionIcon>
-                              </Menu.Target>
-                              <Menu.Dropdown>
-                                {config.actions?.map((action, index) => (
-                                  <React.Fragment key={index}>
-                                    <Menu.Item
-                                      color={
-                                        action.type === "danger" ? "red" : undefined
-                                      }
-                                      onClick={() =>
-                                        handleAction?.({ key: action.key }, item)
-                                      }
-                                      leftSection={
-                                        action.icon &&
-                                        React.createElement(action.icon, {
-                                          size: action?.size ?? 16,
-                                        })
-                                      }
-                                    >
-                                      {action.label}
-                                    </Menu.Item>
-                                    {action.divider && <Divider />}
-                                  </React.Fragment>
-                                ))}
-                              </Menu.Dropdown>
-                            </Menu>
+                          <Table.Td className="w-[5%]">
+                            <div className="invisible group-hover:visible flex justify-center">
+                              <Menu
+                                shadow="md"
+                                width={160}
+                                position="bottom-end"
+                                withArrow
+                              >
+                                <Menu.Target>
+                                  <ActionIcon variant="subtle" size="sm">
+                                    <IconDotsVertical size={16} />
+                                  </ActionIcon>
+                                </Menu.Target>
+                                <Menu.Dropdown>
+                                  {config.actions?.map((action, index) => (
+                                    <React.Fragment key={index}>
+                                      <Menu.Item
+                                        color={
+                                          action.type === "danger"
+                                            ? "red"
+                                            : undefined
+                                        }
+                                        onClick={() =>
+                                          handleAction?.(
+                                            { key: action.key },
+                                            item
+                                          )
+                                        }
+                                        leftSection={
+                                          action.icon &&
+                                          React.createElement(action.icon, {
+                                            size: action?.size ?? 16,
+                                          })
+                                        }
+                                      >
+                                        {action.label}
+                                      </Menu.Item>
+                                      {action.divider && <Divider />}
+                                    </React.Fragment>
+                                  ))}
+                                </Menu.Dropdown>
+                              </Menu>
+                            </div>
                           </Table.Td>
                         )}
-                        {config.showDetail && (
-                          <Table.Td className="w-10%">
 
+                        {config.showDetail && (
+                          <Table.Td
+                            className={`${config.primaryColumn?.tdClass ?? ""} ${
+                              params.id === item?.id
+                                ? "bg-blue-600 text-white w-[5%]"
+                                : "w-[5%]"
+                            }`}
+                          >
+                            {" "}
                             <Button
                               onClick={() => handleDetail(item)}
-                              className={clsx(
-                                config.primaryColumn?.tdClass,
-                                "invisible group-hover:visible p-0 h-auto",
-                                {
-                                  "bg-gray-300": params.id === item?.id,
-                                  "bg-transparent hover:bg-transparent": !(params.id === item?.id),
-                                }
-                              )}
+                              className="invisible group-hover:visible p-0"
                               variant="subtle"
                               size="compact-xs"
-                              leftSection={<IconChevronRight size={16} />} ></Button>
+                              leftSection={
+                                <IconChevronRight
+                                  size={16}
+                                  color={
+                                    params.id === item?.id ? "white" : "#111827"
+                                  }
+                                />
+                              }
+                            >
+                              {params.id === item?.id}
+                            </Button>
                           </Table.Td>
                         )}
                       </Table.Tr>
@@ -488,7 +586,8 @@ export default function SharedEntity<T extends { id?: string | number }>(
                             }
                             style={{
                               padding: 0,
-                              border: expandedRow === item.id ? undefined : "none",
+                              border:
+                                expandedRow === item.id ? undefined : "none",
                             }}
                           >
                             <Collapse in={expandedRow === item.id}>
@@ -506,7 +605,7 @@ export default function SharedEntity<T extends { id?: string | number }>(
             </Table>
             <div className="flex justify-between items-center px-4 py-2">
               <div className="flex items-center text-sm text-gray-600 space-x-1">
-                {total > 0 && (
+                {total > 0 && viewMode === "list" && (
                   <>
                     <span className="text-gray-500">Showing</span>
                     <span className="font-semibold text-blue-600">
@@ -542,9 +641,29 @@ export default function SharedEntity<T extends { id?: string | number }>(
             {renderModals?.()}
           </Card>
         </div>
-        {viewMode === 'detail' && (<div className="w-3/4 bg-white mr-3">{detail}</div>)}
       </div>
-    </>
+
+      {viewMode === "detail" && (
+        <div className="w-full flex flex-col space-y-4">
+          <Paper
+            shadow={"xs"}
+            p="md"
+            radius="md"
+            className="h-full flex flex-col"
+          >
+            <HeaderComponent
+              detailTitle={detailTitle}
+              title={title as string}
+              rootUrl={config?.rootUrl}
+              detail={detail}
+              fullScreen={fullScreen}
+              setFullScreen={setFullScreen}
+              primaryColor={"blue"}
+            />
+          </Paper>
+        </div>
+      )}
+    </div>
   );
 }
 
