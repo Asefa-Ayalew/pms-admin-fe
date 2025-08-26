@@ -13,7 +13,9 @@ export const appApi = createApi({
     "BankAccounts",
     "FAQs",
     "Feedbacks",
-    "Testimonials"
+    "Testimonials",
+    "Services",
+    "Departments"
   ],
   endpoints: () => ({}),
 });

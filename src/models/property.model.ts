@@ -26,11 +26,6 @@ export interface Property {
   deletedBy?: string;
   deletedAt?: string;
 }
-export interface Gallery {
-  propertyId: string;
-  description?: string;
-  gallery: File;
-}
 export interface PropertyService {
   propertyId?: string;
   serviceId: string;
@@ -47,4 +42,22 @@ export interface PropertyService {
   archivedAt?: string;
   deletedBy?: string;
   deletedAt?: string;
+}
+export interface Gallery {
+  id?: string;
+  propertyId: string;
+  description?: string;
+  isActive?: boolean;
+  gallery?: File;
+  type?: string;
+  url?: string;
+  photo?: Photo;
+}
+interface Photo {
+  bucketName: string;
+  name: string;
+  originalName: string;
+  size: number;
+  type: string;
+  url: string;
 }

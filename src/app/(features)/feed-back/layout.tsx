@@ -3,13 +3,14 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import type { CollectionQuery } from "@/src/shared/models/collection.model";
 import FeedbackForm from "./_component/feed-back-form.component";
 import { useDeleteFeedbackMutation, useLazyGetArchivedFeedbacksQuery, useLazyGetFeedbacksQuery, useRestoreFeedbackMutation } from "./_store/feed-back.query";
-import SharedTable from "@/src/shared/table/shared-table";
-import type { Actions, TableConfig } from "@/src/shared/models/table-config";
+import type { Actions } from "@/src/shared/models/table-config";
 import { Modal, Divider } from "@mantine/core";
 import { IconEye, IconPencil, IconTrash } from "@tabler/icons-react";
 import ReasonForm from "./_component/reason-form.component";
 import { Feedback } from "@/src/models/feed-back.model";
 import { modals } from '@mantine/modals';
+import EntityTable from "@/src/shared/table/entity-table";
+import { EntityConfig } from "@/src/shared/models/entity-list-config";
 
 const defaultFeedback: Feedback = {
   id: "",
@@ -192,84 +193,39 @@ export default function FeedbacksComponent() {
       );
     });
 
-      const listActions: Actions[] = [
-    {
-      label: "Edit",
-      key: "edit",
-      icon: IconPencil,
-      size: "16",
-    },
-    {
-      label: "Archive",
-      key: "archive",
-      icon: IconTrash,
-      size: "16",
-      type: "danger",
-    },
-  ];
+const config = useMemo<EntityConfig<Feedback>>(
+  () => {
+    const listActions: Actions[] = [
+      { label: "Edit", key: "edit", icon: IconPencil, size: "16" },
+      { label: "Archive", key: "archive", icon: IconTrash, size: "16", type: "danger" },
+    ];
 
-  const archivedActions: Actions[] = [
-    {
-      label: "Restore",
-      key: "restore",
-      icon: IconPencil,
-      size: "16",
-    },
-    {
-      label: "Delete",
-      key: "delete",
-      icon: IconTrash,
-      size: "16",
-      type: "danger",
-    },
-  ];
+    const archivedActions: Actions[] = [
+      { label: "Restore", key: "restore", icon: IconPencil, size: "16" },
+      { label: "Delete", key: "delete", icon: IconTrash, size: "16", type: "danger" },
+    ];
 
-  const config = useMemo<TableConfig<Feedback>>(
-    () => ({
-      columns: [
-        {
-          key: "name",
-          name: "Name",
-          render: (data: Feedback) => `${data?.name ?? ""}`,
-        },
-        {
-          key: "subject",
-          name: "Subject",
-          render: (data: Feedback) => `${data?.subject ?? ""}`,
-        },
-        {
-          key: "email",
-          name: "Email",
-          render: (data: Feedback) => `${data?.email ?? ""}`,
-        },
-        {
-          key: "phone",
-          name: "Phone Number",
-          render: (data: Feedback) => `${data?.phone ?? ""}`,
-        },
-        {
-          key: "message",
-          name: "Message",
-          render: (data: Feedback) => `${data?.message ?? ""}`,
-        },
+    return {
+      visibleColumn: [
+        { key: "name", name: "Name", render: (d: Feedback) => d?.name ?? "" },
+        { key: "subject", name: "Subject", render: (d: Feedback) => d?.subject ?? "" },
+        { key: "email", name: "Email", render: (d: Feedback) => d?.email ?? "" },
+        { key: "phone", name: "Phone Number", render: (d: Feedback) => d?.phone ?? "" },
+        { key: "message", name: "Message", render: (d: Feedback) => d?.message ?? "" },
       ],
-       actions: [
-        {
-          label: "Show More",
-          key: "view",
-          icon: IconEye,
-          size: "16",
-        },
+      actions: [
+        { label: "Show More", key: "view", icon: IconEye, size: "16" },
         ...(view === "list" ? listActions : archivedActions),
       ],
+    };
+  },
+  [view] 
+);
 
-    }),
-    [view]
-  );
 
 
   return (
-    <SharedTable
+    <EntityTable
       title={view === 'list' ? "Feedbacks" : 'Archived Feedbacks'}
       config={config}
       items={view === 'list' ? feedbacks?.data : archivedFeedbacks?.data}

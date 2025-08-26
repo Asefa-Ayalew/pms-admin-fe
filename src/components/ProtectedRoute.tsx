@@ -29,6 +29,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     }
 
     const [_, { allowedRoles, restrictedRoles, requiresAuth }] = matchedRoute;
+    console.log(_)
 
     // Check authentication
     if (requiresAuth && !isAuthenticated) {
@@ -59,6 +60,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     activeRole,
     isPowerUser,
     canView,
+    hasRole,
     router,
   ]);
 

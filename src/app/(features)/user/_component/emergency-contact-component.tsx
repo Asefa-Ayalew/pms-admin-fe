@@ -68,7 +68,7 @@ export default function EmergencyContactsComponent() {
       id: `${params?.id}`,
       includes: ["userRoles", "userRoles.role", "userContacts"],
     });
-  }, [params?.id]);
+  }, [getUser, params?.id]);
 
  
   const getContactTypeBadge = (contactType: UserContactType) => {

@@ -9,6 +9,7 @@ import { JSX, ReactNode } from "react";
 export interface DataType {
   key: string;
   label: string;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
   value: any;
   type?: "string" | "date" | "number" | "boolean";
 }

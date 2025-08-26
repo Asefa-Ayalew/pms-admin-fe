@@ -14,7 +14,7 @@ import {
   useLazyGetTenantQuery,
   useLazyGetTenantsQuery,
 } from "./_store/tenant.query";
-import SharedEntity from "@/src/shared/entity-table/shared-table";
+import EntityTable from "@/src/shared/table/entity-table";
 
 export default function TenantListPage({
   children,
@@ -31,7 +31,7 @@ export default function TenantListPage({
     orderBy: [{ field: "createdAt", direction: "desc" }],
   });
 
-  const [getTenants, { data: tenants, isLoading: isLoadingTenants, error }] =
+  const [getTenants, { data: tenants, isLoading: isLoadingTenants }] =
     useLazyGetTenantsQuery();
   const [
     getArchivedTenants,
@@ -46,7 +46,7 @@ export default function TenantListPage({
     } else {
       getArchivedTenants(collectionQuery);
     }
-  }, [collectionQuery, getTenants, view]);
+  }, [collectionQuery, getTenants, getArchivedTenants, view]);
 
   useEffect(() => {
     getTenant({ id: String(params.id) });
@@ -98,9 +98,6 @@ export default function TenantListPage({
         },
       ],
       showDetail: true,
-      routing: (data) => {
-        return `detail/${data?.id}`;
-      },
     }),
     []
   );
@@ -123,6 +120,7 @@ export default function TenantListPage({
     }));
   };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
   const onFilter = (filter: any[]) => {
     setCollectionQuery((prev) => ({
       ...prev,
@@ -138,7 +136,7 @@ export default function TenantListPage({
   };
 
   return (
-    <SharedEntity
+    <EntityTable
       title={view === "list" ? "Tenants" : "Archived Tenants"}
       detailTitle={
         params.id !== "new" ? (tenant?.name ?? "Tenant Detail") : "New Tenant"
@@ -151,7 +149,7 @@ export default function TenantListPage({
       collectionQuery={collectionQuery}
       view={view}
       viewMode={viewMode}
-      showNewButton={view === "list"}
+      showNewButton={false}
       onViewChange={setView}
       onPaginationChange={handlePaginationChange}
       onSearch={onSearch}

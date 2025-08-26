@@ -54,7 +54,7 @@ export default function DepartmentDetailComponent() {
       id: `${params?.id}`,
       includes: ["users"],
     });
-  }, [params?.id]);
+  }, [getDepartment, params?.id]);
   const users = department?.data?.user;
   console.log("Users", users);
   return (

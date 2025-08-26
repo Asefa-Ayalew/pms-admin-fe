@@ -2,14 +2,20 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { FAQ } from "@/src/models/faq.model";
 import type { CollectionQuery } from "@/src/shared/models/collection.model";
-import SharedTable from "@/src/shared/table/shared-table";
-import type { Actions, TableConfig } from "@/src/shared/models/table-config";
+import type { Actions } from "@/src/shared/models/table-config";
 import { Modal, Divider } from "@mantine/core";
 import { IconEye, IconPencil, IconTrash } from "@tabler/icons-react";
 import ReasonForm from "./_component/reason-form.component";
-import { useDeleteFAQMutation, useLazyGetArchivedFAQsQuery, useLazyGetFAQsQuery, useRestoreFAQMutation } from "./_store/faq.query";
+import {
+  useDeleteFAQMutation,
+  useLazyGetArchivedFAQsQuery,
+  useLazyGetFAQsQuery,
+  useRestoreFAQMutation,
+} from "./_store/faq.query";
 import FAQForm from "./_component/faq-form.component";
-import { modals } from '@mantine/modals';
+import { modals } from "@mantine/modals";
+import EntityTable from "@/src/shared/table/entity-table";
+import { EntityConfig } from "@/src/shared/models/entity-list-config";
 
 const defaultTenant: FAQ = {
   id: "",
@@ -71,21 +77,24 @@ export default function FAQsComponent() {
   const [view, setView] = useState<"list" | "archived">("list");
 
   const [getFAQs, { data: FAQs, isLoading }] = useLazyGetFAQsQuery();
-  const [getArchivedFAQs, { data: archivedFAQs, isLoading: archivedFAQsLoading }] = useLazyGetArchivedFAQsQuery()
+  const [
+    getArchivedFAQs,
+    { data: archivedFAQs, isLoading: archivedFAQsLoading },
+  ] = useLazyGetArchivedFAQsQuery();
   const [restoreFAQ] = useRestoreFAQMutation();
   const [deleteFAQ] = useDeleteFAQMutation();
 
   useEffect(() => {
-    if (view === 'list') {
+    if (view === "list") {
       getFAQs(collectionQuery);
     }
   }, [collectionQuery, getFAQs, view]);
 
   useEffect(() => {
-    if (view === 'archived') {
-      getArchivedFAQs(collectionQuery)
+    if (view === "archived") {
+      getArchivedFAQs(collectionQuery);
     }
-  }, [collectionQuery, getArchivedFAQs, view])
+  }, [collectionQuery, getArchivedFAQs, view]);
 
   const openModal = (type: keyof typeof modalConfig, FAQ?: FAQ) => {
     setSelectedTenant(FAQ ?? defaultTenant);
@@ -100,9 +109,9 @@ export default function FAQsComponent() {
   const handleAction = (action: { key: string }, FAQ?: FAQ) => {
     openModal(action.key as keyof typeof modalConfig, FAQ);
 
-    if (action.key === 'delete' && FAQ?.id) {
+    if (action.key === "delete" && FAQ?.id) {
       handleDelete(FAQ);
-    } else if (action.key === 'restore') {
+    } else if (action.key === "restore") {
       restoreFAQ(String(FAQ?.id));
     }
   };
@@ -118,29 +127,30 @@ export default function FAQsComponent() {
       children: (
         <div className="space-y-2 text-sm text-gray-700">
           <p>
-            Are you sure you want to delete this <span className="text-red-600 font-medium">document type</span>? This action
+            Are you sure you want to delete this{" "}
+            <span className="text-red-600 font-medium">document type</span>?
+            This action
             <strong> cannot </strong> be undone.
           </p>
           <p>
-            <strong className="text-gray-800">Question:</strong>{' '}
+            <strong className="text-gray-800">Question:</strong>{" "}
             <span className="text-gray-700">{FAQ?.question}</span>
           </p>
         </div>
       ),
       labels: {
-        confirm: 'Delete',
-        cancel: 'Cancel',
+        confirm: "Delete",
+        cancel: "Cancel",
       },
       confirmProps: {
-        color: 'red',
-        variant: 'filled',
+        color: "red",
+        variant: "filled",
       },
       onConfirm: () => {
         deleteFAQ(String(FAQ?.id));
       },
     });
   };
-
 
   const handlePaginationChange = useCallback(
     (pageIndex: number, pageSize: number) => {
@@ -187,74 +197,58 @@ export default function FAQsComponent() {
       );
     });
 
-  const listActions: Actions[] = [
-    {
-      label: "Edit",
-      key: "edit",
-      icon: IconPencil,
-      size: "16",
-    },
-    {
-      label: "Archive",
-      key: "archive",
-      icon: IconTrash,
-      size: "16",
-      type: "danger",
-    },
-  ];
+  const config = useMemo<EntityConfig<FAQ>>(() => {
+    const listActions: Actions[] = [
+      { label: "Edit", key: "edit", icon: IconPencil, size: "16" },
+      {
+        label: "Archive",
+        key: "archive",
+        icon: IconTrash,
+        size: "16",
+        type: "danger",
+      },
+    ];
+    const archivedActions: Actions[] = [
+      { label: "Restore", key: "restore", icon: IconPencil, size: "16" },
+      {
+        label: "Delete",
+        key: "delete",
+        icon: IconTrash,
+        size: "16",
+        type: "danger",
+      },
+    ];
 
-  const archivedActions: Actions[] = [
-    {
-      label: "Restore",
-      key: "restore",
-      icon: IconPencil,
-      size: "16",
-    },
-    {
-      label: "Delete",
-      key: "delete",
-      icon: IconTrash,
-      size: "16",
-      type: "danger",
-    },
-  ];
-
-  const config = useMemo<TableConfig<FAQ>>(
-    () => ({
-      columns: [
+    return {
+      visibleColumn: [
         {
           key: "question",
           name: "Question",
-          render: (data: FAQ) => `${data?.question ?? ""}`,
+          render: (data: FAQ) => data?.question ?? "",
         },
         {
           key: "answer",
           name: "Answer",
-          render: (data: FAQ) => `${data?.answer ?? ""}`,
+          render: (data: FAQ) => data?.answer ?? "",
         },
       ],
       actions: [
-        {
-          label: "Show More",
-          key: "view",
-          icon: IconEye,
-          size: "16",
-        },
+        { label: "Show More", key: "view", icon: IconEye, size: "16" },
         ...(view === "list" ? listActions : archivedActions),
       ],
-    }),
-    [view]
-  );
+    };
+  }, [view]);
+
   return (
-    <SharedTable
-      title={view === 'list' ? "FAQs" : 'Archived FAQs'}
+    <EntityTable
+      title={view === "list" ? "FAQs" : "Archived FAQs"}
       config={config}
-      items={view === 'list' ? FAQs?.data : archivedFAQs?.data}
-      total={view === 'list' ? FAQs?.total : archivedFAQs?.total}
-      itemsLoading={view === 'list' ? isLoading : archivedFAQsLoading}
+      items={view === "list" ? FAQs?.data : archivedFAQs?.data}
+      total={view === "list" ? FAQs?.total : archivedFAQs?.total}
+      itemsLoading={view === "list" ? isLoading : archivedFAQsLoading}
       collectionQuery={collectionQuery}
       view={view}
-      showNewButton={view === 'list'}
+      showNewButton={view === "list"}
       onViewChange={setView}
       onPaginationChange={handlePaginationChange}
       onSearch={onSearch}

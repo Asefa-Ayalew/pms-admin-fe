@@ -1,5 +1,3 @@
-import { Tenant } from "@/src/models/tenant.model";
-import { User } from "@/src/models/user.model";
 import {
   Collection,
   CollectionQuery,
@@ -12,8 +10,6 @@ import { Testimonial } from "@/src/models/testimonial.model";
 import { TESTIMONIAL_ENDPOINT } from "./testimonial.endpoint";
 
 let testimonialCollection: CollectionQuery;
-let tenantCollection: CollectionQuery;
-let userCollection: CollectionQuery;
 
 export const testimonialQuery = appApi.injectEndpoints({
   endpoints: (builder) => ({

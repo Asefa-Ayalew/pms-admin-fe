@@ -1,26 +1,20 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useParams, useSearchParams } from "next/navigation";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 
 import { User } from "@/src/models/user.model";
-import EntityList, {
-  CustomToolbarAction,
-  TableBehaviorConfig,
-  TableStyleConfig,
-} from "@/src/shared/entity/entity-list";
 import { CollectionQuery } from "@/src/shared/models/collection.model";
 import {
   EntityConfig,
   entityViewMode,
-} from "@/src/shared/models/entity-config.model";
-import { useParams } from "next/navigation";
-import { useLazyGetUserQuery, useLazyGetUsersQuery } from "./_store/user.query";
+} from "@/src/shared/models/entity-list-config";
 import {
-  IconAdjustments,
-  IconDownload,
-  IconRefreshDot,
-  IconUserPlus,
-} from "@tabler/icons-react";
+  useLazyGetArchivedUsersQuery,
+  useLazyGetUserQuery,
+  useLazyGetUsersQuery,
+} from "./_store/user.query";
+import EntityTable from "@/src/shared/table/entity-table";
 
 export default function UserListPage({
   children,
@@ -28,133 +22,52 @@ export default function UserListPage({
   children: React.ReactNode;
 }) {
   const params = useParams();
+  const searchParams = useSearchParams();
+  const isArchived = searchParams.get("archived") === "true";
   const [viewMode, setViewMode] = useState<entityViewMode>("list");
-  const [collection, setCollection] = useState<CollectionQuery>({
+  const [view, setView] = useState<"list" | "archived">("list");
+  const [collectionQuery, setCollectionQuery] = useState<CollectionQuery>({
     skip: 0,
-    top: 20,
+    top: 10,
     orderBy: [{ field: "createdAt", direction: "desc" }],
   });
 
-  const [getUsers, { data: users, isLoading, error }] = useLazyGetUsersQuery();
-  const [getUser, { data: user}] = useLazyGetUserQuery();
+  const [
+    getUsers,
+    { data: users, isLoading: isLoadingUsers },
+  ] = useLazyGetUsersQuery();
+  const [
+    getArchivedUsers,
+    { data: archivedUsers, isLoading: archivedUsersLoading },
+  ] = useLazyGetArchivedUsersQuery();
 
- 
-  const behaviorConfig: TableBehaviorConfig = useMemo(
-    () => ({
-      enableColumnFilters: true,
-      enableGlobalFilter: true,
-      enableColumnResizing: true,
-      enableFullScreenToggle: true,
-      enableDensityToggle: true,
-      enableColumnOrdering: true,
-      enablePagination: true,
-      enableMultiSort: true,
-      enableMultiRowSelection: true,
-      manualFiltering: true,
-      manualPagination: true,
-      manualSorting: true,
-      paginationDisplayMode: "pages",
-      positionPagination: "bottom",
-      positionActionsColumn: "last",
-      enableHiding: true,
-    }),
-    []
-  );
- const handlePaginationChange = useCallback(
-    (pageIndex: number, pageSize: number) => {
-      setCollection((prev) => ({
-        ...prev,
-        skip: pageIndex - 1,
-        top: pageSize,
-      }));
-    },
-    []
-  );
-  const onSearch = (search: string) => {
-    setCollection((prev) => ({
-      ...prev,
-      skip: 0,
-      search: search,
-    }));
-  };
-
-  const onFilter = (filter: any[]) => {
-    setCollection((prev) => ({
-      ...prev,
-      filter, 
-    }));
-  };
- 
-  const onOrder = (order: { field: string; direction: "desc" | "asc" }) => {
-    setCollection((prev) => ({
-      ...prev,
-      orderBy: [order],
-    }));
-  };  //Rtk hooks
-  const customActions: CustomToolbarAction[] = useMemo(
-    () => [
-      {
-        key: "refresh",
-        label: "Refresh Properties",
-        icon: <IconRefreshDot size={18} />,
-        color: "blue",
-        onClick: () => getUsers({ skip: 0, top: 20 }),
-        tooltip: "Refresh user data",
-        position: "top",
-        order: 1,
-      },
-      {
-        key: "add-user",
-        label: "Add user",
-        icon: <IconUserPlus size={18} />,
-        color: "green",
-        onClick: () => console.log("Add user clicked"),
-        tooltip: "Add a new user",
-        position: "top",
-        order: 2,
-      },
-      {
-        key: "export-user",
-        label: "Export",
-        icon: <IconDownload size={18} />,
-        color: "cyan",
-        onClick: () => console.log("Export clicked"),
-        tooltip: "Export user data",
-        position: "bottom",
-        variant: "subtle",
-        order: 1,
-      },
-      {
-        key: "settings",
-        label: "Settings",
-        icon: <IconAdjustments size={18} />,
-        color: "gray",
-        onClick: () => console.log("Settings clicked"),
-        tooltip: "Table settings",
-        position: "bottom",
-        variant: "subtle",
-        order: 2,
-      },
-    ],
-    [getUsers]
-  );
-
+  const [getUser, { data: user }] = useLazyGetUserQuery();
 
   useEffect(() => {
-    getUsers(collection);
-  }, [collection]);
-
-
-  useEffect(() => {
-    if (params?.id !== undefined) {
-      getUser({id: String(params.id)})
-      setViewMode("detail");
+    if (view === "list") {
+      getUsers(collectionQuery);
     } else {
-      setViewMode("list");
+      getArchivedUsers(collectionQuery);
     }
-  }, [setViewMode, params, getUser]);
+  }, [collectionQuery, getUsers, getArchivedUsers, view]);
 
-  const config = useMemo<EntityConfig<User>>(
+  useEffect(() => {
+    getUser({ id: String(params.id) });
+  }, [getUser, params.id]);
+
+  useEffect(() => {
+    setViewMode(params?.id !== undefined ? "detail" : "list");
+  }, [params?.id]);
+
+  useEffect(() => {
+    if (isArchived) {
+      setView("archived");
+    } else {
+      setView("list");
+    }
+  }, [isArchived]);
+
+const config = useMemo<EntityConfig<User>>(
     () => ({
       primaryColumn: {
         key: "fullName",
@@ -194,44 +107,66 @@ export default function UserListPage({
           isDate: true,
         },
       ],
+      showDetail: true
     }),
     []
   );
 
-  const styleConfig: TableStyleConfig = useMemo(
-    () => ({
-      primaryColor: "blue",
-      dangerColor: "red",
-      fontSize: "sm",
-      density: "xs",
-      shadowLevel: "xs",
-      borderColor: "border-gray-200",
-      rowHoverColor: "var(--mantine-color-blue-50)",
-    }),
-    []
-  );
+  const handlePaginationChange = useCallback((skip: number, top: number) => {
+    setCollectionQuery((prev) => ({
+      ...prev,
+      skip,
+      top,
+    }));
+  }, []);
+
+  const onSearch = (search: string) => {
+    setCollectionQuery((prev) => ({
+      ...prev,
+      skip: 0,
+      search: search,
+    }));
+  };
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const onFilter = (filter: any[]) => {
+    setCollectionQuery((prev) => ({
+      ...prev,
+      filter,
+    }));
+  };
+
+  const onOrder = (order: { field: string; direction: "desc" | "asc" }) => {
+    setCollectionQuery((prev) => ({
+      ...prev,
+      orderBy: [order],
+    }));
+  };
+
   return (
-    <EntityList
-      title="users"
-      detailTitle={(params?.id !== 'new' && user ) ? user?.firstName : 'New User'}
-      config={config}
-      viewMode={viewMode}
-      detail={children}
-      defaultPageSize={20}
-      pageSizeOptions={[10, 20, 30, 50, 100]}
-      _showTotal={true}
-      tableKey="users"
-      dataLoadMode="static"
-      items={users?.data || []}
-      total={users?.count || 0}
-      itemsLoading={isLoading}
-      styleConfig={styleConfig}
-      behaviorConfig={behaviorConfig}
-      errorText={
-        error ? "Failed to load users. Please try again." : undefined
+    <EntityTable
+      title={view === "list" ? "Users" : "Archived Users"}
+      detailTitle={
+        params.id !== "new"
+          ? (user?.firstName ?? "User Detail")
+          : "New User"
       }
-      noDataText="No user found"
-      customActions={customActions}
+      config={config}
+      detail={children}
+      items={view === "list" ? users?.data : archivedUsers?.data}
+      total={
+        view === "list"
+          ? users?.count
+          : archivedUsers?.count
+      }
+      itemsLoading={
+        view === "list" ? isLoadingUsers : archivedUsersLoading
+      }
+      collectionQuery={collectionQuery}
+      view={view}
+      viewMode={viewMode}
+      showNewButton={view === "list"}
+      onViewChange={setView}
       onPaginationChange={handlePaginationChange}
       onSearch={onSearch}
       onOrder={onOrder}

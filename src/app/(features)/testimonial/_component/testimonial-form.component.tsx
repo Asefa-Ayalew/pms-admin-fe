@@ -1,16 +1,11 @@
 "use client";
 
-import countryJson from "@/src/shared/constants/country-json.json";
-import { CollectionQuery } from "@/src/shared/models/collection.model";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Box,
   Button,
-  LoadingOverlay,
   Modal,
   NumberInput,
-  Select,
-  Switch,
   TextInput,
 } from "@mantine/core";
 import {
@@ -20,34 +15,31 @@ import {
 } from "@tabler/icons-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { useForm, SubmitErrorHandler, SubmitHandler, Controller } from "react-hook-form";
-import z, { date } from "zod";
-
-import { User } from "@/src/models/user.model";
+import {
+  useForm,
+  SubmitErrorHandler,
+  SubmitHandler,
+  Controller,
+} from "react-hook-form";
 import { notifications } from "@mantine/notifications";
 import { Testimonial } from "@/src/models/testimonial.model";
-import { testimonialDefaultValue, testimonialFormSchema } from "@/src/schemas/testimonial-schema";
-import { useCreateTestimonialMutation, useDeleteTestimonialMutation, useUpdateTestimonialMutation } from "../_store/testimonial.query";
-import { Console } from "console";
-
+import {
+  testimonialDefaultValue,
+  testimonialFormSchema,
+} from "@/src/schemas/testimonial-schema";
+import {
+  useCreateTestimonialMutation,
+  useDeleteTestimonialMutation,
+  useUpdateTestimonialMutation,
+} from "../_store/testimonial.query";
 interface Props {
   editMode: "new" | "detail" | "view";
   onClose: () => void;
   onCreating?: (data: boolean) => void;
   data?: Testimonial;
 }
-
-const countryCodes = countryJson
-  .map((country) => ({
-    value: country.dial_code,
-    label: `${country.name} (${country.dial_code})`,
-  }))
-  .filter(
-    (value, index, self) =>
-      index === self.findIndex((t) => t.value === value.value)
-  );
 export default function TestimonialForm(props: Props) {
-  const { editMode, onCreating } = props;
+  const { editMode } = props;
   const params = useParams();
   const navigate = useRouter();
 
@@ -58,21 +50,11 @@ export default function TestimonialForm(props: Props) {
   const [updateTestimonial, updateResponse] = useUpdateTestimonialMutation();
   const [deleteTestimonial, deleteResponse] = useDeleteTestimonialMutation();
 
-  const [countryCode, setCountryCode] = useState<string>("+251");
-
-  const [collection] = useState<CollectionQuery>({
-    skip: 0,
-    top: 50,
-    orderBy: [{ field: "createdAt", direction: "desc" }],
-  });
-
   const {
     register,
     handleSubmit,
-    watch,
     formState: { errors },
     reset,
-    setValue,
     control,
   } = useForm<testimonialFormSchema>({
     resolver: zodResolver(testimonialFormSchema),
@@ -89,11 +71,11 @@ export default function TestimonialForm(props: Props) {
         reset(testimonialDefaultValue);
       }
     }
-  }, [params?.id, editMode]);
+  }, [props.data, reset, params?.id, editMode]);
 
   const onSubmit: SubmitHandler<Testimonial> = async (data) => {
-    console.log('data', data);
-    
+    console.log("data", data);
+
     if (editMode === "new") {
       try {
         const response = await createTestimonial({
@@ -121,7 +103,7 @@ export default function TestimonialForm(props: Props) {
           ...data,
           id: `${props?.data?.id}`,
         });
-        console.log('response', response);
+        console.log("response", response);
 
         if (response) {
           notifications.show({
@@ -129,7 +111,7 @@ export default function TestimonialForm(props: Props) {
             message: "Testimonial Updated successfully",
             color: "green",
           });
-          props.onClose()
+          props.onClose();
         }
       } catch (err) {
         notifications.show({
@@ -236,11 +218,10 @@ export default function TestimonialForm(props: Props) {
                     }
                     leftSection={<IconDeviceFloppy size={15} />}
                   >
-                    {editMode === 'new' ? 'Save' : 'Update'}
+                    {editMode === "new" ? "Save" : "Update"}
                   </Button>
 
                   {editMode === "detail" && (
-
                     <Button
                       type="button"
                       variant="filled"
@@ -326,6 +307,16 @@ export default function TestimonialForm(props: Props) {
             </td>
             <td className="p-2">{props.data?.message}</td>
           </tr>
+          <Box className="w-full flex space-x-4  justify-end mt-4">
+            <Button
+              variant="filled"
+              bg={"primary.4"}
+              type="button"
+              onClick={() => props.onClose()}
+            >
+              Close
+            </Button>
+          </Box>
         </Box>
       )}
     </div>

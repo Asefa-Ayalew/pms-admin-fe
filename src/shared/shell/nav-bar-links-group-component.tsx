@@ -4,7 +4,6 @@ import {
   Collapse,
   Group,
   rem,
-  ScrollArea,
   ThemeIcon,
   UnstyledButton,
 } from "@mantine/core";
@@ -80,7 +79,7 @@ const LinksGroupBase = ({
     } else if (hasActiveChild) {
       setOpened(true);
     }
-  }, []);
+  }, [hasActiveChild, initiallyOpened]);
 
   // Handle group toggle
   const handleClick = useCallback(

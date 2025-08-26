@@ -1,186 +1,176 @@
 "use client";
-import {
-  ActionIcon,
-  Button,
-  Card,
-  Divider,
-  Menu,
-  Modal,
-  Table,
-} from "@mantine/core";
-import { useEffect, useMemo, useState } from "react";
-import {
-  IconDotsVertical,
-  IconEye,
-  IconInbox,
-  IconPencil,
-  IconPlus,
-  IconTrash,
-} from "@tabler/icons-react";
 
-import ReasonForm from "./reason-form-component";
-import RoomForm from "./room-form-component";
+import { useParams } from "next/navigation";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 
-import { useLazyGetRoomsQuery } from "../_store/room.query";
 import { Room } from "@/src/models/room.model";
 import { CollectionQuery } from "@/src/shared/models/collection.model";
+import {
+  EntityConfig,
+  entityViewMode,
+} from "@/src/shared/models/entity-list-config";
+
 import { formatDate } from "@/src/shared/utils/date-utils";
-
-const defaultRoom: Room = {
-  id: "",
-  description: "",
-  floorNumber: "",
-  roomNumber: "",
-  type: "",
-  size: 1,
-  amenities: [],
-};
-
-const modalConfig = {
-  edit: {
-    title: "Edit Room",
-    size: "60%",
-    component: (onClose: () => void, room: Room) => (
-      <RoomForm editMode="detail" onClose={onClose} data={room} />
-    ),
-  },
-  view: {
-    title: "View Room",
-    size: "60%",
-    component: (onClose: () => void, room: Room) => (
-      <RoomForm editMode="view" onClose={onClose} data={room} />
-    ),
-  },
-  archive: {
-    title: "Reason",
-    size: "50%",
-    component: (onClose: () => void, room: Room) => (
-      <ReasonForm id={room?.id ?? ""} onClose={onClose} />
-    ),
-  },
-};
+import clsx from "clsx";
+import {
+  useLazyGetArchivedRoomsQuery,
+  useLazyGetRoomsQuery,
+} from "../_store/room.query";
+import InnerTable from "@/src/shared/table/inner-table";
 
 export default function RoomsComponent() {
-  const [modals, setModals] = useState<
-    Record<keyof typeof modalConfig, boolean>
-  >({
-    edit: false,
-    view: false,
-    archive: false,
+  const params = useParams();
+
+  const [viewMode, setViewMode] = useState<entityViewMode>("list");
+  const [view, setView] = useState<"list" | "archived">("list");
+  const [collectionQuery, setCollectionQuery] = useState<CollectionQuery>({
+    skip: 0,
+    top: 20,
+    orderBy: [{ field: "createdAt", direction: "desc" }],
+    filter :[[{field: 'propertyId', value: params.id, operator: '='}]]
   });
 
-  const [selectedRoom, setSelectedRoom] = useState<Room>(defaultRoom);
-  const [getRooms, { data: rooms }] = useLazyGetRoomsQuery();
+  const [getRooms, { data: rooms, isLoading: isLoadingRooms }] =
+    useLazyGetRoomsQuery();
+  const [
+    getArchivedRooms,
+    { data: archivedRooms, isLoading: archivedRoomsLoading },
+  ] = useLazyGetArchivedRoomsQuery();
 
-  const collection = useMemo<CollectionQuery>(
+  useEffect(() => {
+    if (view === "list") {
+      getRooms(collectionQuery);
+    } else {
+      getArchivedRooms(collectionQuery);
+    }
+  }, [collectionQuery, getRooms,getArchivedRooms, view]);
+
+  useEffect(() => {
+    setViewMode(params?.id !== undefined ? "detail" : "list");
+  }, [params?.id]);
+
+  const config = useMemo<EntityConfig<Room>>(
     () => ({
-      skip: 0,
-      top: 20,
-      orderBy: [{ field: "createdAt", direction: "desc" }],
+      primaryColumn: {
+        key: "description",
+        name: "Description",
+        render: (data: Room) => `${data?.description ?? ""}`,
+      },
+      rootUrl: "/room",
+      detailUrl: "detail",
+      identity: "id",
+      visibleColumn: [
+        {
+          key: "description",
+          name: "Description",
+          render: (data: Room) => `${data?.description ?? ""}`,
+        },
+        {
+          key: "size",
+          name: "Size",
+          render: (data: Room) => `${data?.size ?? ""}`,
+        },
+        {
+          key: "isFurnished",
+          name: "Is Furnished",
+          render: (data: Room) => `${data?.isFurnished ? "Yes" : "No"}`,
+        },
+        {
+          key: "makePublic",
+          name: "Make Public",
+          render: (data: Room) => `${data?.makePublic ? "Yes" : "No"}`,
+        },
+        {
+          key: "numberOfBedRooms",
+          name: "No of Bed Rooms",
+          render: (data: Room) => `${data?.numberOfBedRooms ?? ""}`,
+        },
+        {
+          key: "amenities",
+          name: "Amenities",
+          render: (data: Room) => (
+            <div className="flex flex-wrap gap-2">
+              {data?.amenities?.map((amenity, index) => (
+                <React.Fragment key={`amenity-${index}`}>
+                  <span
+                    className={clsx(
+                      "inline-block px-2 py-0.5 rounded-full text-xs font-medium mb-1",
+                      {
+                        "bg-blue-100 text-blue-800": index % 4 === 0,
+                        "bg-green-100 text-green-800": index % 4 === 1,
+                        "bg-yellow-100 text-yellow-800": index % 4 === 2,
+                        "bg-purple-100 text-purple-800": index % 4 === 3,
+                      }
+                    )}
+                  >
+                    {amenity}
+                  </span>
+                  {(index + 1) % 4 === 0 && <div className="w-full" />}
+                </React.Fragment>
+              ))}
+            </div>
+          ),
+        },
+        {
+          key: "createdAt",
+          name: "Created At",
+          render: (data: Room) => formatDate(data?.createdAt),
+        },
+      ],
+      showDetail: false,
+      hasActions: false,
     }),
     []
   );
 
-  useEffect(() => {
-    getRooms(collection);
-  }, [collection, getRooms]);
+  const handlePaginationChange = useCallback((skip: number, top: number) => {
+    setCollectionQuery((prev) => ({
+      ...prev,
+      skip,
+      top,
+    }));
+  }, []);
 
-  const openModal = (type: keyof typeof modalConfig, room?: Room) => {
-    setSelectedRoom(room ?? defaultRoom);
-    setModals((prev) => ({ ...prev, [type]: true }));
+  const onSearch = (search: string) => {
+    setCollectionQuery((prev) => ({
+      ...prev,
+      skip: 0,
+      search: search,
+    }));
   };
 
-  const closeModal = (type: keyof typeof modalConfig) => {
-    setModals((prev) => ({ ...prev, [type]: false }));
-    setSelectedRoom(defaultRoom);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const onFilter = (filter: any[]) => {
+    setCollectionQuery((prev) => ({
+      ...prev,
+      filter,
+    }));
   };
 
-  const handleAction = (action: string, room?: Room) => {
-    openModal(action as keyof typeof modalConfig, room);
+  const onOrder = (order: { field: string; direction: "desc" | "asc" }) => {
+    setCollectionQuery((prev) => ({
+      ...prev,
+      orderBy: [order],
+    }));
   };
 
-  const renderModals = () =>
-    (Object.keys(modalConfig) as (keyof typeof modalConfig)[]).map((key) => {
-      const { title, size, component } = modalConfig[key];
-      return (
-        <Modal
-          key={key}
-          opened={modals[key]}
-          onClose={() => closeModal(key)}
-          title={title}
-          centered
-          size={size}
-        >
-          <Divider />
-          {component(() => closeModal(key), selectedRoom)}
-        </Modal>
-      );
-    });
+  console.log("view", view);
 
   return (
-    <Card shadow="sm" padding="sm">
-
-      <Table>
-        <Table.Thead>
-          <Table.Tr>
-            <Table.Th>Description</Table.Th>
-            <Table.Th>Size</Table.Th>
-            <Table.Th>Floor Number</Table.Th>
-            <Table.Th>Room Number</Table.Th>
-            <Table.Th>Floor Number</Table.Th>
-            <Table.Th>Number of Bed Rooms</Table.Th>
-            <Table.Th>Is Furnished?</Table.Th>
-            <Table.Th>Is Public</Table.Th>
-            <Table.Th style={{ width: "15%" }}>Created At</Table.Th>
-            <Table.Th style={{ width: "20px" }}></Table.Th>
-          </Table.Tr>
-        </Table.Thead>
-        <Table.Tbody>
-          {rooms?.data?.length === 0 ? (
-            <Table.Tr>
-              <Table.Td colSpan={6} className="text-center py-8 text-gray-500">
-                <div className="flex flex-col items-center">
-                  <IconInbox size={40} />
-                  <p className="mt-2">No rooms found</p>
-                </div>
-              </Table.Td>
-            </Table.Tr>
-          ) : (
-            rooms?.data.map((room: Room) => (
-              <Table.Tr key={room.id}>
-                <Table.Td>{room?.description}</Table.Td>
-                <Table.Td>{room.size}</Table.Td>
-                <Table.Td>{room?.floorNumber}</Table.Td>
-                <Table.Td>{room?.roomNumber}</Table.Td>
-                <Table.Td>{room?.floorNumber}</Table.Td>
-                <Table.Td>{room.numberOfBedRooms}</Table.Td>
-                <Table.Td>{room?.isFurnished ? "Yes" : "No"}</Table.Td>
-                <Table.Td>{room?.makePublic ? "Yes" : "No"}</Table.Td>
-                <Table.Td>{formatDate(room.createdAt)}</Table.Td>
-                <Table.Td>
-                  <Menu shadow="md" width={160} position="bottom-end" withArrow>
-                    <Menu.Target>
-                      <ActionIcon variant="subtle" size="sm">
-                        <IconDotsVertical size={18} />
-                      </ActionIcon>
-                    </Menu.Target>
-                    <Menu.Dropdown>
-                      <Menu.Item
-                        leftSection={<IconEye size={14} />}
-                        onClick={() => handleAction("view", room)}
-                      >
-                        View
-                      </Menu.Item>
-                    </Menu.Dropdown>
-                  </Menu>
-                </Table.Td>
-              </Table.Tr>
-            ))
-          )}
-        </Table.Tbody>
-      </Table>
-
-      {renderModals()}
-    </Card>
+    <InnerTable
+      config={config}
+      items={view === "list" ? rooms?.data : archivedRooms?.data}
+      total={view === "list" ? rooms?.count : archivedRooms?.count}
+      itemsLoading={view === "list" ? isLoadingRooms : archivedRoomsLoading}
+      collectionQuery={collectionQuery}
+      view={view}
+      viewMode={viewMode}
+      showNewButton={false}
+      onViewChange={setView}
+      onPaginationChange={handlePaginationChange}
+      onSearch={onSearch}
+      onOrder={onOrder}
+      onFilterChange={onFilter}
+    />
   );
 }

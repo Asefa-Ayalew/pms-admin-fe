@@ -1,5 +1,6 @@
 export const DEPARTMENT_ENDPOINT = {
     list: `${process.env.NEXT_PUBLIC_APP_API}/departments/get-departments`,
+    listArchivedDepartments: `${process.env.NEXT_PUBLIC_APP_API}/departments/get-archived-departments`,
     create: `${process.env.NEXT_PUBLIC_APP_API}/departments/create-department`,
     detail: `${process.env.NEXT_PUBLIC_APP_API}/departments/get-department`,
     update: `${process.env.NEXT_PUBLIC_APP_API}/departments/update-department`,

@@ -53,7 +53,7 @@ export default function RoleDetailComponent() {
 
   useEffect(() => {
     getRole(`${params?.id}`);
-  }, [params?.id]);
+  }, [getRole, params?.id]);
   return (
     <div className="w-full flex-col space-y-4 border border-gray-200">
       <Tabs defaultValue="detail">

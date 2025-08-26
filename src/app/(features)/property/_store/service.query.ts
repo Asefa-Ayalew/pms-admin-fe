@@ -1,12 +1,39 @@
 import { appApi } from "@/src/store/app.api";
 import { serviceEndpoint } from "./service.endpoint";
-import { Property, Service } from "@/src/models/property.model";
+import { Property } from "@/src/models/property.model";
 import { propertyQuery } from "./property.query";
 import { notifications } from "@mantine/notifications";
 import { AppError } from "@/src/models/app-interfaces";
+import { Service } from "@/src/models/service.model";
+import { collectionQueryBuilder } from "@/src/shared/utitlity/collection-query-builder";
+import { Collection, CollectionQuery } from "@/src/shared/models/collection.model";
 
 export const serviceQuery = appApi.injectEndpoints({
   endpoints: (builder) => ({
+    getServices: builder.query<Collection<Service>, CollectionQuery>({
+      query: (data: CollectionQuery) => ({
+        url: serviceEndpoint.list,
+        method: "GET",
+        params: collectionQueryBuilder(data),
+      }),
+      providesTags: ["Services"],
+    }),
+    getService: builder.query<Service, CollectionQuery>({
+      query: (data: CollectionQuery) => ({
+        url: `${serviceEndpoint.detail}/${data?.id}`,
+        method: "GET",
+        params: collectionQueryBuilder(data),
+      }),
+    }),
+
+    getArchivedServices: builder.query<Collection<Service>, CollectionQuery>({
+      query: (data: CollectionQuery) => ({
+        url: serviceEndpoint.listArchivedServices,
+        method: "GET",
+        params: collectionQueryBuilder(data),
+      }),
+    }),
+
     createPropertyService: builder.mutation<Property, Service>({
       query: (newData) => ({
         url: serviceEndpoint.create,
@@ -71,7 +98,7 @@ export const serviceQuery = appApi.injectEndpoints({
       },
     }),
 
-    deletePropertyService: builder.mutation<Property, any>({
+    deletePropertyService: builder.mutation<Property, Property>({
       query: (data) => ({
         url: `${serviceEndpoint.delete}`,
         method: "POST",
@@ -108,6 +135,9 @@ export const serviceQuery = appApi.injectEndpoints({
 });
 
 export const {
+  useLazyGetServiceQuery,
+  useLazyGetArchivedServicesQuery,
+  useLazyGetServicesQuery,
   useCreatePropertyServiceMutation,
   useUpdatePropertyServiceMutation,
   useDeletePropertyServiceMutation,

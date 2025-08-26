@@ -45,6 +45,32 @@ export const departmentQuery = appApi.injectEndpoints({
       },
     }),
 
+      getArchivedDepartments: builder.query<Collection<Department>, CollectionQuery>(
+          {
+            query: (data: CollectionQuery) => ({
+              url: DEPARTMENT_ENDPOINT.listArchivedDepartments,
+              method: "GET",
+              params: collectionQueryBuilder(data),
+            }),
+            providesTags: ["Departments"],
+            async onQueryStarted(param, { queryFulfilled }) {
+              try {
+                const { data } = await queryFulfilled;
+                if (data) {
+                  departmentCollection = param;
+                }
+              } catch (error: unknown) {
+                notifications.show({
+                  title: "Error",
+                  message:
+                    (error as AppError)?.error?.data?.message || "Error, try again",
+                  color: "red",
+                });
+              }
+            },
+          }
+        ),
+
     createDepartment: builder.mutation<Department, Department>({
       query: (newData: Department) => ({
         url: `${DEPARTMENT_ENDPOINT.create}`,
@@ -92,7 +118,7 @@ export const departmentQuery = appApi.injectEndpoints({
         method: "PUT",
         data: newData,
       }),
-      invalidatesTags: ["DepartmentInfo"],
+      invalidatesTags: ["Departments"],
       async onQueryStarted(param, { dispatch, queryFulfilled }) {
         try {
           const { data } = await queryFulfilled;
@@ -284,6 +310,7 @@ export const departmentQuery = appApi.injectEndpoints({
 
 export const {
   useLazyGetDepartmentQuery,
+  useLazyGetArchivedDepartmentsQuery,
   useArchiveDepartmentMutation,
   useGetDepartmentQuery,
   useRestoreDepartmentMutation,

@@ -105,6 +105,7 @@ export async function middleware(request: NextRequest) {
     }
 
     const [_, { allowedRoles, restrictedRoles }] = matchedRoute;
+    console.log(_);
     const activeRoleKey = decodedToken.activeRole.key;
 
     if (activeRoleKey === "SA" || decodedToken.isPowerUser) {

@@ -12,7 +12,6 @@ import {
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Controller, FieldErrors, SubmitHandler, useForm } from "react-hook-form";
-import z from "zod";
 
 import { AppError } from "@/src/models/app-interfaces";
 import { notifications } from "@mantine/notifications";
@@ -37,6 +36,7 @@ export default function FAQForm(props: Props) {
   const [createFAQ, { isLoading: creating }] = useCreateFAQMutation();
   const [updateFAQ, { isLoading: updating }] = useUpdateFAQMutation();
   const [editorContent, setEditorContent] = useState("");
+  console.log(editorContent)
 
 
   const {
@@ -116,7 +116,7 @@ export default function FAQForm(props: Props) {
     } else {
       reset(faqDefaultValue);
     }
-  }, [params?.id, props.data]);
+  }, [reset, params?.id, props.data]);
  const ans = watch('answer');
   return (
     <>

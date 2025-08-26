@@ -22,6 +22,7 @@ export interface User {
   middleName: string;
   lastName?: string;
   organizationId?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   organization?: any;
   departmentId?: string;
   roleId?: string[];
@@ -33,6 +34,7 @@ export interface User {
   jobTitle?: string;
   gender: "Male" | "Female";
   licenseNumber?: string;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
   profilePicture?: any;
   isPowerUser?: boolean;
   isEmployee?: boolean;
@@ -43,7 +45,7 @@ export interface User {
   tin?: string;
   employeeNumber?: string;
   userRoles?: MappedUserRoles[];
-  roleIds?: any[];
+  roleIds?: string[];
   userContacts?: EmergencyContact[];
   currentRole?: string;
   createdBy?: string;

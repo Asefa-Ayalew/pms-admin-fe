@@ -1,6 +1,5 @@
 "use client";
 import { Box, Button } from "@mantine/core";
-import { formatDate } from "@/src/shared/utils/date-utils";
 import { Room } from "@/src/models/room.model";
 
 interface Props {

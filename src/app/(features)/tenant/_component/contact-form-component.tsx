@@ -50,8 +50,8 @@ const defaultValue: FormSchema = {
     city: "",
     subcity: "",
     woreda: "",
-    kebele: ""
-  }
+    kebele: "",
+  },
 };
 
 const countryCodes = countryJson
@@ -109,7 +109,6 @@ export default function ContactForm(props: Props) {
   };
   const [countryCode, setCountryCode] = useState<string>("+251");
 
-
   const {
     register,
     control,
@@ -128,8 +127,7 @@ export default function ContactForm(props: Props) {
       try {
         const response = await createContact({
           ...data,
-          tenantId: `${params?.id}`
-
+          tenantId: `${params?.id}`,
         }).unwrap();
         if (response) {
           props.onClose();
@@ -142,7 +140,7 @@ export default function ContactForm(props: Props) {
         const response = await updateContact({
           ...data,
           id: `${props?.data?.id}`,
-          tenantId: `${props?.data?.tenantId}`
+          tenantId: `${props?.data?.tenantId}`,
         });
         if (response) {
           props.onClose();
@@ -433,20 +431,13 @@ export default function ContactForm(props: Props) {
 
                 {/* Buttons */}
                 <div className="w-full flex space-x-4 justify-end mt-4">
-                  <Button
-                    variant="default"
-                    onClick={() => reset(defaultValue)}
-                  >
+                  <Button variant="default" onClick={() => reset(defaultValue)}>
                     Reset
                   </Button>
                   <Button
                     variant="filled"
                     type="submit"
-                    loading={
-                      editMode === "new"
-                        ? creating
-                        : updating
-                    }
+                    loading={editMode === "new" ? creating : updating}
                     leftSection={<IconDeviceFloppy />}
                   >
                     {editMode === "new" ? "Save" : "Update"}
@@ -459,9 +450,7 @@ export default function ContactForm(props: Props) {
       ) : (
         <Box className="w-full text-sm text-gray-900">
           <tr className="flex border-b border-gray-300 border-dashed">
-            <td className="w-1/3 p-2 bg-gray-100 border-gray-300">
-              {"Name"}
-            </td>
+            <td className="w-1/3 p-2 bg-gray-100 border-gray-300">{"Name"}</td>
             <td className="p-2">{props?.data?.name}</td>
           </tr>
           <tr className="flex border-b border-gray-300 border-dashed">
@@ -471,22 +460,82 @@ export default function ContactForm(props: Props) {
             <td className="p-2">{props.data?.note}</td>
           </tr>
           <tr className="flex border-b border-gray-300 border-dashed">
-            <td className="w-1/3 p-2 bg-gray-100 border-gray-300">
-              {"Tin"}
-            </td>
+            <td className="w-1/3 p-2 bg-gray-100 border-gray-300">{"Tin"}</td>
             <td className="p-2">{props.data?.gender}</td>
           </tr>
           <tr className="flex border-b border-gray-300 border-dashed">
-            <td className="w-1/3 p-2 bg-gray-100 border-gray-300">
-              {"Email"}
-            </td>
+            <td className="w-1/3 p-2 bg-gray-100 border-gray-300">{"Email"}</td>
             <td className="p-2">{props.data?.email}</td>
+          </tr>
+          <tr className="flex border-b border-gray-300 border-dashed">
+            <td className="w-1/3 p-2 bg-gray-100 border-gray-300">
+              {"Secondary Emails"}
+            </td>
+            <td className="p-2">{props.data?.secondaryEmails?.join(",")}</td>
           </tr>
           <tr className="flex border-b border-gray-300 border-dashed">
             <td className="w-1/3 p-2 bg-gray-100 border-gray-300">
               {"Phone Number"}
             </td>
             <td className="p-2">{props.data?.phoneNumber}</td>
+          </tr>
+          <tr className="flex border-b border-gray-300 border-dashed">
+            <td className="w-1/3 p-2 bg-gray-100 border-gray-300">
+              {"Secondary Phone Numbers"}
+            </td>
+            <td className="p-2">
+              {props.data?.secondaryPhoneNumbers?.join(",")}
+            </td>
+          </tr>
+          <tr className="flex border-b border-gray-300 border-dashed">
+            <td className="w-1/3 p-2 bg-gray-100 border-gray-300">
+              {"Gender"}
+            </td>
+            <td className="p-2">{props.data?.gender}</td>
+          </tr>
+          <tr className="flex border-b border-gray-300 border-dashed">
+            <td className="w-1/3 p-2 bg-gray-100 border-gray-300">
+              {"Industry"}
+            </td>
+            <td className="p-2">{props.data?.industry}</td>
+          </tr>
+          <tr className="flex border-b border-gray-300 border-dashed">
+            <td className="w-1/3 p-2 bg-gray-100 border-gray-300">{"Note"}</td>
+            <td className="p-2">{props.data?.note}</td>
+          </tr>
+          <tr className="flex border-b border-gray-300 border-dashed">
+            <td className="w-1/3 p-2 bg-gray-100 border-gray-300">
+              {"Responsibility"}
+            </td>
+            <td className="p-2">{props.data?.responsibility}</td>
+          </tr>
+          <tr className="flex border-b border-gray-300 border-dashed">
+            <td className="w-1/3 p-2 bg-gray-100 border-gray-300">
+              {"Country"}
+            </td>
+            <td className="p-2">{props.data?.address?.country}</td>
+          </tr>
+          <tr className="flex border-b border-gray-300 border-dashed">
+            <td className="w-1/3 p-2 bg-gray-100 border-gray-300">
+              {"Woreda"}
+            </td>
+            <td className="p-2">{props.data?.address?.woreda}</td>
+          </tr>
+          <tr className="flex border-b border-gray-300 border-dashed">
+            <td className="w-1/3 p-2 bg-gray-100 border-gray-300">
+              {"Kebele"}
+            </td>
+            <td className="p-2">{props.data?.address?.kebele}</td>
+          </tr>
+          <tr className="flex border-b border-gray-300 border-dashed">
+            <td className="w-1/3 p-2 bg-gray-100 border-gray-300">{"City"}</td>
+            <td className="p-2">{props.data?.address?.city}</td>
+          </tr>
+          <tr className="flex border-b border-gray-300 border-dashed">
+            <td className="w-1/3 p-2 bg-gray-100 border-gray-300">
+              {"Sub City"}
+            </td>
+            <td className="p-2">{props.data?.address?.subcity}</td>
           </tr>
           <Box className="flex justify-end mt-2">
             <Button

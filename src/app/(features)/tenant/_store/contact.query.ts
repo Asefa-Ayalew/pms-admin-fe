@@ -1,5 +1,4 @@
 import { AppError } from "@/src/models/app-interfaces";
-import { CollectionQuery } from "@/src/shared/models/collection.model";
 import { appApi } from "@/src/store/app.api";
 import { notifications } from "@mantine/notifications";
 import { CONTACT_ENDPOINT } from "./contact.endpoint";

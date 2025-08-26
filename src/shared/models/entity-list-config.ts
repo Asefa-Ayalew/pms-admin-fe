@@ -1,15 +1,15 @@
 import { Filter } from "./collection.model";
 
-export type entityViewMode = "list" | "detail";
+export type entityViewMode = "list" | "detail" | "always-list";
 
 export interface EntityConfig<T = void> {
   key?: string;
-  identity: string;
+  identity?: string;
   name?: string;
-  rootUrl: string;
+  rootUrl?: string;
   detailUrl?: string;
   filter?: Filter[][];
-  primaryColumn: Column<T>;
+  primaryColumn?: Column<T>;
   visibleColumn: Column<T>[];
   detailColumn?: Column<T>[];
 
@@ -18,10 +18,13 @@ export interface EntityConfig<T = void> {
   showClose?: boolean;
   hasActions?: boolean;
   showDetail?: boolean;
+  hasDetail?: boolean;
   hasBackLink?: boolean;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   routing?(data: any): void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   newAction?(data: any): void;
-  actions?: Actions[];
+  actions?: Actions[] | ((item: T) => Actions[]);
 }
 
 export interface Column<T> {
@@ -37,15 +40,22 @@ export interface Column<T> {
   suffix?: Column<T>;
   // style
   tdClass?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   render?: (value: T) => any;
   className?: (data: T) => string;
 }
 export interface Actions {
   label: string;
-  icon?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  icon?: React.ComponentType<any>;
   size?: string;
   type?: "primary" | "danger";
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   class?: any;
+  color?: string;
   key: string;
   divider?: boolean;
+  isLoading?: boolean;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  onClick?: (data?: any) => void;
 }

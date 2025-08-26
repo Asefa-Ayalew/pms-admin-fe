@@ -3,6 +3,7 @@ import { deleteCookie, getCookie } from "cookies-next";
 
 export interface Auth {
   loading: boolean;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   role: any | null;
 }
 
@@ -31,6 +32,7 @@ export const authSlice = createSlice({
     setLoading: (state, action: PayloadAction<boolean>): void => {
       state.loading = action.payload;
     },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     setRole: (state, action: PayloadAction<any>): void => {
       state.role = action.payload;
     },

@@ -1,18 +1,20 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useParams, useSearchParams } from "next/navigation";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 
 import { Role } from "@/src/models/role.model";
-import EntityList, { CustomToolbarAction, TableBehaviorConfig, TableStyleConfig } from "@/src/shared/entity/entity-list";
 import { CollectionQuery } from "@/src/shared/models/collection.model";
 import {
   EntityConfig,
   entityViewMode,
-} from "@/src/shared/models/entity-config.model";
-import { useParams } from "next/navigation";
-import { useLazyGetUsersQuery } from "../user/_store/user.query";
-import { useLazyGetRolesQuery } from "./_store/role.query";
-import { IconAdjustments, IconDownload, IconRefreshDot, IconUserPlus } from "@tabler/icons-react";
+} from "@/src/shared/models/entity-list-config";
+import {
+  useLazyGetArchivedRolesQuery,
+  useLazyGetRoleQuery,
+  useLazyGetRolesQuery,
+} from "./_store/role.query";
+import EntityTable from "@/src/shared/table/entity-table";
 
 export default function RoleListPage({
   children,
@@ -20,136 +22,48 @@ export default function RoleListPage({
   children: React.ReactNode;
 }) {
   const params = useParams();
-
+  const searchParams = useSearchParams();
+  const isArchived = searchParams.get("archived") === "true";
   const [viewMode, setViewMode] = useState<entityViewMode>("list");
-  const [collection, setCollection] = useState<CollectionQuery>({
+  const [view, setView] = useState<"list" | "archived">("list");
+  const [collectionQuery, setCollectionQuery] = useState<CollectionQuery>({
     skip: 0,
-    top: 20,
-    orderBy: [{ field: "createdAt", direction: "desc" }],
-  });
-  const [userCollection, setUserCollection] = useState<CollectionQuery>({
+    top: 10,
     orderBy: [{ field: "createdAt", direction: "desc" }],
   });
 
-  const [getRole, { data: role, isLoading, error }] = useLazyGetRolesQuery();
-  const [getUsers, users] = useLazyGetUsersQuery();
-  useEffect(() => {
-    getRole(collection);
-  }, [collection]);
+  const [getRoles, { data: roles, isLoading: isLoadingRoles }] =
+    useLazyGetRolesQuery();
+  const [
+    getArchivedRoles,
+    { data: archivedRoles, isLoading: archivedRolesLoading },
+  ] = useLazyGetArchivedRolesQuery();
 
-
-  const behaviorConfig: TableBehaviorConfig = useMemo(
-    () => ({
-      enableColumnFilters: true,
-      enableGlobalFilter: true,
-      enableColumnResizing: true,
-      enableFullScreenToggle: true,
-      enableDensityToggle: true,
-      enableColumnOrdering: true,
-      enablePagination: true,
-      enableMultiSort: true,
-      enableMultiRowSelection: true,
-      manualFiltering: true,
-      manualPagination: true,
-      manualSorting: true,
-      paginationDisplayMode: "default",
-      positionPagination: "bottom",
-      positionActionsColumn: "last",
-      enableHiding: true,
-    }),
-    []
-  );
-  const handlePaginationChange = useCallback(
-    (pageIndex: number, pageSize: number) => {
-      setCollection((prev) => ({
-        ...prev,
-        skip: pageIndex - 1,
-        top: pageSize,
-      }));
-    },
-    []
-  );
-  const onSearch = (search: string) => {
-    setCollection((prev) => ({
-      ...prev,
-      skip: 0,
-      search: search,
-    }));
-  };
-
-  const onFilter = (filter: any[]) => {
-    setCollection((prev) => ({
-      ...prev,
-      filter,
-    }));
-  };
-
-  const onOrder = (order: { field: string; direction: "desc" | "asc" }) => {
-    setCollection((prev) => ({
-      ...prev,
-      orderBy: [order],
-    }));
-  };
-  const customActions: CustomToolbarAction[] = useMemo(
-    () => [
-      {
-        key: "refresh",
-        label: "Refresh Properties",
-        icon: <IconRefreshDot size={18} />,
-        color: "blue",
-        onClick: () => getRole({ skip: 0, top: 20 }),
-        tooltip: "Refresh user data",
-        position: "top",
-        order: 1,
-      },
-      {
-        key: "add-role",
-        label: "Add role",
-        icon: <IconUserPlus size={18} />,
-        color: "green",
-        onClick: () => console.log("Add role clicked"),
-        tooltip: "Add a new role",
-        position: "top",
-        order: 2,
-      },
-      {
-        key: "export-user",
-        label: "Export",
-        icon: <IconDownload size={18} />,
-        color: "cyan",
-        onClick: () => console.log("Export clicked"),
-        tooltip: "Export Role data",
-        position: "bottom",
-        variant: "subtle",
-        order: 1,
-      },
-      {
-        key: "settings",
-        label: "Settings",
-        icon: <IconAdjustments size={18} />,
-        color: "gray",
-        onClick: () => console.log("Settings clicked"),
-        tooltip: "Table settings",
-        position: "bottom",
-        variant: "subtle",
-        order: 2,
-      },
-    ],
-    [getRole]
-  );
-
-  console.log(users, setUserCollection);
-  useEffect(() => {
-    getUsers(userCollection);
-  }, [userCollection, getUsers]);
+  const [getRole, { data: role }] = useLazyGetRoleQuery();
 
   useEffect(() => {
-    if (params?.id !== undefined) {
-      setViewMode("detail");
+    if (view === "list") {
+      getRoles(collectionQuery);
     } else {
-      setViewMode("list");
+      getArchivedRoles(collectionQuery);
     }
-  }, [setViewMode, params]);
+  }, [collectionQuery, getArchivedRoles, getRoles, view]);
+
+  useEffect(() => {
+    getRole(String(params.id));
+  }, [getRole, params.id]);
+
+  useEffect(() => {
+    setViewMode(params?.id !== undefined ? "detail" : "list");
+  }, [params?.id]);
+
+  useEffect(() => {
+    if (isArchived) {
+      setView("archived");
+    } else {
+      setView("list");
+    }
+  }, [isArchived]);
 
   const config = useMemo<EntityConfig<Role>>(
     () => ({
@@ -162,51 +76,62 @@ export default function RoleListPage({
         { key: "description", name: "Role Description" },
         { key: "createdAt", name: "Created At", isDate: true },
       ],
+      showDetail: true,
     }),
     []
   );
 
-  const data = role?.data;
-  const styleConfig: TableStyleConfig = useMemo(
-    () => ({
-      primaryColor: "blue",
-      dangerColor: "red",
-      fontSize: "xs",
-      density: "xs",
-      shadowLevel: "xs",
-      borderColor: "border-gray-200",
-      rowHoverColor: "var(--mantine-color-blue-50)",
-    }),
-    []
-  );
+  const handlePaginationChange = useCallback((skip: number, top: number) => {
+    setCollectionQuery((prev) => ({
+      ...prev,
+      skip,
+      top,
+    }));
+  }, []);
+
+  const onSearch = (search: string) => {
+    setCollectionQuery((prev) => ({
+      ...prev,
+      skip: 0,
+      search: search,
+    }));
+  };
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const onFilter = (filter: any[]) => {
+    setCollectionQuery((prev) => ({
+      ...prev,
+      filter,
+    }));
+  };
+
+  const onOrder = (order: { field: string; direction: "desc" | "asc" }) => {
+    setCollectionQuery((prev) => ({
+      ...prev,
+      orderBy: [order],
+    }));
+  };
+
   return (
-    <div className="flex w-full">
-      <EntityList
-        title="roles"
-        detailTitle="Role Detail"
-        config={config}
-        viewMode={viewMode}
-        detail={children}
-        defaultPageSize={20}
-        pageSizeOptions={[10, 20, 30, 50, 100]}
-        _showTotal={true}
-        tableKey="roles"
-        dataLoadMode="static"
-        items={data || []}
-        total={role?.count || 0}
-        itemsLoading={isLoading}
-        styleConfig={styleConfig}
-        behaviorConfig={behaviorConfig}
-        errorText={
-          error ? "Failed to load roles. Please try again." : undefined
-        }
-        noDataText="No role found"
-        customActions={customActions}
-        onPaginationChange={handlePaginationChange}
-        onSearch={onSearch}
-        onOrder={onOrder}
-        onFilterChange={onFilter}
-      />
-    </div>
+    <EntityTable
+      title={view === "list" ? "Roles" : "Archived Roles"}
+      detailTitle={
+        params.id !== "new" ? (role?.name ?? "Role Detail") : "New Role"
+      }
+      config={config}
+      detail={children}
+      items={view === "list" ? roles?.data : archivedRoles?.data}
+      total={view === "list" ? roles?.count : archivedRoles?.count}
+      itemsLoading={view === "list" ? isLoadingRoles : archivedRolesLoading}
+      collectionQuery={collectionQuery}
+      view={view}
+      viewMode={viewMode}
+      showNewButton={view === "list"}
+      onViewChange={setView}
+      onPaginationChange={handlePaginationChange}
+      onSearch={onSearch}
+      onOrder={onOrder}
+      onFilterChange={onFilter}
+    />
   );
 }

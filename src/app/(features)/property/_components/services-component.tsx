@@ -1,150 +1,141 @@
 "use client";
-import {
-  ActionIcon,
-  Card,
-  Divider,
-  Menu,
-  Modal,
-  Table,
-} from "@mantine/core";
-import { useEffect, useMemo, useState } from "react";
-import {
-  IconDotsVertical,
-  IconEye,
-  IconInbox,
-} from "@tabler/icons-react";
 
-import { PropertyService } from "@/src/models/property.model";
-import { formatDate } from "@/src/shared/utils/date-utils";
-import { useLazyGetPropertyQuery } from "../_store/property.query";
-import { serviceDefaultValue } from "@/src/schemas/property-schema";
 import { useParams } from "next/navigation";
-import { CollectionQuery } from "@/src/shared/models/collection.model";
-import ServicePreview from "./service-preview-component";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 
-const modalConfig = {
-  view: {
-    title: "View Service",
-    size: "60%",
-    component: (onClose: () => void, service:PropertyService) => (
-      <ServicePreview onClose={onClose} data={service} />
-    ),
-  },
-};
+import { CollectionQuery } from "@/src/shared/models/collection.model";
+import {
+  EntityConfig,
+  entityViewMode,
+} from "@/src/shared/models/entity-list-config";
+
+import { formatDate } from "@/src/shared/utils/date-utils";
+import InnerTable from "@/src/shared/table/inner-table";
+import { useLazyGetPropertyQuery } from "../_store/property.query";
+import { PropertyService } from "@/src/models/property.model";
 
 export default function ServicesComponent() {
   const params = useParams();
-    const collection = useMemo<CollectionQuery>(
-    () => ({
-      skip: 0,
-      top: 20,
-      orderBy: [{ field: "createdAt", direction: "desc" }],
-    }),
-    []
-  );
-  const [modals, setModals] = useState<
-    Record<keyof typeof modalConfig, boolean>
-  >({
-    view: false,
+
+  const [viewMode, setViewMode] = useState<entityViewMode>("list");
+  const [collectionQuery, setCollectionQuery] = useState<CollectionQuery>({
+    skip: 0,
+    top: 20,
+    orderBy: [{ field: "createdAt", direction: "desc" }],
   });
-  const [selectedService, setSelectedService] =
-    useState<PropertyService>(serviceDefaultValue);
-  const [getProperty, { data: selectedProperty }] = useLazyGetPropertyQuery();
-  const services = selectedProperty?.services;
+
+ const [getProperty, {data: property, isLoading}] = useLazyGetPropertyQuery()
 
   useEffect(() => {
     getProperty({ id: String(params.id), includes: ["services", "services.service"] });
-  }, [collection, getProperty]);
+  }, [collectionQuery, getProperty, params.id]);
 
-  const openModal = (type: keyof typeof modalConfig, service?:PropertyService) => {
-    setSelectedService(service ?? serviceDefaultValue);
-    setModals((prev) => ({ ...prev, [type]: true }));
+  useEffect(() => {
+    setViewMode(params?.id !== undefined ? "detail" : "list");
+  }, [params?.id]);
+
+  const config = useMemo<EntityConfig<PropertyService>>(
+    () => ({
+      primaryColumn: {
+        key: ["service", "name"],
+        name: "Name",
+        render: (data: PropertyService) => `${data?.service?.name ?? ""}`,
+      },
+      rootUrl: "/service",
+      detailUrl: "detail",
+      identity: "id",
+      visibleColumn: [
+        {
+          key: "name",
+          name: "Name",
+          render: (data: PropertyService) => `${data?.service?.name ?? ""}`,
+        },
+        {
+          key: "description",
+          name: "Description",
+          render: (data: PropertyService) => `${data?.service?.description ?? ""}`,
+        },
+        {
+          key: "chargeAmount",
+          name: "Charge Amount",
+          render: (data: PropertyService) => `${data?.chargeAmount ?? ""}`,
+        },
+        {
+          key: "availableFrom",
+          name: "Available From",
+          render: (data: PropertyService) => `${data?.availableFrom?? ""}`,
+        },
+        {
+          key: "isPublic",
+          name: "Is Public",
+          render: (data: PropertyService) => `${data?.isPublic ? 'Yes' : 'No'}`,
+          isBoolean: true,
+        },
+        {
+          key: "isOptional",
+          name: "Is Optional",
+          render: (data: PropertyService) => `${data?.isPublic ? "Yes" : 'No'}`,
+          isBoolean: true,
+        },
+        {
+          key: "createdAt",
+          name: "Created Date",
+          render: (data: PropertyService) => `${formatDate(data?.createdAt) ?? ""}`,
+          isDate: true,
+        },
+      ],
+      showDetail: false,
+      hasActions: false,
+    }),
+    []
+  );
+
+  const handlePaginationChange = useCallback((skip: number, top: number) => {
+    setCollectionQuery((prev) => ({
+      ...prev,
+      skip,
+      top,
+    }));
+  }, []);
+
+  const onSearch = (search: string) => {
+    setCollectionQuery((prev) => ({
+      ...prev,
+      skip: 0,
+      search: search,
+    }));
   };
 
-  const closeModal = (type: keyof typeof modalConfig) => {
-    setModals((prev) => ({ ...prev, [type]: false }));
-    setSelectedService(serviceDefaultValue);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const onFilter = (filter: any[]) => {
+    setCollectionQuery((prev) => ({
+      ...prev,
+      filter,
+    }));
   };
 
-  const handleAction = (action: string, service?:PropertyService) => {
-    openModal(action as keyof typeof modalConfig, service);
+  const onOrder = (order: { field: string; direction: "desc" | "asc" }) => {
+    setCollectionQuery((prev) => ({
+      ...prev,
+      orderBy: [order],
+    }));
   };
 
-  const renderModals = () =>
-    (Object.keys(modalConfig) as (keyof typeof modalConfig)[]).map((key) => {
-      const { title, size, component } = modalConfig[key];
-      return (
-        <Modal
-          key={key}
-          opened={modals[key]}
-          onClose={() => closeModal(key)}
-          title={title}
-          centered
-          size={size}
-        >
-          <Divider />
-          {component(() => closeModal(key), selectedService)}
-        </Modal>
-      );
-    });
 
   return (
-    <Card shadow="sm" padding="md">
-      <Table>
-        <Table.Thead>
-          <Table.Tr>
-            <Table.Th>Name</Table.Th>
-            <Table.Th>Charge Amount</Table.Th>
-            <Table.Th>Available From</Table.Th>
-            <Table.Th>Is Optional?</Table.Th>
-            <Table.Th>Is Public?</Table.Th>
-            <Table.Th style={{ width: "15%" }}>Created At</Table.Th>
-            <Table.Th style={{ width: "20px" }}></Table.Th>
-          </Table.Tr>
-        </Table.Thead>
-        <Table.Tbody>
-          {services?.length === 0 ? (
-            <Table.Tr>
-              <Table.Td colSpan={6} className="text-center py-8 text-gray-500">
-                <div className="flex flex-col items-center">
-                  <IconInbox size={40} />
-                  <p className="mt-2">No services found</p>
-                </div>
-              </Table.Td>
-            </Table.Tr>
-          ) : (
-            services?.map((service:PropertyService) => (
-              <Table.Tr key={service.id}>
-                <Table.Td>{service?.service?.name}</Table.Td>
-                <Table.Td>{service.chargeAmount}</Table.Td>
-                <Table.Td>{formatDate(service.availableFrom)}</Table.Td>
-                <Table.Td>{service.isOptional ? "Yes" : "No"}</Table.Td>
-                <Table.Td>{service.isPublic ? "Yes" : "No"}</Table.Td>
-                <Table.Td>{formatDate(service.createdAt)}</Table.Td>
-                <Table.Td>
-                  <Menu shadow="md" width={160} position="bottom-end" withArrow>
-                    <Menu.Target>
-                      <ActionIcon variant="subtle" size="sm">
-                        <IconDotsVertical size={18} />
-                      </ActionIcon>
-                    </Menu.Target>
-                    <Menu.Dropdown>
-                      <Menu.Item
-                        leftSection={<IconEye size={14} />}
-                        onClick={() => handleAction("view", service)}
-                      >
-                        View
-                      </Menu.Item>
-                    </Menu.Dropdown>
-                  </Menu>
-                </Table.Td>
-              </Table.Tr>
-            ))
-          )}
-        </Table.Tbody>
-      </Table>
-
-      {renderModals()}
-    </Card>
+    <InnerTable
+      config={config}
+      items={property?.services || []}
+      total={property?.services?.length || 0}
+      itemsLoading={isLoading}
+      collectionQuery={collectionQuery}
+      viewMode={viewMode}
+      showArchivedList={false}
+      showNewButton={false}
+      onPaginationChange={handlePaginationChange}
+      onSearch={onSearch}
+      onOrder={onOrder}
+      onFilterChange={onFilter}
+    />
   );
 }

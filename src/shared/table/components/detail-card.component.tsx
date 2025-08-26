@@ -1,15 +1,15 @@
-import type React from "react"
-import { Card, Tabs, Badge, Text, Group, Stack, Title } from "@mantine/core"
+import type React from "react";
+import { Card, Tabs, Text, Group, Stack, Title } from "@mantine/core";
 
 interface DetailCardProps<T> {
-  item: T
-  title?: string
-  description?: string
+  item: T;
+  title?: string;
+  description?: string;
   sections?: {
-    id: string
-    label: string
-    content: React.ReactNode
-  }[]
+    id: string;
+    label: string;
+    content: React.ReactNode;
+  }[];
 }
 
 export default function DetailCard<T>({
@@ -49,18 +49,25 @@ export default function DetailCard<T>({
         </Tabs>
       ) : (
         <Stack gap="xs">
+          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
           {Object.entries(item as any)
             .filter(([key]) => key !== "id")
             .map(([key, value]) => (
               <Group key={key} justify="space-between">
-                <Text size="sm" color="dimmed" style={{ textTransform: "capitalize" }}>
+                <Text
+                  size="sm"
+                  color="dimmed"
+                  style={{ textTransform: "capitalize" }}
+                >
                   {key.replace(/([A-Z])/g, " $1").trim()}
                 </Text>
-                <Text>{value !== null && value !== undefined ? String(value) : "-"}</Text>
+                <Text>
+                  {value !== null && value !== undefined ? String(value) : "-"}
+                </Text>
               </Group>
             ))}
         </Stack>
       )}
     </Card>
-  )
+  );
 }

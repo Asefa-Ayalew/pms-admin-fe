@@ -5,13 +5,11 @@ import EmptyIcon from "@/src/shared/icons/empty-icon";
 import { LoadingOverlay } from "@mantine/core";
 import { useParams } from "next/navigation";
 import { useEffect } from "react";
-import { useLazyGetUserQuery } from "../../user/_store/user.query";
 import { useLazyGetTestimonialQuery } from "../_store/testimonial.query";
 
 export default function TestimonialDetailComponent() {
   const params = useParams();
 
-  const [getUser, user] = useLazyGetUserQuery();
   const [getTestimonial, testimonial] = useLazyGetTestimonialQuery();
 
   useEffect(() => {
@@ -43,16 +41,6 @@ export default function TestimonialDetailComponent() {
     },
   ];
 
-  const profileData = {
-    image: "",
-    name: `${user?.data?.firstName ?? ""} ${user?.data?.middleName ?? ""} ${user?.data?.lastName ?? ""}`,
-    type: "",
-    address: "",
-    phone: "",
-    email: "",
-    isVerified: false,
-  };
-
   const config = {
     editUrl: `/testimonials//${params?.id}`,
     isProfile: false,
@@ -64,7 +52,7 @@ export default function TestimonialDetailComponent() {
     getTestimonial({
       id: `${params?.id}`,
     });
-  }, [params?.id]);
+  }, [getTestimonial, params?.id]);
 
   return (
     <div className="w-full flex-col space-y-4 buser">
@@ -80,7 +68,6 @@ export default function TestimonialDetailComponent() {
       ) : (
         <DetailsPage
           dataSource={[{ title: "Basic Information", source: data }]}
-          profileData={profileData}
           config={config}
           isLoading={testimonial?.isLoading || testimonial?.isFetching}
         />

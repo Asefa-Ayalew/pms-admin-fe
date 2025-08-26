@@ -1,5 +1,5 @@
 import { Avatar, Group, Text, Box, Paper } from '@mantine/core';
-
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function UserInfo({ user }: { user: any }) {
   const tenant = user?.currentTenant;
 

@@ -26,21 +26,57 @@ export default function TenantDetailComponent() {
       value: `${tenant?.data?.name ?? ""}`,
     },
     {
+      key: "shortCode",
+      label: "Short Code",
+      value: `${tenant?.data?.shortCode ?? ""}`
+    },
+    {
+      key: "description",
+      label: "Description",
+      value: `${tenant?.data?.description ?? ""}`
+    },
+    {
+      key: "email",
+      label: "Email",
+      value: `${tenant?.data?.email ?? ""}`
+    },
+      {
+      key: "secondaryEmails",
+      label: "Secondary Emails",
+      value: `${tenant?.data?.secondaryEmails ?? ""}`
+    },
+    {
+      key: "phoneNumber",
+      label: "Phone Number",
+      value: `${tenant?.data?.phoneNumber ?? ""}`
+    },
+      {
+      key: "secondaryPhoneNumbers",
+      label: "Secondary Phone Numbers",
+      value: `${tenant?.data?.secondaryPhoneNumbers ?? ""}`
+    },
+    {
+      key: "industry",
+      label: "Industry",
+      value: `${tenant?.data?.industry ?? ""}`
+    },
+    {
+      key: "tin",
+      label: "Tin No",
+      value: `${tenant?.data?.tin ?? ""}`
+    },
+    {
+      key: "traderName",
+      label: "Trader Name",
+      value: `${tenant?.data?.tradeName ?? ""}`
+    },
+  
+    {
       key: "createdAt",
       label: "Created At",
       value: dateFormat(tenant?.data?.createdAt, "mmmm dd, yyyy"),
     },
   ];
-
-  const profileData = {
-    image: "",
-    name: `${tenant?.data?.name ?? ""}`,
-    type: "",
-    address: "",
-    phone: "",
-    email: "",
-    isVerified: false,
-  };
 
   const config = {
     editUrl: `/tenants/${params?.id}`,
@@ -52,11 +88,10 @@ export default function TenantDetailComponent() {
   useEffect(() => {
     getTenant({
       id: `${params?.id}`,
-      includes: ["users"],
     });
-  }, [params?.id]);
+  }, [getTenant, params?.id]);
 
-  return (
+   return (
     <div className="w-full flex-col space-y-4 buser">
       {tenant?.isLoading || tenant?.isFetching ? (
         <div className="relative flex items-center justify-center">
@@ -70,10 +105,10 @@ export default function TenantDetailComponent() {
       ) : (
         <DetailsPage
           dataSource={[{ title: "Basic Information", source: data }]}
-          profileData={profileData}
           config={config}
           description={tenant?.data?.description ?? ""}
           isLoading={tenant.isLoading || tenant.isFetching}
+          hideEdit={true}
         />
       )}
     </div>

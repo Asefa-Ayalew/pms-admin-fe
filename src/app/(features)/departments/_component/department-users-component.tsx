@@ -50,7 +50,13 @@ export default function DepartmentUsersComponent() {
 
   const [getDepartment, department] = useLazyGetDepartmentQuery();
   const [getDepartmentUsers, departmentUsers] = useLazyGetUsersQuery();
-
+  console.log(department)
+  // const [collection, setCollection] = useState<CollectionQuery>({
+  //   skip: 0,
+  //   top: 20,
+  //   filter: [[{ field: "departmentId", value: params.id, operator: "=" }]],
+  //   orderBy: [{ field: "createdAt", direction: "desc" }],
+  // });
   const [UserCollection] = useState<CollectionQuery>({
     skip: 0,
     top: 20,
@@ -60,8 +66,7 @@ export default function DepartmentUsersComponent() {
 
   useEffect(() => {
     getDepartmentUsers(UserCollection);
-  }, [UserCollection]);
-
+  }, [getDepartmentUsers, UserCollection]);
 
   const openModal = (type: keyof typeof modals, contact?: User) => {
     setSelectedDepartmentUser(contact ?? defaultDepartmentUserValue);
@@ -101,7 +106,8 @@ export default function DepartmentUsersComponent() {
         key: "name",
         name: "Employee Name",
         render: (data: User) =>
-          `${data?.firstName ?? ""} ${data?.middleName ?? ""} ${data?.lastName ?? ""
+          `${data?.firstName ?? ""} ${data?.middleName ?? ""} ${
+            data?.lastName ?? ""
           }`,
       },
 
@@ -143,7 +149,9 @@ export default function DepartmentUsersComponent() {
         console.warn("Unknown action:", action);
     }
   };
-
+  // const handleNewModal = () => {
+  //   openModal("new");
+  // };
   const renderModal = (
     type: keyof typeof modals,
     title: string,
@@ -165,167 +173,171 @@ export default function DepartmentUsersComponent() {
   return (
     <Card shadow="sm" padding="sm">
       <Button
-        onClick={() => openModal("new")}
-        leftSection={<IconPlus size={16} />}
-        styles={{
-          root: {
-            width: "5rem",
-            transition: "background-color 0.2s ease",
-            "&:hover": {
-              backgroundColor: "#ffeaea",
-            },
-            marginBottom: "4px",
-            marginLeft: "4px",
-          },
-        }}
-      >
-        New
-      </Button>
+                    onClick={() => openModal("new")}
+                    leftSection={<IconPlus size={16} />}
+                    styles={{
+                      root: {
+                        width: "5rem",
+                        transition: "background-color 0.2s ease",
+                        "&:hover": {
+                          backgroundColor: "#ffeaea",
+                        },
+                        marginBottom: "4px",
+                        marginLeft: "4px",
+                      },
+                    }}
+                  >
+                    New
+                  </Button>
 
-      <Table className="mantine-table-optimized" striped highlightOnHover>
-        <Table.Thead>
-          <Table.Tr>
-            {/* Primary Column */}
-            <Table.Th
-              style={{
-                position: "sticky",
-                left: 0,
-                zIndex: 3,
-                background: "white",
-              }}
-            >
-              {config.primaryColumn.name}
-            </Table.Th>
-
-            {/* Dynamic Visible Columns (excluding primary) */}
-            {config.visibleColumn
-              .filter((col) => col.key !== config.primaryColumn.key)
-              .map((col) => (
-                <Table.Th
-                  key={Array.isArray(col.key) ? col.key.join(",") : col.key}
-                >
-                  {col.name}
-                </Table.Th>
-              ))}
-
-            <Table.Th
-              style={{
-                position: "sticky",
-                right: 0,
-                zIndex: 3,
-                background: "white",
-                width: "20px",
-              }}
-            ></Table.Th>
-          </Table.Tr>
-        </Table.Thead>
-
-        <Table.Tbody>
-          {departmentUsers?.data?.data?.length === 0 ? (
-            <Table.Tr>
-              <Table.Td
-                colSpan={config.visibleColumn.length + 2}
-                className="text-center py-8 text-gray-500"
-              >
-                <div className="flex flex-col items-center">
-                  <IconInbox size={40} />
-                  <p className="mt-2">No users found</p>
-                </div>
-              </Table.Td>
-            </Table.Tr>
-          ) : (
-            departmentUsers?.data?.data?.map((user) => (
-              <Table.Tr
-                key={String(
-                  user[config.identity as keyof User] ?? ""
-                )}
-              >
-                <Table.Td
-                  style={{
-                    position: "sticky",
-                    left: 0,
-                    zIndex: 2,
-                    background: "white",
-                  }}
-                >
-                  {config.primaryColumn.render
-                    ? config.primaryColumn.render(user)
-                    : null}
-                </Table.Td>
-
-                {config.visibleColumn
-                  .filter((col) => col.key !== config.primaryColumn.key)
-                  .map((col) => (
+<Table className="mantine-table-optimized" striped highlightOnHover>
+              <Table.Thead>
+                <Table.Tr>
+                  {/* Primary Column */}
+                  <Table.Th
+                    style={{
+                      position: "sticky",
+                      left: 0,
+                      zIndex: 3,
+                      background: "white",
+                    }}
+                  >
+                    {config.primaryColumn.name}
+                  </Table.Th>
+      
+                  {/* Dynamic Visible Columns (excluding primary) */}
+                  {config.visibleColumn
+                    .filter((col) => col.key !== config.primaryColumn.key)
+                    .map((col) => (
+                      <Table.Th
+                        key={Array.isArray(col.key) ? col.key.join(",") : col.key}
+                      >
+                        {col.name}
+                      </Table.Th>
+                    ))}
+      
+                  {/* Actions */}
+                  <Table.Th
+                    style={{
+                      position: "sticky",
+                      right: 0,
+                      zIndex: 3,
+                      background: "white",
+                      width: "20px",
+                    }}
+                  ></Table.Th>
+                </Table.Tr>
+              </Table.Thead>
+      
+              <Table.Tbody>
+                {departmentUsers?.data?.data?.length === 0 ? (
+                  <Table.Tr>
                     <Table.Td
-                      key={Array.isArray(col.key) ? col.key.join(",") : col.key}
+                      colSpan={config.visibleColumn.length + 2}
+                      className="text-center py-8 text-gray-500"
                     >
-                      {col.render
-                        ? col.render(user)
-                        : typeof col.key === "string"
-                          ? user[col.key as keyof User]
-                          : Array.isArray(col.key)
-                            ? col.key
-                              .map(
-                                (k) => user[k as keyof User]
-                              )
-                              .join(" ")
-                            : null}
+                      <div className="flex flex-col items-center">
+                        <IconInbox size={40} />
+                        <p className="mt-2">No users found</p>
+                      </div>
                     </Table.Td>
-                  ))}
-
-                <Table.Td
-                  style={{
-                    position: "sticky",
-                    right: 0,
-                    zIndex: 2,
-                    background: "white",
-                  }}
-                >
-                  <Menu shadow="md" width={160} position="bottom-end" withArrow>
-                    <Menu.Target>
-                      <ActionIcon
-                        variant="subtle"
-                        size="sm"
-                        aria-label="Actions"
+                  </Table.Tr>
+                ) : (
+                  departmentUsers?.data?.data?.map((user) => (
+                    <Table.Tr
+                      key={String(
+                        user[config.identity as keyof User] ?? ""
+                      )}
+                    >
+                      {/* Primary Column */}
+                      <Table.Td
+                        style={{
+                          position: "sticky",
+                          left: 0,
+                          zIndex: 2,
+                          background: "white",
+                        }}
                       >
-                        <IconDotsVertical size={18} />
-                      </ActionIcon>
-                    </Menu.Target>
-                    <Menu.Dropdown>
-                      <Menu.Item
-                        color="blue"
-                        fw={600}
-                        leftSection={<IconEye size={14} />}
-                        onClick={() =>
-                          handleAction({ key: "showMore" }, user)
-                        }
+                        {config.primaryColumn.render
+                          ? config.primaryColumn.render(user)
+                          : null}
+                      </Table.Td>
+      
+                      {/* Visible Columns */}
+                      {config.visibleColumn
+                        .filter((col) => col.key !== config.primaryColumn.key)
+                        .map((col) => (
+                          <Table.Td
+                            key={Array.isArray(col.key) ? col.key.join(",") : col.key}
+                          >
+                            {col.render
+                              ? col.render(user)
+                              : typeof col.key === "string"
+                                ? user[col.key as keyof User]
+                                : Array.isArray(col.key)
+                                  ? col.key
+                                      .map(
+                                        (k) => user[k as keyof User]
+                                      )
+                                      .join(" ")
+                                  : null}
+                          </Table.Td>
+                        ))}
+      
+                      {/* Actions */}
+                      <Table.Td
+                        style={{
+                          position: "sticky",
+                          right: 0,
+                          zIndex: 2,
+                          background: "white",
+                        }}
                       >
-                        Show More
-                      </Menu.Item>
-                      <Menu.Item
-                        color="green"
-                        fw={600}
-                        leftSection={<IconEdit size={14} />}
-                        onClick={() => handleAction({ key: "edit" }, user)}
-                      >
-                        Edit
-                      </Menu.Item>
-                      <Menu.Item
-                        color="red"
-                        fw={600}
-                        leftSection={<IconTrash size={14} />}
-                        onClick={() => handleAction({ key: "delete" }, user)}
-                      >
-                        Delete
-                      </Menu.Item>
-                    </Menu.Dropdown>
-                  </Menu>
-                </Table.Td>
-              </Table.Tr>
-            ))
-          )}
-        </Table.Tbody>
-      </Table>
+                        <Menu shadow="md" width={160} position="bottom-end" withArrow>
+                          <Menu.Target>
+                            <ActionIcon
+                              variant="subtle"
+                              size="sm"
+                              aria-label="Actions"
+                            >
+                              <IconDotsVertical size={18} />
+                            </ActionIcon>
+                          </Menu.Target>
+                          <Menu.Dropdown>
+                            <Menu.Item
+                              color="blue"
+                              fw={600}
+                              leftSection={<IconEye size={14} />}
+                              onClick={() =>
+                                handleAction({ key: "showMore" }, user)
+                              }
+                            >
+                              Show More
+                            </Menu.Item>
+                            <Menu.Item
+                              color="green" 
+                              fw={600}
+                              leftSection={<IconEdit size={14} />}
+                              onClick={() => handleAction({ key: "edit" }, user)}
+                            >
+                              Edit
+                            </Menu.Item>
+                            <Menu.Item
+                              color="red" 
+                              fw={600}
+                              leftSection={<IconTrash size={14} />}
+                              onClick={() => handleAction({ key: "delete" }, user)}
+                            >
+                              Delete
+                            </Menu.Item>
+                          </Menu.Dropdown>
+                        </Menu>
+                      </Table.Td>
+                    </Table.Tr>
+                  ))
+                )}
+              </Table.Tbody>
+            </Table>
       {renderModal(
         "new",
         "Create User",

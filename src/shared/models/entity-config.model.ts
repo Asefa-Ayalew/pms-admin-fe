@@ -18,7 +18,9 @@ export interface EntityConfig<T = void> {
   showClose?: boolean;
   hasActions?: boolean;
   hasBackLink?: boolean;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   routing?(data: any): void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   newAction?(data: any): void;
   actions?: Actions[];
 }
@@ -36,6 +38,7 @@ export interface Column<T> {
   suffix?: Column<T>;
   // style
   tdClass?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   render?: (value: T) => any;
   className?: (data: T) => string;
 }
@@ -44,7 +47,9 @@ export interface Actions {
   icon?: string;
   size?: string;
   type?: "primary" | "danger";
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   class?: any;
   key: string;
   divider?: boolean;
+  isLoading?: boolean
 }

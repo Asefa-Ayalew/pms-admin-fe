@@ -20,6 +20,7 @@ export async function switchRole(roleId: string) {
       Cookies.set(
         "currentRole",
         JSON.stringify(
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           response?.data?.profile?.userRoles?.map((role: any) => role.role?.key)
         )
       );
@@ -28,6 +29,7 @@ export async function switchRole(roleId: string) {
       localStorage.setItem(
         "currentRole",
         JSON.stringify(
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           response?.data?.profile?.userRoles?.map((role: any) => role.role?.key)
         )
       );

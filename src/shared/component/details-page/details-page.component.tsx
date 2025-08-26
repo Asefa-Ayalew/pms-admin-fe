@@ -3,7 +3,6 @@ import {
   Box,
   Button,
   Card,
-  Collapse,
   Group,
   Table,
   Text,
@@ -25,6 +24,7 @@ import DetailsPageSkeleton from "./details-page-skeleton.component";
 interface DataType {
   key: string;
   label: string;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
   value?: any;
   level?: number;
   children?: DataType[];
@@ -153,6 +153,7 @@ function CollapsibleRow({
   const [opened, { toggle }] = useDisclosure(false);
   const hasChildren = item.children && item.children.length > 0;
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
   const renderValue = (value: any) => {
     if (Array.isArray(value)) {
       // Flat array of primitives

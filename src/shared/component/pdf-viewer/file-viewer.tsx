@@ -90,7 +90,7 @@ export const FileViewer = ({
     };
 
     getFile();
-  }, [url]);
+  }, [type, url]);
 
   if (error) {
     return (
@@ -128,6 +128,8 @@ export const FileViewer = ({
           />
         ) : excelData ? (
           <table>
+            {/* eslint-disable @typescript-eslint/no-explicit-any */}
+
             <tbody>
               {excelData.map((row: any, rowIndex: number) => (
                 <tr key={rowIndex}>
@@ -137,6 +139,7 @@ export const FileViewer = ({
                 </tr>
               ))}
             </tbody>
+            {/* eslint-enable @typescript-eslint/no-explicit-any */}
           </table>
         ) : (
           <p>Opening...</p>

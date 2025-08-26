@@ -159,7 +159,7 @@ export default function PropertyFormComponent(props: Props) {
         ...defaultValue,
       });
     }
-  }, [params?.id, editMode]);
+  }, [reset, getProperty, params?.id, editMode]);
 
   return (
     <Box className="w-full p-4 flex-col space-y-4 buser">

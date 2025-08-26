@@ -20,7 +20,7 @@ export default function UserDetailComponent() {
 
   useEffect(() => {
     getRoles(collection);
-  }, [collection]);
+  }, [getRoles, collection]);
   useEffect(() => {
     if (params?.id) {
       getUser({

@@ -26,11 +26,13 @@ export interface Order {
 
 export interface Filter {
   field: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   value?: any;
   operator?: string;
   name?: string;
 }
 export interface Collection<T> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [x: string]: any;
   count: number;
   data: T[];
@@ -41,5 +43,6 @@ export interface CollectionResult<T> {
   collectionQuery?: CollectionQuery;
   items: T[];
   isLoading: boolean;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   error?: any;
 }

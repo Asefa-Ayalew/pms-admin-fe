@@ -38,9 +38,10 @@ type FormSchema = z.infer<typeof NewDepartmentSchema>;
 const defaultValue: Department = {
   name: "",
   description: "",
+  
 };
 
-export default function DepartmentForm(props: Props) {
+export default function NewDepartmentComponent(props: Props) {
   const { editMode, onCreating } = props;
   const params = useParams();
   const navigate = useRouter();
@@ -100,22 +101,22 @@ export default function DepartmentForm(props: Props) {
   function handleDelete() {
     const response = selectedDepartment?.archivedAt
       ? restoreDepartment({ id: `${selectedDepartment?.id}` }).then(
-        (response) => {
-          if (response?.data) {
-            setOpenDeleteModal(false);
+          (response) => {
+            if (response?.data) {
+              setOpenDeleteModal(false);
+            }
           }
-        }
-      )
+        )
       : deleteDepartment(`${selectedDepartment?.id}`)
-        .then((response) => {
-          if (response?.data) {
+          .then((response) => {
+            if (response?.data) {
+              setOpenDeleteModal(false);
+            }
+          })
+          .finally(() => {
             setOpenDeleteModal(false);
-          }
-        })
-        .finally(() => {
-          setOpenDeleteModal(false);
-          navigate.push(`/department`);
-        });
+            navigate.push(`/department`);
+          });
     console.log(response);
   }
 
@@ -195,7 +196,7 @@ export default function DepartmentForm(props: Props) {
       });
       setEditorContent("");
     }
-  }, [params?.id, editMode]);
+  }, [getDepartment, reset, params?.id, editMode]);
   const desc = watch("description");
   return (
     <div className="w-full p-4 flex-col space-y-4 buser">
@@ -214,113 +215,118 @@ export default function DepartmentForm(props: Props) {
           </Button>
         </Box>
       )}
-      {isEditMode ? (
-        <>
-          <div className="">
-            <LoadingOverlay
-              visible={department?.isLoading || department?.isFetching}
-              zIndex={1000}
-              overlayProps={{ radius: "sm", blur: 2 }}
-            />
-            <form
-              name="Department form"
-              onSubmit={handleSubmit(onSubmit, onError)}
-              autoComplete="off"
-              className="w-full"
-            >
-              <div className="flex w-full">
-                <div className="px-2 mt-4 flex-col space-y-4 w-full">
-                  <div className="flex space-x-4 sm:flex-row mt-4">
-                    <TextInput
-                      label="Department Name"
-                      className="w-full"
-                      required
-                      placeholder="Department Name"
-                      {...register("name")}
-                      error={errors?.name?.message}
-                    />
-                  </div>
-                  <div className="flex space-x-4 sm:flex-row mt-4 w-full">
-                    <Controller
-                      name="description"
-                      control={control}
-                      render={({ field }) => (
-                        <CustomRichTextEditor
-                          label="Department description"
-                          {...field}
-                          value={desc}
-                          onChange={(value) => {
-                            setEditorContent(value);
-                            field.onChange(value);
-                          }}
-                          placeholder="Write something..."
-                          config={config}
-                          error={errors.description?.message}
-                        />
-                      )}
-                    />
-                  </div>
-
-                  <div className="w-full flex space-x-4  justify-end mt-4">
-                    <Button
-                      variant="default"
-                      className="bg-none"
-                      onClick={() =>
-                        reset({
-                          ...defaultValue,
-                        })
-                      }
-                    >
-                      Reset
-                    </Button>
-                    {editMode === "detail" && (
-                      <div>
-                        <Button
-                          type="button"
-                          variant="filled"
-                          color="red"
-                          className={`shadow-none bg-red-500 rounded flex items-center`}
-                          onClick={() => {
-                            setOpenDeleteModal(true);
-                            setSelectedDepartment(department?.data);
-                          }}
-                          loading={
-                            archiveResponse?.isLoading ||
-                            restoreResponse?.isLoading
-                          }
-                          leftSection={
-                            department?.data?.archivedAt ? (
-                              <IconArrowBack size={15} />
-                            ) : (
-                              <IconTrash size={15} />
-                            )
-                          }
-                        >
-                          {department?.data?.archivedAt ? "Restore" : "Delete"}
-                        </Button>
-                      </div>
+       {isEditMode ? (
+      <>
+        <div className="flex items-center justify-center">
+          <h3 className="text-2xl font-semibold">
+            {editMode === "new" ? "New Department Registration" : ""}
+          </h3>
+        </div>
+        <div className="">
+          <LoadingOverlay
+            visible={department?.isLoading || department?.isFetching}
+            zIndex={1000}
+            overlayProps={{ radius: "sm", blur: 2 }}
+          />
+          <form
+            name="Department form"
+            onSubmit={handleSubmit(onSubmit, onError)}
+            autoComplete="off"
+            className="w-full"
+          >
+            <div className="flex w-full justify-center">
+              <div className="w-4/5 px-2 mt-4 flex-col space-y-4">
+                <div className="lg:flex lg:space-x-4 sm:flex-row mt-4">
+                  <TextInput
+                    label="Department Name"
+                    className="w-full"
+                    required
+                    placeholder="Department Name"
+                    {...register("name")}
+                    error={errors?.name?.message}
+                  />
+                </div>
+                <div className="lg:flex lg:space-x-4 sm:flex-row mt-4">
+                  <Controller
+                    name="description"
+                    control={control}
+                    render={({ field }) => (
+                      <CustomRichTextEditor
+                        label="Department description"
+                        {...field}
+                        value={desc}
+                        onChange={(value) => {
+                          setEditorContent(value);
+                          field.onChange(value);
+                        }}
+                        placeholder="Write something..."
+                        config={config}
+                        error={errors.description?.message}
+                      />
                     )}
-                    <Button
-                      variant="filled"
-                      // className="shadow-none bg-primary-500 rounded flex items-center"
-                      bg={"primary.4"}
-                      type="submit"
-                      loading={
-                        editMode === "new"
-                          ? createResponse?.isLoading
-                          : updateResponse?.isLoading
-                      }
-                      leftSection={<IconDeviceFloppy />}
-                    >
-                      {editMode === "new" ? "Save" : "Update"}
-                    </Button>
-                  </div>
+                  />
+                </div>
+
+                <div className="w-full flex space-x-4  justify-end mt-4">
+                  <Button
+                    variant="default"
+                    className="bg-none"
+                    onClick={() =>
+                      reset({
+                        ...defaultValue,
+                      })
+                    }
+                  >
+                    Reset
+                  </Button>
+                  {editMode === "detail" && (
+                    <div>
+                      <Button
+                        type="button"
+                        variant="filled"
+                        color="red"
+                        className={`shadow-none bg-red-500 rounded flex items-center`}
+                        onClick={() => {
+                          setOpenDeleteModal(true);
+                          setSelectedDepartment(department?.data);
+                        }}
+                        loading={
+                          archiveResponse?.isLoading ||
+                          restoreResponse?.isLoading
+                        }
+                        leftSection={
+                          department?.data?.archivedAt ? (
+                            <IconArrowBack size={15} />
+                          ) : (
+                            <IconTrash size={15} />
+                          )
+                        }
+                      >
+                        {department?.data?.archivedAt ? "Restore" : "Delete"}
+                      </Button>
+                    </div>
+                  )}
+                  <Button
+                    variant="filled"
+                    // className="shadow-none bg-primary-500 rounded flex items-center"
+                    bg={"primary.4"}
+                    type="submit"
+                    loading={
+                      editMode === "new"
+                        ? createResponse?.isLoading
+                        : updateResponse?.isLoading
+                    }
+                    leftSection={<IconDeviceFloppy />}
+                  >
+                    {editMode === "new" ? "Save" : "Update"}
+                  </Button>
                 </div>
               </div>
-            </form>
-          </div>
-        </>
-      ) : (
+            </div>
+          </form>
+        </div>
+      </>
+) : (
         <DetailsPage
           dataSource={[{ title: "Basic Information", source: data }]}
           profileData={profileData}

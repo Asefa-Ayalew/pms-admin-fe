@@ -44,6 +44,7 @@ export const userQuery = appApi.injectEndpoints({
         }
       },
     }),
+
     createUser: builder.mutation<User, User>({
       query: (newData: User) => ({
         url: `${USER_ENDPOINT.create}`,
@@ -127,6 +128,31 @@ export const userQuery = appApi.injectEndpoints({
         }
       },
     }),
+    getArchivedUsers: builder.query<Collection<User>, CollectionQuery>(
+      {
+        query: (data: CollectionQuery) => ({
+          url: USER_ENDPOINT.listArchivedUsers,
+          method: "GET",
+          params: collectionQueryBuilder(data),
+        }),
+        providesTags: ["Users"],
+        async onQueryStarted(param, { queryFulfilled }) {
+          try {
+            const { data } = await queryFulfilled;
+            if (data) {
+              userCollection = param;
+            }
+          } catch (error: unknown) {
+            notifications.show({
+              title: "Error",
+              message:
+                (error as AppError)?.error?.data?.message || "Error, try again",
+              color: "red",
+            });
+          }
+        },
+      }
+    ),
     archiveUser: builder.mutation<User, CollectionQuery>({
       query: (data: CollectionQuery) => ({
         url: `${USER_ENDPOINT.archive}/${data?.id}`,
@@ -339,6 +365,7 @@ export const userQuery = appApi.injectEndpoints({
 });
 export const {
   useLazyGetUserQuery,
+  useLazyGetArchivedUsersQuery,
   useGetUserQuery,
   useLazyGetUsersQuery,
   useCreateUserMutation,

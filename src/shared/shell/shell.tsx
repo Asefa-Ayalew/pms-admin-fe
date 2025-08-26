@@ -128,6 +128,7 @@ const generateNavData = (
             );
             if (!route) return true;
             const [_, { restrictedRoles }] = route;
+            console.log(_)
             return protectRoutesFromRoles((restrictedRoles as RoleKey[]) || []);
           }),
         };
@@ -165,7 +166,7 @@ export function Shell({ children }: { children: ReactNode }) {
         console.log(res);
       });
     }
-  }, [bucketName, name]);
+  }, [getSignedUrl, bucketName, name]);
 
   // Memoize the header content
   const HeaderContent = useMemo(
@@ -203,6 +204,7 @@ export function Shell({ children }: { children: ReactNode }) {
       user?.organization,
       isLoadingGetSignedUrl,
       signedUrl,
+      tenant?.name
     ]
   );
 

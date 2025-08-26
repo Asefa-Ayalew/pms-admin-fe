@@ -5,16 +5,14 @@ import EmptyIcon from "@/src/shared/icons/empty-icon";
 import { LoadingOverlay } from "@mantine/core";
 import { useParams } from "next/navigation";
 import { useEffect } from "react";
-import { useLazyGetUserQuery } from "../../user/_store/user.query";
 import {
-  useLazyGetFeedBackQuery,
+  useLazyGetFeedbackQuery,
 } from "../_store/feed-back.query";
 
 export default function FeedBackDetailComponent() {
   const params = useParams();
 
-  const [getUser, user] = useLazyGetUserQuery();
-  const [getFeedBack, feedBack] = useLazyGetFeedBackQuery();
+  const [getFeedBack, feedBack] = useLazyGetFeedbackQuery();
 
   useEffect(() => {
     getFeedBack({
@@ -50,16 +48,6 @@ export default function FeedBackDetailComponent() {
     },
   ];
 
-  const profileData = {
-    image: "",
-    name: `${user?.data?.firstName ?? ""} ${user?.data?.middleName ?? ""} ${user?.data?.lastName ?? ""}`,
-    type: "",
-    address: "",
-    phone: "",
-    email: "",
-    isVerified: false,
-  };
-
   const config = {
     editUrl: `/feed-backs//${params?.id}`,
     isProfile: false,
@@ -71,7 +59,7 @@ export default function FeedBackDetailComponent() {
     getFeedBack({
       id: `${params?.id}`,
     });
-  }, [params?.id]);
+  }, [getFeedBack, params?.id]);
 
   return (
     <div className="w-full flex-col space-y-4 buser">
@@ -87,7 +75,6 @@ export default function FeedBackDetailComponent() {
       ) : (
         <DetailsPage
           dataSource={[{ title: "Basic Information", source: data }]}
-          profileData={profileData}
           config={config}
           isLoading={feedBack?.isLoading || feedBack?.isFetching}
         />

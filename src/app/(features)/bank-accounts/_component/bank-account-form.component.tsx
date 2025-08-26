@@ -61,7 +61,7 @@ const bankCodes = BankListJson.map((bank) => ({
 );
 
 export default function BankAccountFormComponent(props: Props) {
-  const { editMode, onCreating } = props;
+  const { editMode } = props;
   const params = useParams();
   const navigate = useRouter();
 
@@ -103,7 +103,11 @@ export default function BankAccountFormComponent(props: Props) {
         ...defaultValue,
       });
     }
-  }, [params?.id, editMode, collection, getUsers]);
+  }, [params?.id, props.data, reset, editMode, collection, getUsers]);
+
+  useEffect(() => {
+    getBankAccount({ ...collection, id: String(params.id) });
+  }, [getBankAccount, collection, params.id]);
 
   const onSubmit: SubmitHandler<BankAccount> = async (data) => {
     if (editMode === "new") {

@@ -5,7 +5,6 @@ import EmptyIcon from "@/src/shared/icons/empty-icon";
 import { LoadingOverlay } from "@mantine/core";
 import { useParams } from "next/navigation";
 import { useEffect } from "react";
-import { useLazyGetUserQuery } from "../../user/_store/user.query";
 import {
   useLazyGetBankAccountQuery,
   useLazyGetTenantQuery,
@@ -14,7 +13,6 @@ import {
 export default function BankAccountDetailComponent() {
   const params = useParams();
 
-  const [getUser, user] = useLazyGetUserQuery();
   const [getBankAccount, bankAccount] = useLazyGetBankAccountQuery();
   const [getTenant, tenant] = useLazyGetTenantQuery();
 
@@ -22,7 +20,6 @@ export default function BankAccountDetailComponent() {
     getTenant({
       id: `${bankAccount?.data?.tenantId}`,
     });
-    getUser({});
   }, [bankAccount?.data?.tenantId, getTenant, getBankAccount]);
 
   const data = [
@@ -58,16 +55,6 @@ export default function BankAccountDetailComponent() {
     },
   ];
 
-  const profileData = {
-    image: "",
-    name: `${user?.data?.firstName ?? ""} ${user?.data?.middleName ?? ""} ${user?.data?.lastName ?? ""}`,
-    type: "",
-    address: "",
-    phone: "",
-    email: "",
-    isVerified: false,
-  };
-
   const config = {
     editUrl: `/bank-accounts//${params?.id}`,
     isProfile: false,
@@ -79,7 +66,7 @@ export default function BankAccountDetailComponent() {
     getBankAccount({
       id: `${params?.id}`,
     });
-  }, [params?.id]);
+  }, [getBankAccount, params?.id]);
 
   return (
     <div className="w-full flex-col space-y-4 buser">
@@ -95,7 +82,6 @@ export default function BankAccountDetailComponent() {
       ) : (
         <DetailsPage
           dataSource={[{ title: "Basic Information", source: data }]}
-          profileData={profileData}
           config={config}
           isLoading={bankAccount?.isLoading || bankAccount?.isFetching}
         />

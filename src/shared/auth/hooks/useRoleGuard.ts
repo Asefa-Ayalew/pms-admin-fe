@@ -19,7 +19,7 @@ export type RoleKey =
   | "OTA"
   | "OM"
   | "SA"
-  | "Admin"
+  | "Admin";
 
 interface UseRoleGuardReturn {
   hasAccess: boolean;
@@ -89,8 +89,6 @@ export const useRoleGuard = (): UseRoleGuardReturn => {
       status,
       isLoading,
       session,
-      user,
-      userRoles,
       isPowerUser,
       activeRole,
       router,

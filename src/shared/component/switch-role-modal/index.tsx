@@ -60,6 +60,7 @@ export default function SwitchRoleModal({ roleId }: { roleId: string }) {
             onClick={async () => {
               try {
                 switchRole(roleId)
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   .then((response: any) => {
                     return update({
                       accessToken: response.data.accessToken,

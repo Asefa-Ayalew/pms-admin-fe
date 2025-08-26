@@ -1,24 +1,22 @@
 "use client";
 
-import { useParams, usePathname } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useParams, useSearchParams } from "next/navigation";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 
-import {
-  useLazyGetArchivedPropertiesQuery,
-  useLazyGetPropertiesQuery,
-  useLazyGetPropertyQuery,
-} from "./_store/property.query";
+import { Property } from "@/src/models/property.model";
+import { CollectionQuery } from "@/src/shared/models/collection.model";
 import {
   EntityConfig,
   entityViewMode,
-} from "@/src/shared/models/entity-config.model";
-import { Property } from "@/src/models/property.model";
+} from "@/src/shared/models/entity-list-config";
+import {
+  useLazyGetArchivedPropertiesQuery,
+  useLazyGetPropertyQuery,
+  useLazyGetPropertiesQuery,
+} from "./_store/property.query";
 import { formatDate } from "@/src/shared/utils/date-utils";
-import EntityList, {
-  TableBehaviorConfig,
-  TableStyleConfig,
-} from "@/src/shared/entity/entity-list";
-import { CollectionQuery } from "@/src/shared/models/collection.model";
+import clsx from "clsx";
+import EntityTable from "@/src/shared/table/entity-table";
 
 export default function PropertyListPage({
   children,
@@ -26,55 +24,76 @@ export default function PropertyListPage({
   children: React.ReactNode;
 }) {
   const params = useParams();
-  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const isArchived = searchParams.get("archived") === "true";
+  const [viewMode, setViewMode] = useState<entityViewMode>("list");
+  const [view, setView] = useState<"list" | "archived">("list");
   const [collectionQuery, setCollectionQuery] = useState<CollectionQuery>({
     skip: 0,
-    top: 20,
+    top: 10,
     orderBy: [{ field: "createdAt", direction: "desc" }],
   });
-  const [view, setView] = useState<"list" | "archived">("list");
 
-  const [getProperties, { data: properties, isLoading, error }] =
-    useLazyGetPropertiesQuery();
-
-  const [getProperty, { data: selectedProperty }] = useLazyGetPropertyQuery();
+  const [
+    getProperties,
+    { data: properties, isLoading: isLoadingProperties },
+  ] = useLazyGetPropertiesQuery();
   const [
     getArchivedProperties,
     { data: archivedProperties, isLoading: archivedPropertiesLoading },
   ] = useLazyGetArchivedPropertiesQuery();
 
+  const [getProperty, { data: property }] = useLazyGetPropertyQuery();
+
   useEffect(() => {
     if (view === "list") {
       getProperties(collectionQuery);
-    }
-  }, [collectionQuery, getProperties, view]);
-
-  useEffect(() => {
-    if (view === "archived") {
+    } else {
       getArchivedProperties(collectionQuery);
     }
-  }, [collectionQuery, getArchivedProperties, view]);
+  }, [collectionQuery, getArchivedProperties, getProperties, view]);
 
   useEffect(() => {
-    if (params?.id) {
-      getProperty({ id: String(params.id) });
+    getProperty({ id: String(params.id) });
+  }, [getProperty, params.id]);
+
+  useEffect(() => {
+    setViewMode(params?.id !== undefined ? "detail" : "list");
+  }, [params?.id]);
+
+  useEffect(() => {
+    if (isArchived) {
+      setView("archived");
+    } else {
+      setView("list");
     }
-  }, [params?.id, getProperty]);
+  }, [isArchived]);
 
   const config = useMemo<EntityConfig<Property>>(
     () => ({
       primaryColumn: {
-        key: "size",
-        name: "Size",
-        render: (data: Property) => `${data?.size ?? ""}`,
+        key: "name",
+        name: "Name",
+        render: (data: Property) => `${data?.name ?? ""}`,
       },
       rootUrl: "/property",
       detailUrl: "detail",
       identity: "id",
       visibleColumn: [
         {
+          key: "name",
+          name: "Name",
+          render: (data: Property) => `${data?.name ?? ""}`,
+        },
+        {
+          key: "city",
+          name: "City",
+          render: (data: Property) => `${data?.address?.city ?? ""}`,
+        },
+        {
           key: "size",
           name: "Size",
+          isNumber: true,
           render: (data: Property) => `${data?.size ?? ""}`,
         },
         {
@@ -88,6 +107,32 @@ export default function PropertyListPage({
           render: (data: Property) => `${data?.numberOfRooms ?? ""}`,
         },
         {
+          key: "amenities",
+          name: "Amenities",
+          render: (data: Property) => (
+            <div className="flex flex-wrap gap-2">
+              {data?.amenities?.map((amenity, index) => (
+                <React.Fragment key={`amenity-${index}`}>
+                  <span
+                    className={clsx(
+                      "inline-block px-2 py-0.5 rounded-full text-xs font-medium mb-1",
+                      {
+                        "bg-blue-100 text-blue-800": index % 4 === 0,
+                        "bg-green-100 text-green-800": index % 4 === 1,
+                        "bg-yellow-100 text-yellow-800": index % 4 === 2,
+                        "bg-purple-100 text-purple-800": index % 4 === 3,
+                      }
+                    )}
+                  >
+                    {amenity}
+                  </span>
+                  {(index + 1) % 4 === 0 && <div className="w-full" />}
+                </React.Fragment>
+              ))}
+            </div>
+          ),
+        },
+        {
           key: "createdAt",
           name: "Created At",
           render: (data: Property) => formatDate(data?.createdAt),
@@ -99,20 +144,14 @@ export default function PropertyListPage({
     []
   );
 
-  const isNewRoute = pathname.endsWith("/new");
+  const handlePaginationChange = useCallback((skip: number, top: number) => {
+    setCollectionQuery((prev) => ({
+      ...prev,
+      skip,
+      top,
+    }));
+  }, []);
 
-  const viewMode: entityViewMode =
-    isNewRoute || params?.id !== undefined ? "detail" : "list";
-  const handlePaginationChange = useCallback(
-    (pageIndex: number, pageSize: number) => {
-      setCollectionQuery((prev) => ({
-        ...prev,
-        skip: pageIndex - 1,
-        top: pageSize,
-      }));
-    },
-    []
-  );
   const onSearch = (search: string) => {
     setCollectionQuery((prev) => ({
       ...prev,
@@ -121,6 +160,7 @@ export default function PropertyListPage({
     }));
   };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
   const onFilter = (filter: any[]) => {
     setCollectionQuery((prev) => ({
       ...prev,
@@ -134,82 +174,35 @@ export default function PropertyListPage({
       orderBy: [order],
     }));
   };
-  const onRefresh = useCallback(() => {
-    if (view === "list") {
-      getProperties(collectionQuery);
-    } else {
-      getArchivedProperties(collectionQuery);
-    }
-  }, [collectionQuery, getProperties, getArchivedProperties, view]);
-
-  const styleConfig: TableStyleConfig = useMemo(
-    () => ({
-      primaryColor: "blue",
-      dangerColor: "red",
-      fontSize: "sm",
-      density: "xs",
-      shadowLevel: "xs",
-      borderColor: "border-gray-200",
-      rowHoverColor: "var(--mantine-color-blue-50)",
-    }),
-    []
-  );
-
-  const behaviorConfig: TableBehaviorConfig = useMemo(
-    () => ({
-      enableColumnFilters: true,
-      enableGlobalFilter: true,
-      enableColumnResizing: true,
-      enableFullScreenToggle: true,
-      enableDensityToggle: true,
-      enableColumnOrdering: true,
-      enablePagination: true,
-      enableMultiSort: true,
-      enableMultiRowSelection: true,
-      manualFiltering: true,
-      manualPagination: true,
-      manualSorting: true,
-      paginationDisplayMode: "default",
-      positionPagination: "bottom",
-      positionActionsColumn: "last",
-      enableHiding: true,
-    }),
-    []
-  );
-
-  const total = view === "list" ? properties?.total : archivedProperties?.total;
-  const items = view === "list" ? properties?.data : archivedProperties?.data;
-  const itemsLoading = view === "list" ? isLoading : archivedPropertiesLoading;
 
   return (
-    <EntityList
+    <EntityTable
       title={view === "list" ? "Properties" : "Archived Properties"}
-      items={items ?? []}
-      total={total ?? 0}
-      itemsLoading={itemsLoading ?? false}
-      detailTitle={selectedProperty?.description}
+      detailTitle={
+        params.id !== "new"
+          ? (property?.name ?? "Property Detail")
+          : "New Property"
+      }
       config={config}
+      detail={children}
+      items={view === "list" ? properties?.data : archivedProperties?.data}
+      total={
+        view === "list"
+          ? properties?.count
+          : archivedProperties?.count
+      }
+      itemsLoading={
+        view === "list" ? isLoadingProperties : archivedPropertiesLoading
+      }
+      collectionQuery={collectionQuery}
       view={view}
       viewMode={viewMode}
-      detail={children}
-      defaultPageSize={20}
-      pageSizeOptions={[10, 20, 30, 50, 100]}
-      _showTotal={true}
-      tableKey="properties"
-      dataLoadMode="static"
       showNewButton={false}
       onViewChange={setView}
-      styleConfig={styleConfig}
-      behaviorConfig={behaviorConfig}
-      errorText={
-        error ? "Failed to load properties. Please try again." : undefined
-      }
-      noDataText="No properties found"
       onPaginationChange={handlePaginationChange}
       onSearch={onSearch}
       onOrder={onOrder}
       onFilterChange={onFilter}
-      onRefresh={onRefresh}
     />
   );
 }

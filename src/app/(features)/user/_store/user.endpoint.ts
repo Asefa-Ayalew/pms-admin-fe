@@ -1,5 +1,6 @@
 export const USER_ENDPOINT = {
   list: `${process.env.NEXT_PUBLIC_APP_API}/users/get-users`,
+  listArchivedUsers: `${process.env.NEXT_PUBLIC_APP_API}/users/get-archived-users`,
   create: `${process.env.NEXT_PUBLIC_APP_API}/users/create-user`,
   detail: `${process.env.NEXT_PUBLIC_APP_API}/users/get-user`,
   update: `${process.env.NEXT_PUBLIC_APP_API}/users/update-user`,

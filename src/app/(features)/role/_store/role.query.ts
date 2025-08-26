@@ -42,6 +42,30 @@ const roleQuery = appApi.injectEndpoints({
         }
       },
     }),
+    getArchivedRoles: builder.query<Collection<Role>, CollectionQuery>(
+      {
+        query: (data: CollectionQuery) => ({
+          url: ROLE_ENDPOINT.listArchivedRoles,
+          method: "GET",
+          params: collectionQueryBuilder(data),
+        }),
+        async onQueryStarted(param, { queryFulfilled }) {
+          try {
+            const { data } = await queryFulfilled;
+            if (data) {
+              roleCollection = param;
+            }
+          } catch (error: unknown) {
+            notifications.show({
+              title: "Error",
+              message:
+                (error as AppError)?.error?.data?.message || "Error, try again",
+              color: "red",
+            });
+          }
+        },
+      }
+    ),
     createRole: builder.mutation<Role, Role>({
       query: (newData: Role) => ({
         url: `${ROLE_ENDPOINT.create}`,
@@ -219,6 +243,7 @@ const roleQuery = appApi.injectEndpoints({
 });
 export const {
   useLazyGetRoleQuery,
+  useLazyGetArchivedRolesQuery,
   useLazyGetRolesQuery,
   useCreateRoleMutation,
   useUpdateRoleMutation,

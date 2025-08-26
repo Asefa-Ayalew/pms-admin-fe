@@ -1,5 +1,4 @@
-import { Tenant } from "@/src/models/tenant.model";
-import { User } from "@/src/models/user.model";
+
 import {
   Collection,
   CollectionQuery,
@@ -12,9 +11,6 @@ import { Feedback } from "@/src/models/feed-back.model";
 import { FEEDBACK_ENDPOINT } from "./feed-back.endpoint";
 
 let feedbackCollection: CollectionQuery;
-let tenantCollection: CollectionQuery;
-let userCollection: CollectionQuery;
-
 export const feedbackQuery = appApi.injectEndpoints({
   endpoints: (builder) => ({
     getFeedback: builder.query<Feedback, CollectionQuery>({

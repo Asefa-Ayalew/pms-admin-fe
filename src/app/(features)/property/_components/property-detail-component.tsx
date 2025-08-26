@@ -68,13 +68,12 @@ export default function PropertyDetailComponent() {
     getUser({
       id: `${params?.id}`,
     });
-    // getRole(`${params?.id}`);
-  }, [params?.id]);
+  }, [getUser, params?.id]);
   useEffect(() => {
     getProperty({
       id: `${params?.id}`,
     });
-  }, [params?.id]);
+  }, [getProperty, params?.id]);
 
   return (
     <div className="w-full flex-col space-y-4 buser">
@@ -93,7 +92,7 @@ export default function PropertyDetailComponent() {
           profileData={profileData}
           config={config}
           isLoading={isLoading || isFetching}
-          hideEdit={false}
+          hideEdit={true}
         />
       )}
     </div>

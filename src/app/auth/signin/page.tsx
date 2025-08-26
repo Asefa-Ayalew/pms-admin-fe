@@ -86,7 +86,7 @@ export default function Login() {
     if (status === "authenticated") {
       router.replace("/");
     }
-  }, [status]);
+  }, [router, status]);
 
   if (status === "loading") {
     return (

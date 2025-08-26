@@ -3,13 +3,19 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { OwnerType, type BankAccount } from "@/src/models/bank-account.model";
 import type { CollectionQuery } from "@/src/shared/models/collection.model";
 import BankAccountForm from "./_component/bank-account-form.component";
-import { useDeleteBankAccountMutation, useLazyGetArchivedBankAccountsQuery, useLazyGetBankAccountsQuery, useRestoreBankAccountMutation } from "./_store/bank-account.query";
-import SharedTable from "@/src/shared/table/shared-table";
-import type { Actions, TableConfig } from "@/src/shared/models/table-config";
+import {
+  useDeleteBankAccountMutation,
+  useLazyGetArchivedBankAccountsQuery,
+  useLazyGetBankAccountsQuery,
+  useRestoreBankAccountMutation,
+} from "./_store/bank-account.query";
+import type { Actions } from "@/src/shared/models/table-config";
 import { Modal, Divider } from "@mantine/core";
 import { IconEye, IconPencil, IconTrash } from "@tabler/icons-react";
 import ReasonForm from "./_component/reason-form.component";
-import { modals } from '@mantine/modals';
+import { modals } from "@mantine/modals";
+import EntityTable from "@/src/shared/table/entity-table";
+import { EntityConfig } from "@/src/shared/models/entity-list-config";
 
 const defaultBankAccount: BankAccount = {
   id: "",
@@ -73,24 +79,31 @@ export default function BankAccountsComponent() {
     useState<BankAccount>(defaultBankAccount);
   const [view, setView] = useState<"list" | "archived">("list");
 
-  const [getBankAccounts, { data: bankAccounts, isLoading }] = useLazyGetBankAccountsQuery();
-  const [getArchivedBankAccounts, { data: archivedBankAccounts, isLoading: archivedBankAccountsLoading }] = useLazyGetArchivedBankAccountsQuery()
+  const [getBankAccounts, { data: bankAccounts, isLoading }] =
+    useLazyGetBankAccountsQuery();
+  const [
+    getArchivedBankAccounts,
+    { data: archivedBankAccounts, isLoading: archivedBankAccountsLoading },
+  ] = useLazyGetArchivedBankAccountsQuery();
   const [restoreBankAccount] = useRestoreBankAccountMutation();
   const [deleteBankAccount] = useDeleteBankAccountMutation();
 
   useEffect(() => {
-    if (view === 'list') {
+    if (view === "list") {
       getBankAccounts(collectionQuery);
     }
   }, [collectionQuery, getBankAccounts, view]);
 
   useEffect(() => {
-    if (view === 'archived') {
-      getArchivedBankAccounts(collectionQuery)
+    if (view === "archived") {
+      getArchivedBankAccounts(collectionQuery);
     }
-  }, [collectionQuery, getArchivedBankAccounts, view])
+  }, [collectionQuery, getArchivedBankAccounts, view]);
 
-  const openModal = (type: keyof typeof modalConfig, bankAccount?: BankAccount) => {
+  const openModal = (
+    type: keyof typeof modalConfig,
+    bankAccount?: BankAccount
+  ) => {
     setSelectedBankAccount(bankAccount ?? defaultBankAccount);
     setModals((prev) => ({ ...prev, [type]: true }));
   };
@@ -103,9 +116,9 @@ export default function BankAccountsComponent() {
   const handleAction = (action: { key: string }, bankAccount?: BankAccount) => {
     openModal(action.key as keyof typeof modalConfig, bankAccount);
 
-    if (action.key === 'delete' && bankAccount?.id) {
+    if (action.key === "delete" && bankAccount?.id) {
       handleDelete(bankAccount);
-    } else if (action.key === 'restore') {
+    } else if (action.key === "restore") {
       restoreBankAccount(String(bankAccount?.id));
     }
   };
@@ -121,22 +134,24 @@ export default function BankAccountsComponent() {
       children: (
         <div className="space-y-2 text-sm text-gray-700">
           <p>
-            Are you sure you want to delete this <span className="text-red-600 font-medium">document type</span>? This action
+            Are you sure you want to delete this{" "}
+            <span className="text-red-600 font-medium">document type</span>?
+            This action
             <strong> cannot </strong> be undone.
           </p>
           <p>
-            <strong className="text-gray-800">Account Number:</strong>{' '}
+            <strong className="text-gray-800">Account Number:</strong>{" "}
             <span className="text-gray-700">{bankAccount?.accountNumber}</span>
           </p>
         </div>
       ),
       labels: {
-        confirm: 'Delete',
-        cancel: 'Cancel',
+        confirm: "Delete",
+        cancel: "Cancel",
       },
       confirmProps: {
-        color: 'red',
-        variant: 'filled',
+        color: "red",
+        variant: "filled",
       },
       onConfirm: () => {
         deleteBankAccount(String(bankAccount?.id));
@@ -189,96 +204,91 @@ export default function BankAccountsComponent() {
       );
     });
 
-  const listActions: Actions[] = [
-    {
-      label: "Edit",
-      key: "edit",
-      icon: IconPencil,
-      size: "16",
-    },
-    {
-      label: "Archive",
-      key: "archive",
-      icon: IconTrash,
-      size: "16",
-      type: "danger",
-    },
-  ];
+  const config = useMemo<EntityConfig<BankAccount>>(() => {
+    const listActions: Actions[] = [
+      {
+        label: "Edit",
+        key: "edit",
+        icon: IconPencil,
+        size: "16",
+      },
+      {
+        label: "Archive",
+        key: "archive",
+        icon: IconTrash,
+        size: "16",
+        type: "danger",
+      },
+    ];
 
-  const archivedActions: Actions[] = [
-    {
-      label: "Restore",
-      key: "restore",
-      icon: IconPencil,
-      size: "16",
-    },
-    {
-      label: "Delete",
-      key: "delete",
-      icon: IconTrash,
-      size: "16",
-      type: "danger",
-    },
-  ];
+    const archivedActions: Actions[] = [
+      {
+        label: "Restore",
+        key: "restore",
+        icon: IconPencil,
+        size: "16",
+      },
+      {
+        label: "Delete",
+        key: "delete",
+        icon: IconTrash,
+        size: "16",
+        type: "danger",
+      },
+    ];
 
-  const config = useMemo<TableConfig<BankAccount>>(
-    () => ({
-      columns: [
+    return {
+      visibleColumn: [
         {
           key: "name",
           name: "Bank Name",
-          render: (data: BankAccount) => `${data?.bankName ?? ""}`,
+          render: (d) => `${d?.bankName ?? ""}`,
         },
         {
           key: "accountNumber",
           name: "Account Number",
-          render: (data: BankAccount) => `${data?.accountNumber ?? ""}`,
+          render: (d) => `${d?.accountNumber ?? ""}`,
         },
         {
           key: "bankCode",
           name: "Bank Code",
-          render: (data: BankAccount) => `${data?.bankCode ?? ""}`,
+          render: (d) => `${d?.bankCode ?? ""}`,
         },
         {
           key: "ownerName",
           name: "Owner Name",
-          render: (data: BankAccount) => `${data?.ownerName ?? ""}`,
+          render: (d) => `${d?.ownerName ?? ""}`,
         },
         {
           key: "ownerType",
           name: "Owner Type",
-          render: (data: BankAccount) => `${data?.ownerType ?? ""}`,
+          render: (d) => `${d?.ownerType ?? ""}`,
         },
         {
           key: "isPreferred",
           name: "Is Preferred?",
-          render: (data: BankAccount) => `${data?.isPreferred ?? ""}`,
+          render: (d) => `${d?.isPreferred ?? ""}`,
         },
       ],
       actions: [
-        {
-          label: "Show More",
-          key: "view",
-          icon: IconEye,
-          size: "16",
-        },
+        { label: "Show More", key: "view", icon: IconEye, size: "16" },
         ...(view === "list" ? listActions : archivedActions),
       ],
-
-    }),
-    [view]
-  );
+    };
+  }, [view]);
 
   return (
-    <SharedTable
-      title={view === 'list' ? "Bank Accounts" : 'Archived Bank Accounts'}
+    <EntityTable
+      title={view === "list" ? "Bank Accounts" : "Archived Bank Accounts"}
       config={config}
-      items={view === 'list' ? bankAccounts?.data : archivedBankAccounts?.data}
-      total={view === 'list' ? bankAccounts?.total : archivedBankAccounts?.total}
-      itemsLoading={view === 'list' ? isLoading : archivedBankAccountsLoading}
+      items={view === "list" ? bankAccounts?.data : archivedBankAccounts?.data}
+      total={
+        view === "list" ? bankAccounts?.total : archivedBankAccounts?.total
+      }
+      itemsLoading={view === "list" ? isLoading : archivedBankAccountsLoading}
       collectionQuery={collectionQuery}
       view={view}
-      showNewButton={view === 'list'}
+      showNewButton={view === "list"}
       onViewChange={setView}
       onPaginationChange={handlePaginationChange}
       onSearch={onSearch}

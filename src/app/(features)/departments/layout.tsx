@@ -1,26 +1,20 @@
 "use client";
 
-import { useParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useParams, useSearchParams } from "next/navigation";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 
 import { Department } from "@/src/models/department.model";
-import EntityList, {
-  CustomToolbarAction,
-  TableBehaviorConfig,
-  TableStyleConfig,
-} from "@/src/shared/entity/entity-list";
 import { CollectionQuery } from "@/src/shared/models/collection.model";
 import {
   EntityConfig,
   entityViewMode,
-} from "@/src/shared/models/entity-config.model";
-import { useGetDepartmentQuery, useLazyGetDepartmentQuery, useLazyGetDepartmentsQuery } from "./_store/department.query";
+} from "@/src/shared/models/entity-list-config";
 import {
-  IconAdjustments,
-  IconDownload,
-  IconRefreshDot,
-  IconUserPlus,
-} from "@tabler/icons-react";
+  useLazyGetArchivedDepartmentsQuery,
+  useLazyGetDepartmentQuery,
+  useLazyGetDepartmentsQuery,
+} from "./_store/department.query";
+import EntityTable from "@/src/shared/table/entity-table";
 
 export default function DepartmentListPage({
   children,
@@ -28,32 +22,50 @@ export default function DepartmentListPage({
   children: React.ReactNode;
 }) {
   const params = useParams();
-
+  const searchParams = useSearchParams();
+  const isArchived = searchParams.get("archived") === "true";
   const [viewMode, setViewMode] = useState<entityViewMode>("list");
+  const [view, setView] = useState<"list" | "archived">("list");
   const [collectionQuery, setCollectionQuery] = useState<CollectionQuery>({
     skip: 0,
-    top: 20,
+    top: 10,
     orderBy: [{ field: "createdAt", direction: "desc" }],
   });
 
   const [
     getDepartments,
-    { data: departments, isLoading: isLoadingDepartments, error },
+    { data: departments, isLoading: isLoadingDepartments },
   ] = useLazyGetDepartmentsQuery();
+  const [
+    getArchivedDepartments,
+    { data: archivedDepartments, isLoading: archivedDepartmentsLoading },
+  ] = useLazyGetArchivedDepartmentsQuery();
 
-  const [ getDepartment, {data: department}] = useLazyGetDepartmentQuery()
+  const [getDepartment, { data: department }] = useLazyGetDepartmentQuery();
 
   useEffect(() => {
-    getDepartments(collectionQuery);
-  }, [collectionQuery, getDepartments]);
+    if (view === "list") {
+      getDepartments({ ...collectionQuery, includes: ["tenant"] });
+    } else {
+      getArchivedDepartments({ ...collectionQuery, includes: ["tenant"] });
+    }
+  }, [collectionQuery, getDepartments, getArchivedDepartments, view]);
 
   useEffect(() => {
-    getDepartment({id: String(params.id)})
-  }, [getDepartments, params.id])
+    getDepartment({ id: String(params.id) });
+  }, [getDepartment, params.id]);
 
   useEffect(() => {
     setViewMode(params?.id !== undefined ? "detail" : "list");
   }, [params?.id]);
+
+  useEffect(() => {
+    if (isArchived) {
+      setView("archived");
+    } else {
+      setView("list");
+    }
+  }, [isArchived]);
 
   const config = useMemo<EntityConfig<Department>>(
     () => ({
@@ -70,62 +82,42 @@ export default function DepartmentListPage({
           name: "Department Name",
           render: (data: Department) => `${data?.name ?? ""}`,
         },
+
+        {
+          key: ["tenant", "name"],
+          name: "Tenant",
+          render: (data: Department) => `${data?.tenant?.name}`,
+        },
+        {
+          key: "description",
+          name: "Description",
+          render: (data: Department) => (
+            <div
+              className="line-clamp-2"
+              dangerouslySetInnerHTML={{ __html: data?.description ?? "" }}
+            />
+          ),
+          tdClass: "w-1/4",
+        },
         {
           key: "createdAt",
           name: "Created At",
           isDate: true,
         },
       ],
+      showDetail: true,
     }),
     []
   );
 
+  const handlePaginationChange = useCallback((skip: number, top: number) => {
+    setCollectionQuery((prev) => ({
+      ...prev,
+      skip,
+      top,
+    }));
+  }, []);
 
-  const styleConfig: TableStyleConfig = useMemo(
-    () => ({
-      primaryColor: "blue",
-      dangerColor: "red",
-      fontSize: "sm",
-      density: "xs",
-      shadowLevel: "xs",
-      borderColor: "border-gray-200",
-      rowHoverColor: "var(--mantine-color-blue-50)",
-    }),
-    []
-  );
-
-  const behaviorConfig: TableBehaviorConfig = useMemo(
-    () => ({
-      enableColumnFilters: true,
-      enableGlobalFilter: true,
-      enableColumnResizing: true,
-      enableFullScreenToggle: true,
-      enableDensityToggle: true,
-      enableColumnOrdering: true,
-      enablePagination: true,
-      enableMultiSort: true,
-      enableMultiRowSelection: true,
-      manualFiltering: true,
-      manualPagination: true,
-      manualSorting: true,
-      paginationDisplayMode: "default",
-      positionPagination: "bottom",
-      positionActionsColumn: "last",
-      enableHiding: true,
-    }),
-    []
-  );
-
-  const handlePaginationChange = useCallback(
-    (pageIndex: number, pageSize: number) => {
-      setCollectionQuery((prev) => ({
-        ...prev,
-        skip: pageIndex - 1,
-        top: pageSize,
-      }));
-    },
-    []
-  );
   const onSearch = (search: string) => {
     setCollectionQuery((prev) => ({
       ...prev,
@@ -134,6 +126,7 @@ export default function DepartmentListPage({
     }));
   };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
   const onFilter = (filter: any[]) => {
     setCollectionQuery((prev) => ({
       ...prev,
@@ -147,83 +140,31 @@ export default function DepartmentListPage({
       orderBy: [order],
     }));
   };
-  const customActions: CustomToolbarAction[] = useMemo(
-    () => [
-      {
-        key: "refresh",
-        label: "Refresh Departments",
-        icon: <IconRefreshDot size={18} />,
-        color: "blue",
-        onClick: () => getDepartments({ skip: 0, top: 20 }),
-        tooltip: "Refresh department data",
-        position: "top",
-        order: 1,
-      },
-      {
-        key: "add-department",
-        label: "Add department",
-        icon: <IconUserPlus size={18} />,
-        color: "green",
-        onClick: () => console.log("Add department clicked"),
-        tooltip: "Add a new department",
-        position: "top",
-        order: 2,
-      },
-      {
-        key: "export-department",
-        label: "Export",
-        icon: <IconDownload size={18} />,
-        color: "cyan",
-        onClick: () => console.log("Export clicked"),
-        tooltip: "Export department data",
-        position: "bottom",
-        variant: "subtle",
-        order: 1,
-      },
-      {
-        key: "settings",
-        label: "Settings",
-        icon: <IconAdjustments size={18} />,
-        color: "gray",
-        onClick: () => console.log("Settings clicked"),
-        tooltip: "Table settings",
-        position: "bottom",
-        variant: "subtle",
-        order: 2,
-      },
-    ],
-    [getDepartments]
-  );
-
 
   return (
-    <div className="flex w-full">
-      <EntityList
-        title="Departments"
-        detailTitle={params.id !== 'new'  ? (department?.name ?? 'Department Detail') : 'New Department'}
-        config={config}
-        viewMode={viewMode}
-        detail={children}
-        defaultPageSize={20}
-        pageSizeOptions={[10, 20, 30, 50, 100]}
-        _showTotal={true}
-        tableKey="departments"
-        dataLoadMode="static"
-        items={departments?.data || []}
-        total={departments?.count || 0}
-        itemsLoading={isLoadingDepartments}
-        styleConfig={styleConfig}
-        behaviorConfig={behaviorConfig}
-        errorText={
-          error ? "Failed to load departments. Please try again." : undefined
-        }
-        noDataText="No departments found"
-        customActions={customActions}
-        onPaginationChange={handlePaginationChange}
-        onSearch={onSearch}
-        onOrder={onOrder}
-        onFilterChange={onFilter}
-      />
-    </div>
+    <EntityTable
+      title={view === "list" ? "Departments" : "Archived Departments"}
+      detailTitle={
+        params.id !== "new"
+          ? (department?.name ?? "Department Detail")
+          : "New Department"
+      }
+      config={config}
+      detail={children}
+      items={view === "list" ? departments?.data : archivedDepartments?.data}
+      total={view === "list" ? departments?.count : archivedDepartments?.count}
+      itemsLoading={
+        view === "list" ? isLoadingDepartments : archivedDepartmentsLoading
+      }
+      collectionQuery={collectionQuery}
+      view={view}
+      viewMode={viewMode}
+      showNewButton={view === "list"}
+      onViewChange={setView}
+      onPaginationChange={handlePaginationChange}
+      onSearch={onSearch}
+      onOrder={onOrder}
+      onFilterChange={onFilter}
+    />
   );
 }

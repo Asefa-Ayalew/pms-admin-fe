@@ -1,5 +1,4 @@
 import {
-  IconAdjustments,
   IconBuildingBank,
   IconBuildingEstate,
   IconCalendar,

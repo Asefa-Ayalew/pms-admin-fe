@@ -1,40 +1,31 @@
 "use client";
-import {
-  ActionIcon,
-  Button,
-  Card,
-  Divider,
-  Menu,
-  Modal,
-  Table,
-} from "@mantine/core";
-import { useEffect, useMemo, useState } from "react";
-import {
-  IconDotsVertical,
-  IconEye,
-  IconInbox,
-  IconPencil,
-  IconPlus,
-  IconTrash,
-} from "@tabler/icons-react";
-
-
-import { CollectionQuery } from "@/src/shared/models/collection.model";
-import { formatDate } from "@/src/shared/utils/date-utils";
-import { Contact } from "@/src/models/tenant.model";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import type { CollectionQuery } from "@/src/shared/models/collection.model";
+import InnerTable from "@/src/shared/table/inner-table";
+import { Modal, Divider } from "@mantine/core";
+import { IconEye, IconPencil, IconTrash } from "@tabler/icons-react";
 import ContactForm from "./contact-form-component";
-import ReasonForm from "./reason-form.component";
+import {
+  useLazyGetTenantQuery,
+} from "../_store/tenant.query";
+import { modals } from "@mantine/modals";
+import { EntityConfig } from "@/src/shared/models/entity-list-config";
+import { useDeleteContactMutation } from "../_store/contact.query";
+import { Contact } from "@/src/models/tenant.model";
 import { useParams } from "next/navigation";
-import { useLazyGetTenantQuery } from "../_store/tenant.query";
 
 const defaultContact: Contact = {
   id: "",
   name: "",
-  note: "",
-  gender: "",
   email: "",
+  secondaryEmails: [],
   phoneNumber: "",
-  industry:"",
+  secondaryPhoneNumbers: [],
+  address: undefined,
+  gender: "",
+  note: "",
+  industry: "",
+  responsibility: ""
 };
 
 const modalConfig = {
@@ -59,40 +50,35 @@ const modalConfig = {
       <ContactForm editMode="view" onClose={onClose} data={contact} />
     ),
   },
-  archive: {
-    title: "Reason",
-    size: "50%",
-    component: (onClose: () => void, contact: Contact) => (
-      <ReasonForm id={contact?.id ?? ""} onClose={onClose} />
-    ),
-  },
 };
 
 export default function ContactsComponent() {
   const params = useParams();
-  const [modals, setModals] = useState<
+  const [collectionQuery, setCollectionQuery] = useState<CollectionQuery>({
+    skip: 0,
+    top: 10,
+    orderBy: [{ field: "createdAt", direction: "desc" }],
+    search: "",
+  });
+
+  const [modal, setModals] = useState<
     Record<keyof typeof modalConfig, boolean>
   >({
     new: false,
     edit: false,
     view: false,
-    archive: false,
   });
 
-  const [getTenant, {data: tenant}] = useLazyGetTenantQuery();
-  const [selectedContact, setSelectedContact] = useState<Contact>(defaultContact);
+  const [selectedContact, setSelectedContact] =
+    useState<Contact>(defaultContact);
 
-  useEffect(()=>{
-    getTenant({id: String(params.id), includes: ['contacts']})
-  }, [getTenant, params.id])
-  const collection = useMemo<CollectionQuery>(
-    () => ({
-      skip: 0,
-      top: 20,
-      orderBy: [{ field: "createdAt", direction: "desc" }],
-    }),
-    []
-  );
+  const [getTenant, { data: tenant, isLoading }] = useLazyGetTenantQuery();
+
+  const [deleteContact] = useDeleteContactMutation();
+
+  useEffect(() => {
+    getTenant({ id: String(params.id), includes: ["contacts"] });
+  }, [getTenant, params.id]);
 
   const openModal = (type: keyof typeof modalConfig, contact?: Contact) => {
     setSelectedContact(contact ?? defaultContact);
@@ -104,17 +90,93 @@ export default function ContactsComponent() {
     setSelectedContact(defaultContact);
   };
 
-  const handleAction = (action: string, contact?: Contact) => {
-    openModal(action as keyof typeof modalConfig, contact);
+  const handleAction = (action: { key: string }, contact?: Contact) => {
+    openModal(action.key as keyof typeof modalConfig, contact);
+
+    if (action.key === "delete" && contact?.id) {
+      handleDelete(contact);
+    }
+  };
+
+  const handleDelete = (contact: Contact) => {
+    modals.openConfirmModal({
+      title: (
+        <span className="text-lg font-semibold text-gray-800">
+          Confirm Deletion
+        </span>
+      ),
+      centered: true,
+      children: (
+        <div className="space-y-2 text-sm text-gray-700">
+          <p>
+            Are you sure you want to delete this{" "}
+            <span className="text-red-600 font-medium">document type</span>?
+            This action
+            <strong> cannot </strong> be undone.
+          </p>
+          <p>
+            <strong className="text-gray-800">Charge Code:</strong>{" "}
+            <span className="text-gray-700">{contact?.name}</span>
+          </p>
+        </div>
+      ),
+      labels: {
+        confirm: "Delete",
+        cancel: "Cancel",
+      },
+      confirmProps: {
+        color: "red",
+        variant: "filled",
+      },
+      onConfirm: () => {
+        deleteContact(String(contact?.id));
+      },
+    });
+  };
+
+  const handlePaginationChange = useCallback(
+    (pageIndex: number, pageSize: number) => {
+      setCollectionQuery((prev) => ({
+        ...prev,
+        skip: pageIndex,
+        top: pageSize,
+      }));
+    },
+    []
+  );
+
+  const onSearch = (search: string) => {
+    setCollectionQuery((prev) => ({
+      ...prev,
+      skip: 0,
+      search: search,
+    }));
+  };
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const onFilter = (filter: any[]) => {
+    console.log("filter", filter);
+    setCollectionQuery((prev) => ({
+      ...prev,
+      filter,
+    }));
+  };
+
+  const onOrder = (order: { field: string; direction: "desc" | "asc" }) => {
+    setCollectionQuery((prev) => ({
+      ...prev,
+      orderBy: [order],
+    }));
   };
 
   const renderModals = () =>
     (Object.keys(modalConfig) as (keyof typeof modalConfig)[]).map((key) => {
       const { title, size, component } = modalConfig[key];
+
       return (
         <Modal
           key={key}
-          opened={modals[key]}
+          opened={modal[key]}
           onClose={() => closeModal(key)}
           title={title}
           centered
@@ -126,97 +188,79 @@ export default function ContactsComponent() {
       );
     });
 
+  const config = useMemo<EntityConfig<Contact>>(
+    () => ({
+      visibleColumn: [
+        {
+          key: "name",
+          name: "Name",
+          render: (data: Contact) => `${data?.name ?? ""}`,
+        },
+        {
+          key: "email",
+          name: "Email",
+          render: (data: Contact) => `${data?.email}`,
+        },
+        {
+          key: "phoneNumber",
+          name: "Phone Number",
+          render: (data: Contact) => `${data?.phoneNumber ?? ""}`,
+        },
+        {
+          key: "gender",
+          name: "Gender",
+          render: (data: Contact) => `${data?.gender ?? ""}`,
+        },
+        {
+          key: "address?.country",
+          name: "Country",
+          render: (data: Contact) => `${data?.address?.country ?? ""}`,
+        },
+        {
+          key: "address?.city",
+          name: "City",
+          render: (data: Contact) => `${data?.address?.city ?? ""}`,
+        },
+      ],
+      actions: [
+        {
+          label: "Show More",
+          key: "view",
+          icon: IconEye,
+          size: "16",
+        },
+        {
+          label: "Edit",
+          key: "edit",
+          icon: IconPencil,
+          size: "16",
+        },
+        {
+          label: "Delete",
+          key: "delete",
+          icon: IconTrash,
+          size: "16",
+          type: "danger",
+        },
+      ],
+    }),
+    []
+  );
+
   return (
-    <Card shadow="sm" padding="sm">
-      <Button
-        onClick={() => openModal("new")}
-        leftSection={<IconPlus size={16} />}
-        styles={{
-          root: {
-            width: "5rem",
-            transition: "background-color 0.2s ease",
-            "&:hover": {
-              backgroundColor: "#ffeaea",
-            },
-            marginBottom: "4px",
-            marginLeft: "4px",
-          },
-        }}
-      >
-        New
-      </Button>
-
-      <Table>
-        <Table.Thead>
-          <Table.Tr>
-            <Table.Th>Name</Table.Th>
-            <Table.Th>Short Code</Table.Th>
-            <Table.Th>Tin</Table.Th>
-            <Table.Th>Email</Table.Th>
-            <Table.Th>Phone Number</Table.Th>
-            <Table.Th>Industry</Table.Th>
-            <Table.Th>Created At</Table.Th>
-            <Table.Th style={{ width: "15%" }}>Created At</Table.Th>
-            <Table.Th style={{ width: "20px" }}></Table.Th>
-          </Table.Tr>
-        </Table.Thead>
-        <Table.Tbody>
-          {tenant?.contacts?.length === 0 ? (
-            <Table.Tr>
-              <Table.Td colSpan={6} className="text-center py-8 text-gray-500">
-                <div className="flex flex-col items-center">
-                  <IconInbox size={40} />
-                  <p className="mt-2">No contacts found</p>
-                </div>
-              </Table.Td>
-            </Table.Tr>
-          ) : (
-            tenant?.contacts?.map((contact: Contact) => (
-              <Table.Tr key={contact.id}>
-                <Table.Td>{contact?.name}</Table.Td>
-                <Table.Td>{contact.note}</Table.Td>
-                <Table.Td>{contact?.gender}</Table.Td>
-                <Table.Td>{contact?.email}</Table.Td>
-                <Table.Td>{contact?.phoneNumber}</Table.Td>
-                <Table.Td>{contact?.industry}</Table.Td>
-                <Table.Td>{formatDate(contact.createdAt)}</Table.Td>
-                <Table.Td>
-                  <Menu shadow="md" width={160} position="bottom-end" withArrow>
-                    <Menu.Target>
-                      <ActionIcon variant="subtle" size="sm">
-                        <IconDotsVertical size={18} />
-                      </ActionIcon>
-                    </Menu.Target>
-                   <Menu.Dropdown>
-                      <Menu.Item
-                        leftSection={<IconEye size={14} />}
-                        onClick={() => handleAction("view", contact)}
-                      >
-                        View
-                      </Menu.Item>
-                      <Menu.Item
-                        leftSection={<IconPencil size={14} />}
-                        onClick={() => handleAction("edit", contact)}
-                      >
-                        Edit
-                      </Menu.Item>
-                      <Menu.Item
-                        leftSection={<IconTrash size={14} />}
-                        color="red"
-                        onClick={() => handleAction("archive", contact)}
-                      >
-                        Delete
-                      </Menu.Item>
-                    </Menu.Dropdown>
-                  </Menu>
-                </Table.Td>
-              </Table.Tr>
-            ))
-          )}
-        </Table.Tbody>
-      </Table>
-
-      {renderModals()}
-    </Card>
+    <InnerTable
+      title={"Contacts"}
+      config={config}
+      items={tenant?.contacts}
+      total={tenant?.contacts?.length}
+      itemsLoading={isLoading}
+      collectionQuery={collectionQuery}
+      onPaginationChange={handlePaginationChange}
+      onSearch={onSearch}
+      onOrder={onOrder}
+      onFilterChange={onFilter}
+      renderModals={renderModals}
+      handleAction={handleAction}
+    />
   );
 }

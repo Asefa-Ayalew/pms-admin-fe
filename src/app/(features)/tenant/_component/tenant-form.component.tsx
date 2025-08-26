@@ -4,7 +4,7 @@ import { Tenant } from "@/src/models/tenant.model";
 import { NewTenantSchema } from "@/src/schemas/new-tenant-schema";
 import countryJson from "@/src/shared/constants/country-json.json";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Box, Button, LoadingOverlay, Select, TextInput } from "@mantine/core";
+import { Button, LoadingOverlay, Select, TextInput } from "@mantine/core";
 import { IconDeviceFloppy, IconPlus, IconTrash } from "@tabler/icons-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -17,7 +17,6 @@ import {
   useRestoreTenantMutation,
   useUpdateTenantMutation,
 } from "../_store/tenant.query";
-import { formatDate } from "@/src/shared/utils/date-utils";
 import { AppError } from "@/src/models/app-interfaces";
 import { notifications } from "@mantine/notifications";
 
@@ -58,8 +57,8 @@ export default function TenantForm(props: Props) {
     useLazyGetTenantQuery();
   const [createTenant, createResponse] = useCreateTenantMutation();
   const [updateTenant, updateResponse] = useUpdateTenantMutation();
-  const [archiveTenant, __] = useArchiveTenantMutation();
-  const [restoreTenant, _] = useRestoreTenantMutation();
+  const [archiveTenant] = useArchiveTenantMutation();
+  const [restoreTenant] = useRestoreTenantMutation();
   const [secondaryPhoneNumbers, setSecondaryPhoneNumbers] = useState<string[]>(
     []
   );
@@ -166,7 +165,7 @@ export default function TenantForm(props: Props) {
     } else {
       reset(defaultValue);
     }
-  }, [params?.id]);
+  }, [tenant, reset, params?.id]);
 
   return (
     <>

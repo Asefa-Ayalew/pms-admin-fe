@@ -1,15 +1,12 @@
 "use client";
 
 import countryJson from "@/src/shared/constants/country-json.json";
-import { CollectionQuery } from "@/src/shared/models/collection.model";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Box,
   Button,
-  LoadingOverlay,
   Modal,
   Select,
-  Switch,
   TextInput,
 } from "@mantine/core";
 import {
@@ -17,17 +14,14 @@ import {
   IconDeviceFloppy,
   IconTrash,
 } from "@tabler/icons-react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useForm, SubmitErrorHandler, SubmitHandler } from "react-hook-form";
 import z from "zod";
 import {
   useCreateFeedbackMutation,
-  useDeleteFeedbackMutation,
-  useLazyGetFeedbackQuery,
   useUpdateFeedbackMutation,
 } from "../_store/feed-back.query";
-import { User } from "@/src/models/user.model";
 import { notifications } from "@mantine/notifications";
 import { Feedback } from "@/src/models/feed-back.model";
 import { feedBackSchema } from "@/src/schemas/feed-back-schema";
@@ -59,32 +53,21 @@ const countryCodes = countryJson
       index === self.findIndex((t) => t.value === value.value)
   );
 export default function FeedbackFormComponent(props: Props) {
-  const { editMode, onCreating } = props;
+  const { editMode } = props;
   const params = useParams();
-  const navigate = useRouter();
 
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
-  const [selectedFeedback, setSelectedFeedback] = useState<Feedback>();
 
   const [createFeedback, createResponse] = useCreateFeedbackMutation();
   const [updateFeedback, updateResponse] = useUpdateFeedbackMutation();
-  const [deleteFeedback, deleteResponse] = useDeleteFeedbackMutation();
 
   const [countryCode, setCountryCode] = useState<string>("+251");
-
-  const [collection] = useState<CollectionQuery>({
-    skip: 0,
-    top: 50,
-    orderBy: [{ field: "createdAt", direction: "desc" }],
-  });
 
   const {
     register,
     handleSubmit,
-    watch,
     formState: { errors },
     reset,
-    setValue,
   } = useForm<FormSchema>({
     resolver: zodResolver(feedBackSchema),
     mode: "all",
@@ -100,7 +83,7 @@ export default function FeedbackFormComponent(props: Props) {
         reset(defaultValue);
       }
     }
-  }, [params?.id, editMode]);
+  }, [props.data, reset, params?.id, editMode]);
 
   const onSubmit: SubmitHandler<Feedback> = async (data) => {
     if (editMode === "new") {
@@ -254,7 +237,6 @@ export default function FeedbackFormComponent(props: Props) {
                       className="shadow-none bg-red-500 rounded flex items-center"
                       onClick={() => {
                         setOpenDeleteModal(true);
-                        setSelectedFeedback(props?.data);
                       }}
                       leftSection={
                         props?.data?.archivedAt ? (

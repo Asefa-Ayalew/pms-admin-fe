@@ -4,6 +4,7 @@ import { getSession, signOut } from "next-auth/react";
 
 interface CustomSession {
   accessToken?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [key: string]: any;
 }
 
@@ -33,6 +34,7 @@ const handleLogout = async (): Promise<boolean> => {
 
     modals.closeAll();
     return false;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     modals.closeAll();
 

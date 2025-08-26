@@ -1,5 +1,6 @@
 export const ROLE_ENDPOINT = {
   list: `${process.env.NEXT_PUBLIC_APP_API}/roles/get-roles`,
+  listArchivedRoles: `${process.env.NEXT_PUBLIC_APP_API}/roles/get-archived-roles`,
   create: `${process.env.NEXT_PUBLIC_APP_API}/roles/create-role`,
   detail: `${process.env.NEXT_PUBLIC_APP_API}/roles/get-role`,
   update: `${process.env.NEXT_PUBLIC_APP_API}/roles/update-role`,

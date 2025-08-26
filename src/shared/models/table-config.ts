@@ -23,15 +23,17 @@ export interface Column<T> {
   suffix?: Column<T>;
   // style
   tdClass?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   render?: (value: T) => any;
   className?: (data: T) => string;
 }
 export interface Actions {
   label: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   icon?: React.ComponentType<any>;
   size?: string;
   type?: "primary" | "danger";
-  class?: any;
+  class?: string;
   key: string;
   divider?: boolean;
 }

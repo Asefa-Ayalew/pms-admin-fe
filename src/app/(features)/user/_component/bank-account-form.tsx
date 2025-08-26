@@ -79,7 +79,13 @@ export default function BankAccountForm(props: Props) {
   const [deleteBankAccount, deleteResponse] = useDeleteBankAccountMutation();
 
   const [getUser, user] = useLazyGetUserQuery();
+  // const collection = {
+  //   skip: 0,
+  //   top: 50,
+  //   orderBy: [{ field: "createdAt", direction: "desc" }],
+  // };
 
+  console.log(archiveBankAccount, restoreBankAccount);
   const {
     register,
     handleSubmit,
@@ -106,7 +112,7 @@ export default function BankAccountForm(props: Props) {
         ...defaultValue,
       });
     }
-  }, [params?.id, accountId, editMode]);
+  }, [reset, getBankAccount, params?.id, accountId, editMode]);
 
   function onSubmit(data: FormSchema) {
     const currentData = {
@@ -157,7 +163,7 @@ export default function BankAccountForm(props: Props) {
     getUser({
       id: `${params?.id}`,
     });
-  }, [params?.id]);
+  }, [getUser, params?.id]);
   const onError = (error: FieldErrors) => {
     console.log("Error", error);
   };
