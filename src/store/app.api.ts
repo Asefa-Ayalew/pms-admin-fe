@@ -15,7 +15,10 @@ export const appApi = createApi({
     "Feedbacks",
     "Testimonials",
     "Services",
-    "Departments"
+    "Departments",
+    "Leases",
+    "Gallery",
+    "EmergencyContacts"
   ],
   endpoints: () => ({}),
 });

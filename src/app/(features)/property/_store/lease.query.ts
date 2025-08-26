@@ -1,5 +1,4 @@
 import { AppError } from "@/src/models/app-interfaces";
-import { Lease } from "@/src/models/lease.model";
 import {
   Collection,
   CollectionQuery,
@@ -8,6 +7,7 @@ import { collectionQueryBuilder } from "@/src/shared/utitlity/collection-query-b
 import { appApi } from "@/src/store/app.api";
 import { LeaseEndpoint } from "./lease.endpoint";
 import { notifications } from "@mantine/notifications";
+import { Lease } from "@/src/models/lease.model";
 
 let leaseCollection: CollectionQuery;
 

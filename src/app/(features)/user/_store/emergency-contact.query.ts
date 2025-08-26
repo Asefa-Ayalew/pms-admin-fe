@@ -102,7 +102,7 @@ export const emergencyContactQuery = appApi.injectEndpoints({
         method: "PUT",
         data: newData,
       }),
-      invalidatesTags: ["EmergencyContactInfo"],
+      invalidatesTags: ["EmergencyContacts"],
       async onQueryStarted(param, { dispatch, queryFulfilled }) {
         try {
           const { data } = await queryFulfilled;

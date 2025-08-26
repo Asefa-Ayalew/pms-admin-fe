@@ -96,7 +96,7 @@ export const bankAccountQuery = appApi.injectEndpoints({
         method: "PUT",
         data: newData,
       }),
-      invalidatesTags: ["BankAccountInfo"],
+      invalidatesTags: ["BankAccounts"],
       async onQueryStarted(param, { dispatch, queryFulfilled }) {
         try {
           const { data } = await queryFulfilled;

@@ -42,8 +42,6 @@ import {
 } from "../models/entity-list-config";
 import { useRouter } from "next/navigation";
 
-type FunctionType<T = unknown> = (args: T) => void;
-
 interface Props<T> {
   config: EntityConfig<T>;
   title?: string | ReactElement;
@@ -62,7 +60,7 @@ interface Props<T> {
   onViewChange?: (view: "list" | "archived") => void;
 
   onPaginationChange?: (skip: number, top: number) => void;
-  onSearch?: FunctionType;
+  onSearch?: (search: string) => void;
   onFilterChange?: (filters: Filter[][]) => void;
   onOrder?: (order: { field: string; direction: "asc" | "desc" }) => void;
   onSelectItem?: (item: T) => void;
