@@ -153,156 +153,140 @@ export const departmentQuery = appApi.injectEndpoints({
         }
       },
     }),
-    archiveDepartment: builder.mutation<Department, CollectionQuery>({
-      query: (data: CollectionQuery) => ({
-        url: `${DEPARTMENT_ENDPOINT.archive}/${data?.id}`,
-        method: "DELETE",
-      }),
-
-      async onQueryStarted(param, { dispatch, queryFulfilled }) {
-        try {
-          const { data } = await queryFulfilled;
-          if (data) {
-            dispatch(
-              departmentQuery.util.updateQueryData(
-                "getDepartments",
-                departmentCollection,
-                (draft) => {
-                  if (data) {
-                    draft.data = draft?.data?.map((department) => {
-                      if (department.id === data.id) return data;
-                      else {
-                        return department;
-                      }
-                    });
+      archiveDepartment: builder.mutation<Department, { id: string; remark: string }>({
+        query: (data) => ({
+          url: `${DEPARTMENT_ENDPOINT.archive}`,
+          data,
+          method: "DELETE",
+        }),
+        invalidatesTags: ["Departments"],
+        async onQueryStarted(param, { dispatch, queryFulfilled }) {
+          try {
+            const { data } = await queryFulfilled;
+            if (data) {
+              dispatch(
+                departmentQuery.util.updateQueryData(
+                  "getDepartments",
+                  departmentCollection,
+                  (draft) => {
+                    if (data) {
+                      draft.data = draft?.data?.map((department) => {
+                        if (department.id === data.id) return data;
+                        else {
+                          return department;
+                        }
+                      });
+                    }
                   }
-                }
-              )
-            );
-            dispatch(
-              departmentQuery.util.updateQueryData(
-                "getDepartment",
-                param,
-                (draft) => {
-                  if (data) {
-                    draft.archivedAt = data?.archivedAt;
+                )
+              );
+              dispatch(
+                departmentQuery.util.updateQueryData(
+                  "getDepartment",
+                  param,
+                  (draft) => {
+                    if (data) {
+                      draft.archivedAt = data?.archivedAt;
+                    }
                   }
-                }
-              )
-            );
+                )
+              );
+              notifications.show({
+                title: "Success",
+                message: "Successfully archived",
+                color: "green",
+              });
+            }
+          } catch (error: unknown) {
             notifications.show({
-              title: "Success",
-              message: "Successfully archived",
-              color: "green",
+              title: "Error",
+              message:
+                (error as AppError)?.error?.data?.message || "Error, try again",
+              color: "red",
             });
           }
-        } catch (error: unknown) {
-          notifications.show({
-            title: "Error",
-            message: (error as AppError)?.error?.data?.message
-              ? (error as AppError)?.error?.data?.message
-              : "Error try again",
-            color: "red",
-          });
-        }
-      },
-    }),
-    restoreDepartment: builder.mutation<Department, CollectionQuery>({
-      query: (data: CollectionQuery) => ({
-        url: `${DEPARTMENT_ENDPOINT.restore}/${data?.id}`,
-        method: "POST",
+        },
       }),
-
-      async onQueryStarted(param, { dispatch, queryFulfilled }) {
-        try {
-          const { data } = await queryFulfilled;
-          if (data) {
-            dispatch(
-              departmentQuery.util.updateQueryData(
-                "getDepartments",
-                departmentCollection,
-                (draft) => {
-                  if (data) {
-                    draft.data = draft?.data?.map((department) => {
-                      if (department.id === data.id)
-                        return { ...data, archivedDate: null };
-                      else {
-                        return department;
-                      }
-                    });
+      restoreDepartment: builder.mutation<Department, string>({
+        query: (id: string) => ({
+          url: `${DEPARTMENT_ENDPOINT.restore}/${id}`,
+          method: "POST",
+        }),
+  
+        async onQueryStarted(param, { dispatch, queryFulfilled }) {
+          try {
+            const { data } = await queryFulfilled;
+            if (data) {
+              dispatch(
+                departmentQuery.util.updateQueryData(
+                  "getArchivedDepartments",
+                  departmentCollection,
+                  (draft) => {
+                    if (draft?.data) {
+                      draft.data = draft.data.filter(
+                        (department) => department.id !== data.id
+                      );
+                    }
                   }
-                }
-              )
-            );
-            dispatch(
-              departmentQuery.util.updateQueryData(
-                "getDepartment",
-                param,
-                (draft) => {
-                  if (data) {
-                    draft.archivedAt = "";
-                  }
-                }
-              )
-            );
+                )
+              );
+              notifications.show({
+                title: "Success",
+                message: "Successfully Restored",
+                color: "green",
+              });
+            }
+          } catch (error: unknown) {
             notifications.show({
-              title: "Success",
-              message: "Successfully restored",
-              color: "green",
+              title: "Error",
+              message:
+                (error as AppError)?.error?.data?.message || "Error, try again",
+              color: "red",
             });
           }
-        } catch (error: unknown) {
-          notifications.show({
-            title: "Error",
-            message: (error as AppError)?.error?.data?.message
-              ? (error as AppError)?.error?.data?.message
-              : "Error try again",
-            color: "red",
-          });
-        }
-      },
-    }),
-    deleteDepartment: builder.mutation<boolean, string>({
-      query: (id: string) => ({
-        url: `${DEPARTMENT_ENDPOINT.delete}/${id}`,
-        method: "DELETE",
+        },
       }),
-      invalidatesTags: ["Departments"],
-      async onQueryStarted(id, { dispatch, queryFulfilled }) {
-        try {
-          const { data } = await queryFulfilled;
-          if (data) {
-            dispatch(
-              departmentQuery.util.updateQueryData(
-                "getDepartments",
-                departmentCollection,
-                (draft) => {
-                  if (data) {
-                    draft.data = draft?.data?.filter(
-                      (item) => item.id?.toString() !== id
-                    );
-                    draft.count -= 1;
+      deleteDepartment: builder.mutation<boolean, string>({
+        query: (id: string) => ({
+          url: `${DEPARTMENT_ENDPOINT.delete}/${id}`,
+          method: "DELETE",
+        }),
+        invalidatesTags: ["Departments"],
+        async onQueryStarted(id, { dispatch, queryFulfilled }) {
+          try {
+            const { data } = await queryFulfilled;
+            if (data) {
+              dispatch(
+                departmentQuery.util.updateQueryData(
+                  "getArchivedDepartments",
+                  departmentCollection,
+                  (draft) => {
+                    if (data) {
+                      draft.data = draft?.data?.filter(
+                        (item) => item.id?.toString() !== id
+                      );
+                      draft.count -= 1;
+                    }
                   }
-                }
-              )
-            );
-
+                )
+              );
+  
+              notifications.show({
+                title: "Success",
+                message: "Successfully Deleted",
+                color: "green",
+              });
+            }
+          } catch (error: unknown) {
             notifications.show({
-              title: "Success",
-              message: "Successfully deleted",
-              color: "green",
+              title: "Error",
+              message:
+                (error as AppError)?.error?.data?.message || "Error, try again",
+              color: "red",
             });
           }
-        } catch (error: unknown) {
-          notifications.show({
-            title: "Error",
-            message:
-              (error as AppError)?.error?.data?.message || "Error, try again",
-            color: "red",
-          });
-        }
-      },
-    }),
+        },
+      }),
   }),
 
   overrideExisting: true,

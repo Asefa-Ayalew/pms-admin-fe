@@ -4,9 +4,10 @@ import { Box, Button, Group, Textarea } from "@mantine/core";
 import { IconArchive } from "@tabler/icons-react";
 import { FieldErrors, SubmitHandler, useForm } from "react-hook-form";
 import z from "zod";
-import { useArchiveBankAccountMutation } from "../_store/bank-account.query";
+import { useArchiveDepartmentMutation } from "../_store/department.query";
+
 interface Props {
-  type?: "bankAccount";
+  type?: "tenant";
   onClose: () => void;
   onCreating?: (data: boolean) => void;
   id?: string;
@@ -22,8 +23,8 @@ const defaultValue: FormSchema = {
   reason: "",
 };
 export default function ReasonForm(props: Props) {
-  const [archiveBankAccount, { isLoading: archivingBankAccount }] =
-    useArchiveBankAccountMutation();
+  const [archiveDepartment, { isLoading: archivingDepartment }] =
+    useArchiveDepartmentMutation();
   const {
     register,
     handleSubmit,
@@ -36,7 +37,7 @@ export default function ReasonForm(props: Props) {
 
   const onSubmit: SubmitHandler<FormSchema> = async (data) => {
     try {
-      const response = await archiveBankAccount({
+      const response = await archiveDepartment({
         ...data,
         remark: data.reason || "",
         id: (props.id || "").toString(),
@@ -89,7 +90,7 @@ export default function ReasonForm(props: Props) {
                 className="shadow-none bg-[#F59E0B] rounded flex items-center"
                 bg={"primary.4"}
                 type="submit"
-                loading={archivingBankAccount}
+                loading={archivingDepartment}
                 leftSection={<IconArchive />}
               >
                 {"Archive"}

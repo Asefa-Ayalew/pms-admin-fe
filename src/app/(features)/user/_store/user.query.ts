@@ -153,58 +153,61 @@ export const userQuery = appApi.injectEndpoints({
         },
       }
     ),
-    archiveUser: builder.mutation<User, CollectionQuery>({
-      query: (data: CollectionQuery) => ({
-        url: `${USER_ENDPOINT.archive}/${data?.id}`,
-        method: "DELETE",
-      }),
-
-      async onQueryStarted(param, { dispatch, queryFulfilled }) {
-        try {
-          const { data } = await queryFulfilled;
-          if (data) {
-            dispatch(
-              userQuery.util.updateQueryData(
-                "getUsers",
-                userCollection,
-                (draft) => {
-                  if (data) {
-                    draft.data = draft?.data?.map((user) => {
-                      if (user.id === data.id) return data;
-                      else {
-                        return user;
-                      }
-                    });
+     archiveUser: builder.mutation<User, { id: string; reason: string }>(
+      {
+        query: (data) => ({
+          url: `${USER_ENDPOINT.archive}`,
+          data,
+          method: "DELETE",
+        }),
+        invalidatesTags: ["Users"],
+        async onQueryStarted(param, { dispatch, queryFulfilled }) {
+          try {
+            const { data } = await queryFulfilled;
+            if (data) {
+              dispatch(
+                userQuery.util.updateQueryData(
+                  "getUsers",
+                  userCollection,
+                  (draft) => {
+                    if (data) {
+                      draft.data = draft?.data?.map((user) => {
+                        const prop = JSON.parse(JSON.stringify(user));
+                        if (prop.id === data.id) return data;
+                        else {
+                          return user;
+                        }
+                      });
+                    }
                   }
-                }
-              )
-            );
-            dispatch(
-              userQuery.util.updateQueryData("getUser", param, (draft) => {
-                if (data) {
-                  draft.archivedAt = data?.archivedAt;
-                }
-              })
-            );
+                )
+              );
+              dispatch(
+                userQuery.util.updateQueryData(
+                  "getUser",
+                  param,
+                  (draft) => {
+                    if (data) {
+                      draft.archivedAt = data?.archivedAt;
+                    }
+                  }
+                )
+              );
+            }
+          } catch (error: unknown) {
             notifications.show({
-              title: "Success",
-              message: "Successfully archived",
-              color: "green",
+              title: "Error",
+              message:
+                (error as AppError)?.error?.data?.message || "Error, try again",
+              color: "red",
             });
           }
-        } catch (error: unknown) {
-          notifications.show({
-            title: "Error",
-            message:
-              (error as AppError)?.error?.data?.message || "Error, try again",
-            color: "red",
-          });
-        }
-      },
-    }),
-    restoreUser: builder.mutation<User, CollectionQuery>({
-      query: (data: CollectionQuery) => ({
-        url: `${USER_ENDPOINT.restore}/${data?.id}`,
+        },
+      }
+    ),
+    restoreUser: builder.mutation<User, string>({
+      query: (id) => ({
+        url: `${USER_ENDPOINT.restore}/${id}`,
         method: "POST",
       }),
 
@@ -229,13 +232,6 @@ export const userQuery = appApi.injectEndpoints({
                 }
               )
             );
-            dispatch(
-              userQuery.util.updateQueryData("getUser", param, (draft) => {
-                if (data) {
-                  draft.archivedAt = "";
-                }
-              })
-            );
             notifications.show({
               title: "Success",
               message: "Successfully restored",
@@ -255,7 +251,7 @@ export const userQuery = appApi.injectEndpoints({
     deleteUser: builder.mutation<boolean, string>({
       query: (id: string) => ({
         url: `${USER_ENDPOINT.delete}/${id}`,
-        method: "delete",
+        method: "DELETE",
       }),
       invalidatesTags: ["Users"],
       async onQueryStarted(id, { dispatch, queryFulfilled }) {
@@ -269,13 +265,14 @@ export const userQuery = appApi.injectEndpoints({
                 (draft) => {
                   if (data) {
                     draft.data = draft?.data?.filter(
-                      (user) => user.id?.toString() !== id
+                      (item) => item.id?.toString() !== id
                     );
                     draft.count -= 1;
                   }
                 }
               )
             );
+
             notifications.show({
               title: "Success",
               message: "Successfully deleted",

@@ -15,7 +15,7 @@ import {
   IconMinimize,
   IconX,
   IconHelpCircle,
-  IconActivity,
+  IconLogs,
 } from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
 import { FC, ReactElement, useState } from "react";
@@ -111,7 +111,6 @@ export const HeaderComponent: FC<HeaderComponentProps> = ({
               <Tooltip label={fullScreen ? "Exit full screen" : "Full screen"}>
                 <ActionIcon
                   variant={fullScreen ? "filled" : "light"}
-                  color="blue"
                   size="md"
                   onClick={() => setFullScreen(!fullScreen)}
                 >
@@ -127,7 +126,6 @@ export const HeaderComponent: FC<HeaderComponentProps> = ({
             <Tooltip label="Help">
               <ActionIcon
                 variant={drawerType === "help" ? "filled" : "light"}
-                color="teal"
                 size="md"
                 onClick={() => toggleDrawer("help")}
               >
@@ -138,18 +136,16 @@ export const HeaderComponent: FC<HeaderComponentProps> = ({
             <Tooltip label="Activity Log">
               <ActionIcon
                 variant={drawerType === "activity" ? "filled" : "light"}
-                color="orange"
                 size="md"
                 onClick={() => toggleDrawer("activity")}
               >
-                <IconActivity size={16} />
+                <IconLogs size={16} />
               </ActionIcon>
             </Tooltip>
 
             <Tooltip label="Close">
               <ActionIcon
                 variant="light"
-                color="red"
                 size="md"
                 onClick={handleBack}
               >

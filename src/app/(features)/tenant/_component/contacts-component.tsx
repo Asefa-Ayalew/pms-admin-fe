@@ -74,7 +74,7 @@ export default function ContactsComponent() {
 
   const [getTenant, { data: tenant, isLoading }] = useLazyGetTenantQuery();
 
-  const [deleteContact, {isLoading: deleting}] = useDeleteContactMutation();
+  const [deleteContact] = useDeleteContactMutation();
 
   useEffect(() => {
     getTenant({ id: String(params.id), includes: ["contacts"] });
@@ -241,7 +241,6 @@ export default function ContactsComponent() {
           icon: IconTrash,
           size: "16",
           type: "danger",
-          isLoading: deleting
         },
       ],
     }),

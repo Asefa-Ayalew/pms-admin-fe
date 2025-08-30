@@ -1,6 +1,6 @@
 "use client";
 
-import { useParams, useSearchParams } from "next/navigation";
+import { useParams } from "next/navigation";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 
 import { Role } from "@/src/models/role.model";
@@ -10,7 +10,6 @@ import {
   entityViewMode,
 } from "@/src/shared/models/entity-list-config";
 import {
-  useLazyGetArchivedRolesQuery,
   useLazyGetRoleQuery,
   useLazyGetRolesQuery,
 } from "./_store/role.query";
@@ -22,10 +21,7 @@ export default function RoleListPage({
   children: React.ReactNode;
 }) {
   const params = useParams();
-  const searchParams = useSearchParams();
-  const isArchived = searchParams.get("archived") === "true";
   const [viewMode, setViewMode] = useState<entityViewMode>("list");
-  const [view, setView] = useState<"list" | "archived">("list");
   const [collectionQuery, setCollectionQuery] = useState<CollectionQuery>({
     skip: 0,
     top: 10,
@@ -34,20 +30,12 @@ export default function RoleListPage({
 
   const [getRoles, { data: roles, isLoading: isLoadingRoles }] =
     useLazyGetRolesQuery();
-  const [
-    getArchivedRoles,
-    { data: archivedRoles, isLoading: archivedRolesLoading },
-  ] = useLazyGetArchivedRolesQuery();
 
   const [getRole, { data: role }] = useLazyGetRoleQuery();
 
   useEffect(() => {
-    if (view === "list") {
       getRoles(collectionQuery);
-    } else {
-      getArchivedRoles(collectionQuery);
-    }
-  }, [collectionQuery, getArchivedRoles, getRoles, view]);
+  }, [collectionQuery, getRoles]);
 
   useEffect(() => {
     getRole(String(params.id));
@@ -58,12 +46,8 @@ export default function RoleListPage({
   }, [params?.id]);
 
   useEffect(() => {
-    if (isArchived) {
-      setView("archived");
-    } else {
-      setView("list");
-    }
-  }, [isArchived]);
+   getRole(String(params.id))
+  }, [getRole, params.id]);
 
   const config = useMemo<EntityConfig<Role>>(
     () => ({
@@ -97,7 +81,7 @@ export default function RoleListPage({
     }));
   };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const onFilter = (filter: any[]) => {
     setCollectionQuery((prev) => ({
       ...prev,
@@ -114,20 +98,17 @@ export default function RoleListPage({
 
   return (
     <EntityTable
-      title={view === "list" ? "Roles" : "Archived Roles"}
-      detailTitle={
-        params.id !== "new" ? (role?.name ?? "Role Detail") : "New Role"
-      }
+      title={"Roles"}
+      detailTitle={role?.name}
       config={config}
       detail={children}
-      items={view === "list" ? roles?.data : archivedRoles?.data}
-      total={view === "list" ? roles?.count : archivedRoles?.count}
-      itemsLoading={view === "list" ? isLoadingRoles : archivedRolesLoading}
+      items={roles?.data}
+      total={roles?.count}
+      itemsLoading={isLoadingRoles}
       collectionQuery={collectionQuery}
-      view={view}
       viewMode={viewMode}
-      showNewButton={view === "list"}
-      onViewChange={setView}
+      showNewButton={false}
+      showArchivedList={false}
       onPaginationChange={handlePaginationChange}
       onSearch={onSearch}
       onOrder={onOrder}

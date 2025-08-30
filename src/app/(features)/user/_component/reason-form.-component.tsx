@@ -7,9 +7,10 @@ import z from "zod";
 import { useArchiveBankAccountMutation } from "../_store/bank-account.query";
 import { useArchiveEmergencyContactMutation } from "../_store/emergency-contact.query";
 import { notifications } from "@mantine/notifications";
+import { useArchiveUserMutation } from "../_store/user.query";
 
 interface Props {
-  type?: "bank-account" | "user-contact";
+  type?: "user" | "bank-account" | "user-contact";
   onClose: () => void;
   onCreating?: (data: boolean) => void;
   id?: string;
@@ -27,6 +28,7 @@ const defaultValue: FormSchema = {
   reason: "",
 };
 export default function ReasonFormComponent(props: Props) {
+  const [archiveUser] = useArchiveUserMutation();
   const [archiveUserContact, { isLoading: archivingUserContact }] =
     useArchiveEmergencyContactMutation();
   const [archiveBankAccount, { isLoading: archivingBankAccount }] =
@@ -45,15 +47,20 @@ export default function ReasonFormComponent(props: Props) {
     console.log("Data from Delete ", data);
     try {
       const response =
-        props?.type === "bank-account"
-          ? await archiveBankAccount({
-              ...data,
-              id: props.id?.toString(),
+        props.type === "user"
+          ? await archiveUser({
+              reason: String(data?.reason),
+              id: String(props.id),
             }).unwrap()
-          : await archiveUserContact({
-              ...data,
-              id: props.id?.toString(),
-            }).unwrap();
+          : props?.type === "bank-account"
+            ? await archiveBankAccount({
+                ...data,
+                id: props.id?.toString(),
+              }).unwrap()
+            : await archiveUserContact({
+                ...data,
+                id: props.id?.toString(),
+              }).unwrap();
       console.log(response, "response");
       if (response) {
         props.onClose();

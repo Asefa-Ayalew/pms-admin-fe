@@ -4,7 +4,6 @@ import { Box, Button, Group, Textarea } from "@mantine/core";
 import { IconArchive } from "@tabler/icons-react";
 import { FieldErrors, SubmitHandler, useForm } from "react-hook-form";
 import z from "zod";
-import { notifications } from "@mantine/notifications";
 import { useArchiveFAQMutation } from "../_store/faq.query";
 
 interface Props {

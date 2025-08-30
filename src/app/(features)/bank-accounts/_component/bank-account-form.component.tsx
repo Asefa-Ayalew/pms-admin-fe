@@ -31,12 +31,10 @@ import {
   useUpdateBankAccountMutation,
 } from "../_store/bank-account.query";
 import { User } from "@/src/models/user.model";
-import { notifications } from "@mantine/notifications";
 
 interface Props {
   editMode: "new" | "detail" | "view";
   onClose: () => void;
-  onCreating?: (data: boolean) => void;
   data?: BankAccount;
 }
 

@@ -15,8 +15,6 @@ import {
   SubmitHandler,
   Controller,
 } from "react-hook-form";
-import { notifications } from "@mantine/notifications";
-import { Testimonial } from "@/src/models/testimonial.model";
 import {
   testimonialDefaultValue,
   testimonialFormSchema,
@@ -26,6 +24,7 @@ import {
   useDeleteTestimonialMutation,
   useUpdateTestimonialMutation,
 } from "../_store/testimonial.query";
+import { Testimonial } from "@/src/models/testimonial.model";
 interface Props {
   editMode: "new" | "detail" | "view";
   onClose: () => void;

@@ -1,39 +1,51 @@
+"use client";
 import ClientOnly from "@/src/components/ClientOnly";
-import UserTypeDetailComponent from "../../_component/user-detail-component";
+import dynamic from "next/dynamic";
+import { useParams } from "next/navigation";
+import EmergencyContactsComponent from "../../_component/emergency-contact-component";
+import { Tabs } from "@mantine/core";
+import { IconBuildingBank, IconUserShield } from "@tabler/icons-react";
+import { EyeIcon } from "lucide-react";
+import UserBankAccountComponent from "../../_component/user-bank-account-component";
 
-// const UserDetailComponent = dynamic(
-//   () => import("@/src/app/(features)/user/_component/user-detail-component"),
-//   { ssr: false }
-// );
-
-export default function UserDetailPage() {
+const NewUserTypeComponent = dynamic(
+  () => import("../../_component/new-user-component"),
+  { ssr: false }
+);
+export default function NewUserTypePage() {
+  const params = useParams();
   return (
     <ClientOnly>
-      <UserTypeDetailComponent />
-      {/* <Tabs defaultValue="emergency" className="w-full">
-                  <Tabs.List className="gap-8 my-2">
-                    <Tabs.Tab leftSection={<IconUserShield size={15} />} value="emergency">
-                      Contacts
-                    </Tabs.Tab>
-                    <Tabs.Tab leftSection={<EyeIcon size={15} />} value="detail">
-                      Detail
-                    </Tabs.Tab>
-                    <Tabs.Tab leftSection={<IconBuildingBank size={15} />} value="bank">
-                      Bank Account
-                    </Tabs.Tab>
-                  </Tabs.List>
-                  <Tabs.Panel value="emergency">
-                    <EmergencyContactsComponent />
-                    
-                  </Tabs.Panel>
-                  <Tabs.Panel value="detail">
-                    <UserTypeDetailComponent />
-                  </Tabs.Panel>
-                  <Tabs.Panel value="bank">
-                    <UserBankAccountComponent />
-                    
-                  </Tabs.Panel>
-                </Tabs> */}
+      <Tabs defaultValue="detail" className="w-full">
+        <Tabs.List className="gap-8 my-2">
+          <Tabs.Tab leftSection={<EyeIcon size={15} />} value="detail">
+            {params?.id === "new" ? "New User" : "Detail"}
+          </Tabs.Tab>
+          <Tabs.Tab
+            leftSection={<IconUserShield size={15} />}
+            value="emergency"
+          >
+            Contacts
+          </Tabs.Tab>
+          
+          <Tabs.Tab leftSection={<IconBuildingBank size={15} />} value="bank">
+            Bank Account
+          </Tabs.Tab>
+        </Tabs.List>
+        <Tabs.Panel value="emergency">
+          <EmergencyContactsComponent />
+        </Tabs.Panel>
+        <Tabs.Panel value="detail">
+          {params?.id === "new" ? (
+            <NewUserTypeComponent editMode="new" />
+          ) : (
+            <NewUserTypeComponent editMode="detail" />
+          )}
+        </Tabs.Panel>
+        <Tabs.Panel value="bank">
+          <UserBankAccountComponent />
+        </Tabs.Panel>
+      </Tabs>
     </ClientOnly>
   );
 }

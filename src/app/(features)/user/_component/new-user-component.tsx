@@ -22,7 +22,8 @@ import {
 } from "@mantine/core";
 import { DatePickerInput } from "@mantine/dates";
 import {
-  IconArrowBack,
+  IconArchive,
+  IconArrowBackUp,
   IconDeviceFloppy,
   IconEdit,
   IconTrash,
@@ -30,8 +31,8 @@ import {
 } from "@tabler/icons-react";
 import dayjs from "dayjs";
 import { useSession } from "next-auth/react";
-import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState, useMemo } from "react"; 
+import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState, useMemo } from "react";
 import { Controller, FieldErrors, useForm } from "react-hook-form";
 
 import z from "zod";
@@ -49,6 +50,8 @@ import { IMaskInput } from "react-imask";
 import DetailsPage from "@/src/shared/component/details-page/details-page.component";
 import { useLazyGetBankAccountsQuery } from "../_store/bank-account.query";
 import { CollectionQuery } from "@/src/shared/models/collection.model";
+import ReasonFormComponent from "./reason-form.-component";
+import { useDisclosure } from "@mantine/hooks";
 
 interface Props {
   editMode: "new" | "detail";
@@ -86,24 +89,25 @@ const defaultValue: User = {
 export default function NewUserComponent(props: Props) {
   const { editMode, onCreating } = props;
   const params = useParams();
+  const searchParams = useSearchParams();
+  const isArchived = searchParams.get("archived") === "true";
   const navigate = useRouter();
   const { update } = useSession();
 
+  const [opened, { close }] = useDisclosure(false);
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<User>();
   const [countryCode, setCountryCode] = useState<string>("+251");
 
   const [getRoles, roles] = useLazyGetRolesQuery();
   const [getBankAccount] = useLazyGetBankAccountsQuery();
   const [getUser, user] = useLazyGetUserQuery();
-  const [createUser, createResponse] = useCreateUserMutation();
-  const [updateUser, updateResponse] = useUpdateUserMutation();
-  const [archiveUser, archiveResponse] = useArchiveUserMutation();
-  const [restoreUser, restoreResponse] = useRestoreUserMutation();
-  const [deleteUser, deleteResponse] = useDeleteUserMutation();
+  const [createUser, { isLoading: creating }] = useCreateUserMutation();
+  const [updateUser, { isLoading: updating }] = useUpdateUserMutation();
+  const [archiveUser, { isLoading: archiving }] = useArchiveUserMutation();
+  const [restoreUser, { isLoading: restoring }] = useRestoreUserMutation();
+  const [deleteUser, { isLoading: deleting }] = useDeleteUserMutation();
   const { user: currentUser } = useUserInfo();
-  const [isEditMode, setIsEditMode] = useState(editMode !== 'detail');
-  // FIX: Memoize the collection object to prevent infinite re-renders
+  const [isEditMode, setIsEditMode] = useState(editMode !== "detail");
   const collection = useMemo(() => ({}), []);
   const [bankAccountCollection, setBankAccountCollection] =
     useState<CollectionQuery>({
@@ -158,28 +162,28 @@ export default function NewUserComponent(props: Props) {
               profile: response.data,
             });
           }
-
-          navigate.push(`/user/detail/${response?.data?.id}`);
         }
       });
     }
   }
 
+  const handleRestore = async () => {
+    try {
+      const response = await restoreUser((params.id || "").toString()).unwrap();
+      if (response) {
+        navigate.push(`/property/${response?.id}?archived=false`);
+      }
+    } catch (error) {
+      console.log(error)
+    }
+  };
+
   async function handleDelete() {
     try {
-      let response;
-      if (selectedUser?.archivedAt) {
-        response = await restoreUser({ id: `${selectedUser?.id}` });
-      } else {
-        response = await deleteUser(`${selectedUser?.id}`);
-      }
+      const response = await deleteUser(String(params.id));
 
-      if (response?.data) {
+      if (response) {
         setOpenDeleteModal(false);
-      }
-      // Navigate to /user only after successful delete
-      if (!selectedUser?.archivedAt) {
-        navigate.push(`/user`);
       }
     } catch (error) {
       console.error("Error during delete/restore operation:", error);
@@ -223,12 +227,12 @@ export default function NewUserComponent(props: Props) {
         ...defaultValue,
       });
     }
-  }, [params?.id, editMode, getUser, reset]); // Added getUser and reset to dependencies
+  }, [params?.id, editMode, getUser, reset]);
 
   useEffect(() => {
     getDepartments(collection);
     getRoles(collection);
-  }, [collection, getDepartments, getRoles]); // Added getDepartments and getRoles to dependencies
+  }, [collection, getDepartments, getRoles]);
 
   const data = [
     {
@@ -296,7 +300,7 @@ export default function NewUserComponent(props: Props) {
         },
       ],
     },
-   
+
     {
       key: "roles",
       label: "Roles",
@@ -715,45 +719,63 @@ export default function NewUserComponent(props: Props) {
                     >
                       Reset
                     </Button>
-                    {editMode === "detail" && (
+                    {!isArchived ? (
                       <Button
-                        type="button"
                         variant="filled"
-                        color="red"
-                        className={`shadow-none bg-red-500 rounded flex items-center`}
-                        onClick={() => {
-                          setOpenDeleteModal(true);
-                          setSelectedUser(user?.data);
-                        }}
-                        loading={
-                          archiveResponse?.isLoading ||
-                          restoreResponse?.isLoading
-                        }
-                        leftSection={
-                          user?.data?.archivedAt ? (
-                            <IconArrowBack size={15} />
-                          ) : (
-                            <IconTrash size={15} />
-                          )
-                        }
+                        bg={"primary.4"}
+                        type="submit"
+                        loading={editMode === "new" ? creating : updating}
+                        leftSection={<IconDeviceFloppy />}
                       >
-                        {user?.data?.archivedAt ? "Restore" : "Delete"}
+                        {editMode === "new" ? "Save" : "Update"}
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="filled"
+                        bg={"primary.4"}
+                        type="submit"
+                        loading={restoring}
+                        leftSection={<IconArrowBackUp size={16} />}
+                        onClick={handleRestore}
+                      >
+                        Restore
                       </Button>
                     )}
-                    <Button
-                      variant="filled"
-                      // className="shadow-none bg-primary-500 rounded flex items-center"
-                      bg={"primary.4"}
-                      type="submit"
-                      loading={
-                        editMode === "new"
-                          ? createResponse?.isLoading
-                          : updateResponse?.isLoading
-                      }
-                      leftSection={<IconDeviceFloppy />}
-                    >
-                      {editMode === "new" ? "Save" : "Update"}
-                    </Button>
+                    {/* )} */}
+                    {editMode === "detail" && (
+                      <>
+                        <Modal
+                          opened={opened}
+                          onClose={close}
+                          title="Reason"
+                          centered
+                          size={"50%"}
+                        >
+                          <ReasonFormComponent
+                            id={String(params.id)}
+                            onClose={close}
+                            type="user"
+                          />{" "}
+                        </Modal>
+                        <Button
+                          type="button"
+                          variant="filled"
+                          color={isArchived ? "red" : "orange"}
+                          className={`shadow-none rounded flex items-center`}
+                          onClick={() => setOpenDeleteModal(true)}
+                          loading={isArchived ? deleting: archiving}
+                          leftSection={
+                            isArchived ? (
+                              <IconTrash size={16} />
+                            ) : (
+                              <IconArchive size={16} />
+                            )
+                          }
+                        >
+                          {isArchived ? "Delete" : "Archive"}
+                        </Button>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
@@ -776,45 +798,50 @@ export default function NewUserComponent(props: Props) {
           setOpenDeleteModal(false);
         }}
         size={"40%"}
-        title={"Delete Contact"}
+        title={isArchived ? "Delete Property" : "Archive Property"}
         centered
       >
-        {/* Modal content */}
-        <h2 className="">
-          Are you sure You want to delete{" "}
-          <span className="underline text-xl">{selectedUser?.firstName} </span>
-        </h2>
-        <div className="flex my-4">
-          <Button
-            variant="default"
-            className="bg-none mx-2"
-            onClick={() => {
-              setOpenDeleteModal(false);
-            }}
-          >
-            Cancel
-          </Button>
+        {isArchived ? (
+          <Box>
+            <h2 className="">
+              Are you sure You want to delete{" "}
+              <span className="underline text-xl">
+                {user.data?.middleName}{" "}
+              </span>
+            </h2>
+            <Box className="flex my-4">
+              <Button
+                variant="default"
+                className="bg-none mx-2"
+                onClick={() => {
+                  setOpenDeleteModal(false);
+                }}
+              >
+                Cancel
+              </Button>
 
-          <Button
-            type="button"
-            variant="filled"
-            color="red"
-            className={`bg-red-500 text-white shadow-none rounded flex items-center mx-2`}
-            onClick={() => {
-              handleDelete();
-            }}
-            loading={archiveResponse?.isLoading || deleteResponse?.isLoading}
-            leftSection={
-              selectedUser?.archivedAt ? (
-                <IconArrowBack size={15} />
-              ) : (
-                <IconTrash size={15} />
-              )
-            }
-          >
-            {selectedUser?.archivedAt ? "Restore" : "Delete"}
-          </Button>
-        </div>
+              <Button
+                type="button"
+                variant="filled"
+                color="red"
+                className={`bg-red-500 text-white shadow-none rounded flex items-center  mx-2`}
+                onClick={() => {
+                  handleDelete();
+                }}
+                loading={deleting}
+                leftSection={<IconTrash />}
+              >
+                {"Delete"}
+              </Button>
+            </Box>
+          </Box>
+        ) : (
+          <ReasonFormComponent
+            id={String(params.id)}
+            onClose={close}
+            type="user"
+          />
+        )}
       </Modal>
     </div>
   );

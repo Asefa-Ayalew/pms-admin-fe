@@ -100,14 +100,14 @@ export default function NewDepartmentComponent(props: Props) {
 
   function handleDelete() {
     const response = selectedDepartment?.archivedAt
-      ? restoreDepartment({ id: `${selectedDepartment?.id}` }).then(
+      ? restoreDepartment(String(selectedDepartment?.id)).then(
           (response) => {
             if (response?.data) {
               setOpenDeleteModal(false);
             }
           }
         )
-      : deleteDepartment(`${selectedDepartment?.id}`)
+      : deleteDepartment(String(selectedDepartment?.id))
           .then((response) => {
             if (response?.data) {
               setOpenDeleteModal(false);
