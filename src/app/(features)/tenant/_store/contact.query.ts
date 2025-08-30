@@ -71,10 +71,11 @@ export const contactQuery = appApi.injectEndpoints({
       },
     }),
 
-    deleteContact: builder.mutation<Contact, string>({
-      query: (id: string) => ({
-        url: `${CONTACT_ENDPOINT.delete}/${id}`,
-        method: "DELETE",
+    deleteContact: builder.mutation<Contact, {id: string, tenantId: string}>({
+      query: (data: {id: string, tenantId :string}) => ({
+        url: `${CONTACT_ENDPOINT.delete}`,
+        method: "POST",
+        data
       }),
       invalidatesTags: ["Tenants"],
       async onQueryStarted(newData, { dispatch, queryFulfilled }) {

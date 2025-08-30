@@ -1,13 +1,8 @@
 "use client";
 import { ProtectedRoute } from "@/src/components/ProtectedRoute";
 import { useUserInfo } from "@/src/hooks/useUserInfo";
+import { UserProfile, UserRole } from "@/src/models/user-info.model";
 import {
-  ActiveRole,
-  UserProfile,
-  UserRole,
-} from "@/src/models/user-info.model";
-import {
-  Accordion,
   AppShell,
   Avatar,
   Box,
@@ -15,7 +10,6 @@ import {
   Flex,
   Group,
   Menu,
-  ScrollArea,
   Skeleton,
   Text,
   Title,
@@ -27,15 +21,12 @@ import {
   IconBuildingBank,
   IconChevronDown,
   IconChevronUp,
-  IconCircleCheckFilled,
   IconCashBanknote,
   IconGauge,
   IconLogout,
-  IconSettings,
   IconUserCog,
 } from "@tabler/icons-react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 import { ReactNode, useEffect, useMemo, useState } from "react";
 import { RoleKey, useRoleGuard } from "../auth/hooks/useRoleGuard";
 import InternetConnectionStatus from "../component/internet-connection-status/internet-connection-status";
@@ -64,16 +55,10 @@ interface UserMenuProps {
   user: UserProfile | null;
   userRoles: UserRole[];
   userMenuOpened: boolean;
-  activeRole: ActiveRole | null;
+  activeRole: string;
   setUserMenuOpened: (opened: boolean) => void;
   onSwitchRole: (roleId: string) => void;
   onLogout: () => void;
-}
-
-interface RoleSwitcherProps {
-  userRoles: UserRole[];
-  activeRole: ActiveRole | null;
-  onSwitchRole: (roleId: string) => void;
 }
 
 const generateNavData = (
@@ -128,7 +113,7 @@ const generateNavData = (
             );
             if (!route) return true;
             const [_, { restrictedRoles }] = route;
-            console.log(_)
+            console.log(_);
             return protectRoutesFromRoles((restrictedRoles as RoleKey[]) || []);
           }),
         };
@@ -204,7 +189,7 @@ export function Shell({ children }: { children: ReactNode }) {
       user?.organization,
       isLoadingGetSignedUrl,
       signedUrl,
-      tenant?.name
+      tenant?.name,
     ]
   );
 
@@ -257,7 +242,7 @@ export function Shell({ children }: { children: ReactNode }) {
           <UserMenu
             user={user}
             userRoles={userRoles}
-            activeRole={activeRole}
+            activeRole={String(activeRole)}
             userMenuOpened={userMenuOpened}
             setUserMenuOpened={setUserMenuOpened}
             onSwitchRole={SwitchRole}
@@ -331,14 +316,12 @@ function OrganizationLogo({
 
 function UserMenu({
   user,
-  userRoles,
   activeRole,
   userMenuOpened,
   setUserMenuOpened,
-  onSwitchRole,
   onLogout,
 }: UserMenuProps) {
-  const router = useRouter();
+  console.log("activeRole", activeRole);
 
   return (
     <div className="px-5 flex items-center space-x-4 text-gray-500">
@@ -384,33 +367,15 @@ function UserMenu({
           <Text fz="sm" c="dimmed">
             {user?.currentTenant?.industry ?? "Industry"}
           </Text>
-          {userRoles.length > 1 ? (
-            <RoleSwitcher
-              activeRole={activeRole}
-              onSwitchRole={onSwitchRole}
-              userRoles={userRoles}
-            />
-          ) : (
-            <Menu.Item
-              leftSection={
-                <IconUserCog size={20} color="var(--mantine-color-green-6)" />
-              }
-              className="text-xs font-semibold bg-blue-500 border-blue-700 border-solid border-2 text-slate-50 shadow-md cursor-not-allowed"
-            >
-              {activeRole?.name}
-            </Menu.Item>
-          )}
-          {activeRole?.key === "SA" && (
-            <Menu.Item
-              leftSection={<IconSettings size={16} stroke={1.5} />}
-              className="text-xs font-semibold"
-              onClick={() => {
-                router.push("/settings");
-              }}
-            >
-              Account settings
-            </Menu.Item>
-          )}
+
+          <Menu.Item
+            leftSection={
+              <IconUserCog size={20} color="var(--mantine-color-green-6)" />
+            }
+            className="text-xs font-semibold bg-blue-500 border-blue-700 border-solid border-2 text-slate-50 shadow-md cursor-not-allowed"
+          >
+            {activeRole}
+          </Menu.Item>
           <Menu.Item
             color="red"
             leftSection={<IconLogout size={16} stroke={1.5} />}
@@ -421,48 +386,6 @@ function UserMenu({
         </Menu.Dropdown>
       </Menu>
     </div>
-  );
-}
-
-function RoleSwitcher({
-  onSwitchRole,
-  userRoles,
-  activeRole,
-}: RoleSwitcherProps) {
-  return (
-    <Accordion variant="default">
-      <Accordion.Item value="roles">
-        <Accordion.Control
-          icon={<IconUserCog size={20} color="var(--mantine-color-green-6)" />}
-        >
-          Switch Role
-        </Accordion.Control>
-        <Accordion.Panel>
-          <ScrollArea className="h-[50svh]">
-            {userRoles?.map((role: UserRole) => (
-              <Menu.Item
-                key={role.role.id}
-                onClick={() => onSwitchRole(role.role.id)}
-                className={cn(
-                  "text-xs font-semibold hover:bg-blue-200 hover:border-blue-200 hover:shadow-lg bg-blue-50 border-2 border-blue-100 border-solid transition-all duration-300 rounded-md px-4 py-1.5 mb-1",
-                  role.role.id === activeRole?.id
-                    ? "bg-blue-500 border-blue-700 border-solid border-2 text-slate-50 shadow-md cursor-not-allowed"
-                    : ""
-                )}
-                disabled={role.role.id === activeRole?.id}
-                rightSection={
-                  role.role.id === activeRole?.id ? (
-                    <IconCircleCheckFilled size={20} stroke={3} color="white" />
-                  ) : null
-                }
-              >
-                {role.role.roleName}
-              </Menu.Item>
-            ))}
-          </ScrollArea>
-        </Accordion.Panel>
-      </Accordion.Item>
-    </Accordion>
   );
 }
 

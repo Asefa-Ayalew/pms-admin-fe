@@ -74,7 +74,7 @@ export default function ContactsComponent() {
 
   const [getTenant, { data: tenant, isLoading }] = useLazyGetTenantQuery();
 
-  const [deleteContact] = useDeleteContactMutation();
+  const [deleteContact, {isLoading: deleting}] = useDeleteContactMutation();
 
   useEffect(() => {
     getTenant({ id: String(params.id), includes: ["contacts"] });
@@ -129,7 +129,7 @@ export default function ContactsComponent() {
         variant: "filled",
       },
       onConfirm: () => {
-        deleteContact(String(contact?.id));
+        deleteContact({id: String(contact?.id), tenantId: String(params.id)});
       },
     });
   };
@@ -241,6 +241,7 @@ export default function ContactsComponent() {
           icon: IconTrash,
           size: "16",
           type: "danger",
+          isLoading: deleting
         },
       ],
     }),
@@ -256,6 +257,7 @@ export default function ContactsComponent() {
       itemsLoading={isLoading}
       collectionQuery={collectionQuery}
       onPaginationChange={handlePaginationChange}
+      showArchivedList={false}
       onSearch={onSearch}
       onOrder={onOrder}
       onFilterChange={onFilter}

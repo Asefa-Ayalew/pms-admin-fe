@@ -117,18 +117,10 @@ export default function BankAccountFormComponent(props: Props) {
         }).unwrap();
 
         if (response) {
-          notifications.show({
-            title: "Success",
-            message: "Bank Account created successfully",
-            color: "green",
-          });
+          props.onClose();
         }
       } catch (err) {
-        notifications.show({
-          title: "Error",
-          message: "Sorry Not created successfully" + err,
-          color: "red",
-        });
+        console.log(err);
       }
     } else {
       try {
@@ -137,18 +129,10 @@ export default function BankAccountFormComponent(props: Props) {
           id: `${props?.data?.id}`,
         });
         if (response) {
-          notifications.show({
-            title: "Success",
-            message: "Bank Account Updated successfully",
-            color: "green",
-          });
+          props.onClose();
         }
       } catch (err) {
-        notifications.show({
-          title: "Error",
-          message: "Sorry Bank Account not updated successfully" + err,
-          color: "red",
-        });
+        console.log(err);
       }
     }
   };
@@ -322,7 +306,7 @@ export default function BankAccountFormComponent(props: Props) {
                     }
                     leftSection={<IconDeviceFloppy size={15} />}
                   >
-                    Save
+                    {editMode === "new" ? "Save" : " Update"}
                   </Button>
                 </div>
               </div>
@@ -395,6 +379,16 @@ export default function BankAccountFormComponent(props: Props) {
             </td>
             <td className="p-2">{props.data?.isPreferred ? "Yes" : "No"}</td>
           </tr>
+          <Box className="flex justify-end mt-2">
+            <Button
+              variant="filled"
+              bg={"primary.4"}
+              type="button"
+              onClick={() => props.onClose()}
+            >
+              Close
+            </Button>
+          </Box>
         </Box>
       )}
     </div>

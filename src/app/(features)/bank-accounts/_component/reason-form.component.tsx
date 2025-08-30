@@ -45,11 +45,6 @@ export default function ReasonForm(props: Props) {
       }).unwrap();
       if (response) {
         props.onClose();
-        notifications.show({
-          title: "Success",
-          message: "Successfully archived",
-          color: "green",
-        });
       }
     } catch (err) {
       console.log(err);

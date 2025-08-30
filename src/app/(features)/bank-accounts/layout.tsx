@@ -267,7 +267,7 @@ export default function BankAccountsComponent() {
         {
           key: "isPreferred",
           name: "Is Preferred?",
-          render: (d) => `${d?.isPreferred ?? ""}`,
+          render: (d) => `${d?.isPreferred ? "Yes" : "No"}`,
         },
       ],
       actions: [

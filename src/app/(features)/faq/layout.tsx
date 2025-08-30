@@ -229,7 +229,9 @@ export default function FAQsComponent() {
         {
           key: "answer",
           name: "Answer",
-          render: (data: FAQ) => data?.answer ?? "",
+          render: (data: FAQ) => (
+            <div dangerouslySetInnerHTML={{ __html: data?.answer ?? "" }} />
+          ),
         },
       ],
       actions: [

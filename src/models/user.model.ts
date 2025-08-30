@@ -1,4 +1,3 @@
-import { MappedUserRoles } from "../app/(features)/user/_component/user-roles-component";
 import { EmergencyContact } from "./emergency-contact.model";
 
 export interface ProfileImage {
@@ -34,7 +33,7 @@ export interface User {
   jobTitle?: string;
   gender: "Male" | "Female";
   licenseNumber?: string;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   profilePicture?: any;
   isPowerUser?: boolean;
   isEmployee?: boolean;
@@ -73,4 +72,18 @@ export interface PasswordChange {
   oldPassword: string;
   newPassword: string;
   confirmPassword?: string;
+}
+
+export interface MappedUserRoles {
+  userId: string;
+  roleId: string;
+  role?: {
+    id: string;
+    name: string;
+    description: string;
+    key: string;
+  };
+  name: string;
+  description: string;
+  key: string;
 }

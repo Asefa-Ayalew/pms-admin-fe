@@ -1,13 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  Box,
-  Button,
-  Modal,
-  NumberInput,
-  TextInput,
-} from "@mantine/core";
+import { Box, Button, Modal, NumberInput, TextInput } from "@mantine/core";
 import {
   IconArrowBack,
   IconDeviceFloppy,
@@ -83,19 +77,10 @@ export default function TestimonialForm(props: Props) {
         }).unwrap();
 
         if (response) {
-          notifications.show({
-            title: "Success",
-            message: "Testimonial created successfully",
-            color: "green",
-          });
           props.onClose();
         }
       } catch (err) {
-        notifications.show({
-          title: "Error",
-          message: "Sorry Not created successfully" + err,
-          color: "red",
-        });
+        console.log(err);
       }
     } else {
       try {
@@ -106,19 +91,10 @@ export default function TestimonialForm(props: Props) {
         console.log("response", response);
 
         if (response) {
-          notifications.show({
-            title: "Success",
-            message: "Testimonial Updated successfully",
-            color: "green",
-          });
           props.onClose();
         }
       } catch (err) {
-        notifications.show({
-          title: "Error",
-          message: "Sorry Testimonial not updated successfully" + err,
-          color: "red",
-        });
+        console.log(err);
       }
     }
   };
