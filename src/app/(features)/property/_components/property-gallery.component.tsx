@@ -9,9 +9,9 @@ import {
 } from "../_store/property.query";
 import { Gallery } from "@/src/models/property.model";
 import { CollectionQuery } from "@/src/shared/models/collection.model";
-import PropertyGalleryForm from "./gallery-form.component";
 import { EntityConfig } from "@/src/shared/models/entity-list-config";
 import InnerTable from "@/src/shared/table/inner-table";
+import PropertyGalleryPreview from "./gallery-preview.component";
 
 const defaultGallery: Gallery = {
   propertyId: "",
@@ -23,7 +23,7 @@ const modalConfig = {
     title: "Preview Gallery",
     size: "60%",
     component: (onClose: () => void, gallery: Gallery) => (
-      <PropertyGalleryForm
+      <PropertyGalleryPreview
         onClose={onClose}
         data={gallery}
       />
@@ -49,6 +49,11 @@ export default function PropertyGalleryComponent() {
     top: 20,
     orderBy: [{ field: "createdAt", direction: "desc" }],
   });
+
+    const openModal = (type: keyof typeof modalConfig, gallery?: Gallery) => {
+    setSelectedGallery(gallery ?? defaultGallery);
+    setModals((prev) => ({ ...prev, [type]: true }));
+  };
 
   useEffect(() => {
     getProperty({ id: String(params.id), includes: ["galleries"] });
@@ -88,6 +93,11 @@ export default function PropertyGalleryComponent() {
   const closeModal = (type: keyof typeof modalConfig) => {
     setModals((prev) => ({ ...prev, [type]: false }));
     setSelectedGallery(defaultGallery);
+  };
+
+    const handleAction = (action: { key: string }, gallery?: Gallery) => {
+    openModal(action.key as keyof typeof modalConfig, gallery);
+
   };
 
   const handlePaginationChange = useCallback(
@@ -153,6 +163,7 @@ export default function PropertyGalleryComponent() {
       onOrder={onOrder}
       onFilterChange={onFilter}
       renderModals={renderModals}
+      handleAction={handleAction}
     />
   );
 }
