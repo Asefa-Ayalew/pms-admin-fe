@@ -123,7 +123,7 @@ export const HeaderComponent: FC<HeaderComponentProps> = ({
               </Tooltip>
             )}
 
-            <Tooltip label="Help">
+            <Tooltip label="Quick Help">
               <ActionIcon
                 variant={drawerType === "help" ? "filled" : "light"}
                 size="md"
@@ -168,7 +168,7 @@ export const HeaderComponent: FC<HeaderComponentProps> = ({
           (headerContents?.help ? (
             headerContents.help
           ) : (
-            <p className="text-gray-500 italic">No help found.</p>
+            <p className="text-gray-500 italic">No quick help found.</p>
           ))}
 
         {drawerType === "activity" &&
