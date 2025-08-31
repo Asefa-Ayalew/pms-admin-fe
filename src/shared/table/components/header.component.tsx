@@ -11,8 +11,8 @@ import {
 } from "@mantine/core";
 import {
   IconArrowLeft,
-  IconMaximize,
-  IconMinimize,
+  IconArrowsMaximize,
+  IconArrowsMinimize,
   IconX,
   IconHelpCircle,
   IconLogs,
@@ -115,9 +115,9 @@ export const HeaderComponent: FC<HeaderComponentProps> = ({
                   onClick={() => setFullScreen(!fullScreen)}
                 >
                   {fullScreen ? (
-                    <IconMinimize size={16} />
+                    <IconArrowsMinimize size={16} />
                   ) : (
-                    <IconMaximize size={16} />
+                    <IconArrowsMaximize size={16} />
                   )}
                 </ActionIcon>
               </Tooltip>

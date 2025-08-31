@@ -30,6 +30,7 @@ import {
   IconX,
   IconArrowsMaximize,
   IconArrowsMinimize,
+  IconChevronLeft,
 } from "@tabler/icons-react";
 import Image from "next/image";
 import { ReactNode, useEffect, useMemo, useState } from "react";
@@ -42,7 +43,7 @@ import { cn } from "../utitlity/cn";
 import { NavigationContainer } from "./nav-bar-links-group-component";
 import classes from "./navbar.module.css";
 import { NAV_ITEMS, PROTECTED_ROUTES } from "./route-permissions";
-import HelpCenter from "./components/help-center/help-center";
+import HelpCenter, { View } from "./components/help-center/help-center";
 
 interface NavItem {
   label: string;
@@ -141,6 +142,8 @@ export function Shell({ children }: { children: ReactNode }) {
   const [userMenuOpened, setUserMenuOpened] = useState(false);
   const [open, setOpen] = useState(false);
   const [fullscreen, setFullScreen] = useState(false);
+  const [viewStack, setViewStack] = useState<View[]>([{ type: "collections" }]);
+  const goBack = () => setViewStack((prev) => prev.slice(0, -1));
   const bucketName = user?.organization?.logo?.bucketName;
   const name = user?.organization?.logo?.name;
   const [getSignedUrl, { isLoading: isLoadingGetSignedUrl, data: signedUrl }] =
@@ -303,7 +306,17 @@ export function Shell({ children }: { children: ReactNode }) {
     ${fullscreen ? "w-[36em]" : "w-[24rem]"}`}
                     >
                       <div className="flex items-center justify-between pt-4 px-4">
-                        <h2 className="font-semibold text-lg">Help</h2>
+                        <div className="flex items-center">
+                          {viewStack.length > 1 && (
+                            <Button
+                              variant="subtle"
+                              onClick={goBack}
+                              className="text-gray-700 hover:text-gray-900"
+                              leftSection={<IconChevronLeft size={16} />}
+                            ></Button>
+                          )}
+                          <h2 className="font-semibold text-lg">Help</h2>
+                        </div>
                         <div className="flex -space-x-1">
                           <Button
                             variant="subtle"
@@ -316,16 +329,20 @@ export function Shell({ children }: { children: ReactNode }) {
                                 <IconArrowsMaximize size={16} />
                               )
                             }
-                          ></Button>
+                          />
                           <Button
                             variant="subtle"
                             onClick={() => setOpen(false)}
                             className="text-gray-500 hover:text-gray-700"
                             leftSection={<IconX size={16} />}
-                          ></Button>
+                          />
                         </div>
                       </div>
-                      <HelpCenter />
+
+                      <HelpCenter
+                        viewStack={viewStack}
+                        setViewStack={setViewStack}
+                      />
                     </motion.div>
                   </>
                 )}
