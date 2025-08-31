@@ -7,6 +7,7 @@ import {
   Avatar,
   Box,
   Burger,
+  Button,
   Flex,
   Group,
   Menu,
@@ -17,6 +18,7 @@ import {
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { modals } from "@mantine/modals";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   IconBuildingBank,
   IconChevronDown,
@@ -25,6 +27,9 @@ import {
   IconGauge,
   IconLogout,
   IconUserCog,
+  IconX,
+  IconArrowsMaximize,
+  IconArrowsMinimize,
 } from "@tabler/icons-react";
 import Image from "next/image";
 import { ReactNode, useEffect, useMemo, useState } from "react";
@@ -37,6 +42,7 @@ import { cn } from "../utitlity/cn";
 import { NavigationContainer } from "./nav-bar-links-group-component";
 import classes from "./navbar.module.css";
 import { NAV_ITEMS, PROTECTED_ROUTES } from "./route-permissions";
+import HelpCenter from "./components/help-center/help-center";
 
 interface NavItem {
   label: string;
@@ -133,6 +139,8 @@ export function Shell({ children }: { children: ReactNode }) {
   const tenant = user?.currentTenant;
 
   const [userMenuOpened, setUserMenuOpened] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [fullscreen, setFullScreen] = useState(false);
   const bucketName = user?.organization?.logo?.bucketName;
   const name = user?.organization?.logo?.name;
   const [getSignedUrl, { isLoading: isLoadingGetSignedUrl, data: signedUrl }] =
@@ -153,7 +161,6 @@ export function Shell({ children }: { children: ReactNode }) {
     }
   }, [getSignedUrl, bucketName, name]);
 
-  // Memoize the header content
   const HeaderContent = useMemo(
     () => (
       <Group h="100%" px="md">
@@ -251,11 +258,79 @@ export function Shell({ children }: { children: ReactNode }) {
         </AppShell.Header>
         <Flex className="flex-row h-full">
           <AppShell.Navbar className="mt-6">
-            {/* <UserInfo user={user} /> */}
             <NavigationContainer links={navData} />
           </AppShell.Navbar>
           <AppShell.Main className="w-full mt-4 bg-neutral-100">
             {children}
+
+            <div className="fixed bottom-4 right-4 z-50">
+              <motion.div
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                transition={{ type: "spring", stiffness: 300, damping: 20 }}
+              >
+                <Button
+                  onClick={() => setOpen(!open)}
+                  className="flex items-center justify-center w-12 h-12 shadow-lg p-1 rounded-full"
+                >
+                  <motion.div
+                    animate={{ rotate: open ? 180 : 0 }}
+                    transition={{ duration: 0.5, ease: "easeInOut" }}
+                  >
+                    <IconChevronDown size={24} className="text-white" />
+                  </motion.div>
+                </Button>
+              </motion.div>
+
+              <AnimatePresence>
+                {open && (
+                  <>
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 0.4 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="fixed inset-1"
+                      onClick={() => setOpen(false)}
+                    />
+
+                    <motion.div
+                      initial={{ opacity: 0, y: 50, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 50, scale: 0.95 }}
+                      transition={{ duration: 0.3, ease: "easeInOut" }}
+                      className={`fixed bottom-20 right-4 h-[calc(100vh-10rem)] bg-white shadow-2xl rounded-2xl flex flex-col overflow-hidden z-[9999] 
+    ${fullscreen ? "w-[36em]" : "w-[24rem]"}`}
+                    >
+                      <div className="flex items-center justify-between pt-4 px-4">
+                        <h2 className="font-semibold text-lg">Help</h2>
+                        <div className="flex -space-x-1">
+                          <Button
+                            variant="subtle"
+                            onClick={() => setFullScreen(!fullscreen)}
+                            className="text-gray-500 hover:text-gray-700"
+                            leftSection={
+                              fullscreen ? (
+                                <IconArrowsMinimize size={16} />
+                              ) : (
+                                <IconArrowsMaximize size={16} />
+                              )
+                            }
+                          ></Button>
+                          <Button
+                            variant="subtle"
+                            onClick={() => setOpen(false)}
+                            className="text-gray-500 hover:text-gray-700"
+                            leftSection={<IconX size={16} />}
+                          ></Button>
+                        </div>
+                      </div>
+                      <HelpCenter />
+                    </motion.div>
+                  </>
+                )}
+              </AnimatePresence>
+            </div>
           </AppShell.Main>
         </Flex>
         <InternetConnectionStatus />
@@ -264,7 +339,6 @@ export function Shell({ children }: { children: ReactNode }) {
   );
 }
 
-// Extract components
 function OrganizationLogo({
   organization,
   isLoading,
