@@ -353,6 +353,16 @@ const HelpCenter = ({
               </ul>
             </>
           )}
+
+          {currentView.type === "question-detail" && (
+            <>
+              <h2 className="font-semibold">{currentView.data.text}</h2>
+              <Divider className="bg-gray-100 my-2" />
+              <p className="text-sm">
+                {currentView.data.answer}
+              </p>
+            </>
+          )}
         </div>
       </ScrollArea>
 

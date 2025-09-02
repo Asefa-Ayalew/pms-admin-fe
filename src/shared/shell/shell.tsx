@@ -302,8 +302,8 @@ export function Shell({ children }: { children: ReactNode }) {
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: 50, scale: 0.95 }}
                       transition={{ duration: 0.3, ease: "easeInOut" }}
-                      className={`fixed bottom-20 right-4 h-[calc(100vh-10rem)] bg-white shadow-2xl rounded-2xl flex flex-col overflow-hidden z-[9999] 
-    ${fullscreen ? "w-[36em]" : "w-[24rem]"}`}
+                      className={`fixed bottom-20 right-4 h-[calc(100vh-8.8rem)] bg-white shadow-2xl rounded-2xl flex flex-col overflow-hidden z-[9999] 
+                              ${fullscreen ? "w-[36em]" : "w-[24rem]"}`}
                     >
                       <div className="flex items-center justify-between pt-4 px-4">
                         <div className="flex items-center">
