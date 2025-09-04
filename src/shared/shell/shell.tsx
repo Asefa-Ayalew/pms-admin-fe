@@ -164,6 +164,14 @@ export function Shell({ children }: { children: ReactNode }) {
     }
   }, [getSignedUrl, bucketName, name]);
 
+  useEffect(() => {
+    if (viewStack.length > 1) {
+      setFullScreen(true);
+    } else if (viewStack.length === 1) {
+      setFullScreen(false);
+    }
+  }, [viewStack, setFullScreen]);
+
   const HeaderContent = useMemo(
     () => (
       <Group h="100%" px="md">

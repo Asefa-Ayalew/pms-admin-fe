@@ -5,10 +5,16 @@ import {
   IconHelp,
   IconMessage,
   IconSearch,
+  IconCircleCheck,
 } from "@tabler/icons-react";
-import { Divider, ScrollArea } from "@mantine/core";
+import { Divider, ScrollArea, Timeline } from "@mantine/core";
 
-export type Question = { id: string; text: string; answer: string };
+export type Question = {
+  id: string;
+  text: string;
+  answer: string;
+  steps?: string[];
+};
 export type Article = { id: string; title: string; questions: Question[] };
 export type Collection = { id: string; name: string; articles: Article[] };
 
@@ -31,7 +37,14 @@ const collections: Collection[] = [
             id: "q1",
             text: "How can I manage my properties?",
             answer:
-              "Use the dashboard to manage properties, including adding, editing, and removing listings.",
+              "Use the dashboard to manage properties, including adding, editing, and removing listings. You can follow the following steps to create Properties",
+            steps: [
+              "Go to the Properties section in your dashboard.",
+              "Click on 'Add New Property'.",
+              "Fill in the property details such as address, type, and rent amount.",
+              "Upload photos of the property.",
+              "Click 'Save' to add the property to your listings.",
+            ],
           },
           {
             id: "q2",
@@ -358,9 +371,28 @@ const HelpCenter = ({
             <>
               <h2 className="font-semibold">{currentView.data.text}</h2>
               <Divider className="bg-gray-100 my-2" />
-              <p className="text-sm">
-                {currentView.data.answer}
-              </p>
+              <p className="text-sm">{currentView.data.answer}</p>
+              {currentView.data.steps && currentView.data.steps.length > 0 && (
+                <Timeline
+                  active={currentView.data.steps.length}
+                  bulletSize={16}
+                  lineWidth={1}
+                >
+                  {currentView.data.steps.map((step, idx) => (
+                    <Timeline.Item
+                      key={idx}
+                      title={`Step ${idx + 1}`}
+                      bullet={
+                        <IconCircleCheck size={14} className="text-blue-600" />
+                      }
+                      lineVariant="solid"
+                      color="blue"
+                    >
+                      <p className="text-sm text-gray-700">{step}</p>
+                    </Timeline.Item>
+                  ))}
+                </Timeline>
+              )}
             </>
           )}
         </div>
