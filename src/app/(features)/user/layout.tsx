@@ -32,10 +32,8 @@ export default function UserListPage({
     orderBy: [{ field: "createdAt", direction: "desc" }],
   });
 
-  const [
-    getUsers,
-    { data: users, isLoading: isLoadingUsers },
-  ] = useLazyGetUsersQuery();
+  const [getUsers, { data: users, isLoading: isLoadingUsers }] =
+    useLazyGetUsersQuery();
   const [
     getArchivedUsers,
     { data: archivedUsers, isLoading: archivedUsersLoading },
@@ -67,7 +65,7 @@ export default function UserListPage({
     }
   }, [isArchived]);
 
-const config = useMemo<EntityConfig<User>>(
+  const config = useMemo<EntityConfig<User>>(
     () => ({
       primaryColumn: {
         key: "fullName",
@@ -84,7 +82,7 @@ const config = useMemo<EntityConfig<User>>(
           key: "fullName",
           isPrimary: true,
           name: "Full Name",
-          
+
           render: (data: User) =>
             `${data?.firstName ?? ""} ${data?.middleName ?? ""} ${
               data?.lastName ?? ""
@@ -107,7 +105,7 @@ const config = useMemo<EntityConfig<User>>(
           isDate: true,
         },
       ],
-      showDetail: true
+      showDetail: true,
     }),
     []
   );
@@ -128,7 +126,7 @@ const config = useMemo<EntityConfig<User>>(
     }));
   };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const onFilter = (filter: any[]) => {
     setCollectionQuery((prev) => ({
       ...prev,
@@ -148,20 +146,17 @@ const config = useMemo<EntityConfig<User>>(
       title={view === "list" ? "Users" : "Archived Users"}
       detailTitle={
         params.id !== "new"
-          ? (user?.firstName ?? "User Detail")
+          ? user
+            ? `${user.firstName ?? ""} ${user.middleName ?? ""} ${user.lastName ?? ""}`.trim() ||
+              "User Detail"
+            : "User Detail"
           : "New User"
       }
       config={config}
       detail={children}
       items={view === "list" ? users?.data : archivedUsers?.data}
-      total={
-        view === "list"
-          ? users?.count
-          : archivedUsers?.count
-      }
-      itemsLoading={
-        view === "list" ? isLoadingUsers : archivedUsersLoading
-      }
+      total={view === "list" ? users?.count : archivedUsers?.count}
+      itemsLoading={view === "list" ? isLoadingUsers : archivedUsersLoading}
       collectionQuery={collectionQuery}
       view={view}
       viewMode={viewMode}

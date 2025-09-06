@@ -46,7 +46,7 @@ export const HeaderComponent: FC<HeaderComponentProps> = ({
   fullScreen,
   setFullScreen,
   className = "",
-  showBackButton = true,
+  showBackButton = false,
   showExpandButton = true,
   customBackUrl,
   onBack,
@@ -84,11 +84,11 @@ export const HeaderComponent: FC<HeaderComponentProps> = ({
         className="mb-4 px-4 py-3 flex items-center justify-between bg-white"
       >
         <div className="flex justify-between">
-          <Group gap="sm" align="center" className="flex-1 overflow-hidden">
+          <Group gap="xs" align="center" className="flex-1 overflow-hidden">
             {showBackButton && (
               <Tooltip label="Go back">
                 <ActionIcon
-                  variant="light"
+                  variant="subtle"
                   color="blue"
                   size="md"
                   onClick={handleBack}
@@ -106,11 +106,11 @@ export const HeaderComponent: FC<HeaderComponentProps> = ({
             </Title>
           </Group>
 
-          <Group gap="xs" className="flex-shrink-0">
+          <div className="flex-shrink-0">
             {showExpandButton && setFullScreen && (
               <Tooltip label={fullScreen ? "Exit full screen" : "Full screen"}>
                 <ActionIcon
-                  variant={fullScreen ? "filled" : "light"}
+                  variant={fullScreen ? "filled" : "subtle"}
                   size="md"
                   onClick={() => setFullScreen(!fullScreen)}
                 >
@@ -125,7 +125,7 @@ export const HeaderComponent: FC<HeaderComponentProps> = ({
 
             <Tooltip label="Quick Help">
               <ActionIcon
-                variant={drawerType === "help" ? "filled" : "light"}
+                variant={drawerType === "help" ? "filled" : "subtle"}
                 size="md"
                 onClick={() => toggleDrawer("help")}
               >
@@ -135,7 +135,7 @@ export const HeaderComponent: FC<HeaderComponentProps> = ({
 
             <Tooltip label="Activity Log">
               <ActionIcon
-                variant={drawerType === "activity" ? "filled" : "light"}
+                variant={drawerType === "activity" ? "filled" : "subtle"}
                 size="md"
                 onClick={() => toggleDrawer("activity")}
               >
@@ -145,14 +145,14 @@ export const HeaderComponent: FC<HeaderComponentProps> = ({
 
             <Tooltip label="Close">
               <ActionIcon
-                variant="light"
+                variant="subtle"
                 size="md"
                 onClick={handleBack}
               >
                 <IconX size={16} />
               </ActionIcon>
             </Tooltip>
-          </Group>
+          </div>
         </div>
       </Paper>
 
