@@ -110,7 +110,7 @@ export const HeaderComponent: FC<HeaderComponentProps> = ({
             {showExpandButton && setFullScreen && (
               <Tooltip label={fullScreen ? "Exit full screen" : "Full screen"}>
                 <ActionIcon
-                  variant={fullScreen ? "filled" : "subtle"}
+                  variant="subtle"
                   size="md"
                   onClick={() => setFullScreen(!fullScreen)}
                 >
@@ -125,7 +125,7 @@ export const HeaderComponent: FC<HeaderComponentProps> = ({
 
             <Tooltip label="Quick Help">
               <ActionIcon
-                variant={drawerType === "help" ? "filled" : "subtle"}
+                variant="subtle"
                 size="md"
                 onClick={() => toggleDrawer("help")}
               >
@@ -135,7 +135,7 @@ export const HeaderComponent: FC<HeaderComponentProps> = ({
 
             <Tooltip label="Activity Log">
               <ActionIcon
-                variant={drawerType === "activity" ? "filled" : "subtle"}
+                variant="subtle"
                 size="md"
                 onClick={() => toggleDrawer("activity")}
               >
@@ -144,11 +144,7 @@ export const HeaderComponent: FC<HeaderComponentProps> = ({
             </Tooltip>
 
             <Tooltip label="Close">
-              <ActionIcon
-                variant="subtle"
-                size="md"
-                onClick={handleBack}
-              >
+              <ActionIcon variant="subtle" size="md" onClick={handleBack}>
                 <IconX size={16} />
               </ActionIcon>
             </Tooltip>
