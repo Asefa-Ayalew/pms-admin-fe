@@ -11,11 +11,11 @@ import {
 } from "@mantine/core";
 import {
   IconArrowLeft,
-  IconArrowsMaximize,
-  IconArrowsMinimize,
   IconX,
   IconHelpCircle,
-  IconLogs,
+  IconArrowsMinimize,
+  IconArrowsMaximize,
+  IconNotes,
 } from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
 import { FC, ReactElement, useState } from "react";
@@ -46,7 +46,7 @@ export const HeaderComponent: FC<HeaderComponentProps> = ({
   fullScreen,
   setFullScreen,
   className = "",
-  showBackButton = false,
+  showBackButton = true,
   showExpandButton = true,
   customBackUrl,
   onBack,
@@ -84,7 +84,7 @@ export const HeaderComponent: FC<HeaderComponentProps> = ({
         className="mb-4 px-4 py-3 flex items-center justify-between bg-white"
       >
         <div className="flex justify-between">
-          <Group gap="xs" align="center" className="flex-1 overflow-hidden">
+          <Group gap="sm" align="center" className="flex-1 overflow-hidden">
             {showBackButton && (
               <Tooltip label="Go back">
                 <ActionIcon
@@ -123,6 +123,16 @@ export const HeaderComponent: FC<HeaderComponentProps> = ({
               </Tooltip>
             )}
 
+            <Tooltip label="Activity Log">
+              <ActionIcon
+                variant="subtle"
+                size="md"
+                onClick={() => toggleDrawer("activity")}
+              >
+                <IconNotes size={16} />
+              </ActionIcon>
+            </Tooltip>
+
             <Tooltip label="Quick Help">
               <ActionIcon
                 variant="subtle"
@@ -130,16 +140,6 @@ export const HeaderComponent: FC<HeaderComponentProps> = ({
                 onClick={() => toggleDrawer("help")}
               >
                 <IconHelpCircle size={16} />
-              </ActionIcon>
-            </Tooltip>
-
-            <Tooltip label="Activity Log">
-              <ActionIcon
-                variant="subtle"
-                size="md"
-                onClick={() => toggleDrawer("activity")}
-              >
-                <IconLogs size={16} />
               </ActionIcon>
             </Tooltip>
 
@@ -164,7 +164,7 @@ export const HeaderComponent: FC<HeaderComponentProps> = ({
           (headerContents?.help ? (
             headerContents.help
           ) : (
-            <p className="text-gray-500 italic">No quick help found.</p>
+            <p className="text-gray-500 italic">No help found.</p>
           ))}
 
         {drawerType === "activity" &&
